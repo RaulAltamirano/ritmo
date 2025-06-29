@@ -55,19 +55,81 @@ La aplicación utiliza una paleta de colores cuidadosamente diseñada:
 
 - **Frontend**: Nuxt.js 3, Vue.js 3, TypeScript
 - **Styling**: Tailwind CSS con configuración personalizada
-- **Iconografía**: SVG icons personalizados
-- **Estado**: Composables de Vue 3
+- **Iconografía**: Lucide Vue Next
+- **Estado**: Composables de Vue 3 + Pinia
 - **Build**: Vite
 - **Linting**: ESLint, Prettier
 
 ## 📁 Estructura del Proyecto
 
 ```
-components/
-│   ├── atoms/          # Componentes básicos (BaseButton, BaseCard, Badge)
-│   ├── molecules/      # Componentes compuestos (NavLink, TaskItem, TaskForm)
-│   ├── organisms/      # Componentes complejos (MainNavbar, StreakCard)
-│   └── templates/      # Layouts de página (DashboardTemplate, AuthTemplate)
+ritmo/
+├── components/           # Componentes Atomic Design
+│   ├── atoms/           # Componentes básicos (BaseButton, BaseCard, BaseInput, Badge)
+│   ├── molecules/       # Componentes compuestos (TaskItem, TaskList, PageHeader, etc.)
+│   ├── organisms/       # Componentes complejos (MainNavbar)
+│   └── templates/       # Layouts de página (DashboardTemplate)
+├── pages/               # Páginas de la aplicación
+├── layouts/             # Layouts de Nuxt
+├── composables/         # Composables de Vue 3
+├── stores/              # Stores de Pinia
+├── types/               # Definiciones de TypeScript
+├── utils/               # Utilidades y helpers
+│   └── routes.ts        # Rutas centralizadas
+├── assets/              # Assets estáticos
+├── public/              # Archivos públicos
+└── docs/                # Documentación
+    └── COMPONENTS.md    # Documentación de componentes
+```
+
+## 🏗️ Arquitectura Atomic Design
+
+### 🟢 Atoms (Átomos)
+Componentes básicos y reutilizables:
+- `BaseButton.vue` - Botón base con variantes
+- `BaseCard.vue` - Contenedor base
+- `BaseInput.vue` - Campo de entrada base
+- `Badge.vue` - Etiqueta pequeña
+
+### 🔵 Molecules (Moléculas)
+Componentes funcionales compuestos:
+- `TaskItem.vue` - Elemento de tarea individual
+- `TaskList.vue` - Lista de tareas con filtros
+- `PageHeader.vue` - Encabezado de página
+- `FloatingTimer.vue` - Timer flotante
+- `QuickTaskInput.vue` - Input rápido de tareas
+- `StreakCard.vue` - Tarjeta de racha
+- `ProgressVisual.vue` - Visualización de progreso
+
+### 🟡 Organisms (Organismos)
+Componentes complejos:
+- `MainNavbar.vue` - Barra de navegación principal
+
+### 🟠 Templates (Plantillas)
+Layouts de página:
+- `DashboardTemplate.vue` - Template para dashboards
+
+## 🛣️ Sistema de Rutas Centralizado
+
+Todas las rutas están centralizadas en `utils/routes.ts`:
+
+```typescript
+export const ROUTES = {
+  HOME: '/',
+  LOGIN: '/login',
+  DASHBOARD: '/dashboard',
+  HOY: '/hoy',
+  TAREAS: '/tareas',
+  PROYECTOS: '/proyectos',
+  MATERIAS: '/materias',
+  CATEGORIAS: '/categorias',
+  HORARIO: '/horario',
+  ANALITICAS: '/analiticas',
+  ENFOQUE: '/enfoque',
+  FOCUS: '/focus',
+  PERFIL: '/perfil',
+  CONFIGURACION: '/configuracion'
+}
 ```
 
 ## 🚀 Instalación y Desarrollo
@@ -120,6 +182,9 @@ yarn test:watch   # Tests en modo watch
 - [x] Exportación de datos
 - [x] Diseño responsive (Mobile First)
 - [x] Accesibilidad WCAG
+- [x] **Limpieza de componentes no utilizados**
+- [x] **Centralización de rutas**
+- [x] **Estructura Atomic Design optimizada**
 
 ### 🔄 En Desarrollo
 - [ ] Integración con backend
@@ -136,6 +201,27 @@ yarn test:watch   # Tests en modo watch
 - [ ] Sistema de recordatorios avanzado
 - [ ] Reportes y analytics
 - [ ] Modo colaborativo
+
+## 🧹 Limpieza Realizada
+
+### Componentes Eliminados
+- `SimpleTimer.vue` - Reemplazado por `FloatingTimer.vue`
+- `MobileNavLink.vue` - Funcionalidad integrada en `MainNavbar.vue`
+- `NavLink.vue` - Funcionalidad integrada en `MainNavbar.vue`
+- `FormInput.vue` - Reemplazado por `BaseInput.vue`
+- `TaskSection.vue` - Funcionalidad integrada en `TaskList.vue`
+- `AuthTemplate.vue` - No se estaba utilizando
+
+### Páginas de Desarrollo Eliminadas
+- `test.vue` - Página de prueba
+- `test-navbar.vue` - Página de prueba de navbar
+- `navbar-demo.vue` - Demo de navbar
+
+### Mejoras Implementadas
+- **Rutas centralizadas**: Todas las rutas en `utils/routes.ts`
+- **Alias de importación**: Uso consistente de `@components`, `@utils`, etc.
+- **Documentación**: `docs/COMPONENTS.md` con documentación completa
+- **Estructura optimizada**: Mejor organización siguiendo Atomic Design
 
 ## 🎯 Uso de la Aplicación
 
@@ -166,6 +252,14 @@ yarn test:watch   # Tests en modo watch
 - Asegura accesibilidad en todos los componentes
 - Escribe tests para nuevas funcionalidades
 - Documenta cambios importantes
+- **Usa las rutas centralizadas** de `utils/routes.ts`
+- **Sigue la estructura de componentes** documentada en `docs/COMPONENTS.md`
+
+## 📚 Documentación
+
+- **[Documentación de Componentes](./docs/COMPONENTS.md)** - Guía completa de todos los componentes
+- **[README de Componentes](./README_COMPONENTS.md)** - Documentación técnica de componentes
+- **[Flujo del Timer](./README_TIMER_FLOW.md)** - Documentación del sistema de timer
 
 ## 📄 Licencia
 
@@ -175,7 +269,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 - **Vue.js Team**: Por el increíble framework
 - **Tailwind CSS**: Por el sistema de diseño
-- **Heroicons**: Por los íconos SVG
+- **Lucide**: Por los íconos SVG
 - **Comunidad de desarrolladores**: Por el feedback y contribuciones
 
 ## 📞 Contacto
