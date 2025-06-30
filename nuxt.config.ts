@@ -44,14 +44,7 @@ export default defineNuxtConfig({
     autoImports: ['defineStore', 'acceptHMRUpdate']
   },
 
-  // Configuración de rutas (Nuxt maneja las rutas automáticamente)
-  router: {
-    options: {
-      strict: true
-    }
-  },
-
-  // Configuración de composables
+  
   imports: {
     dirs: [
       '~/composables'
