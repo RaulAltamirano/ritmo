@@ -1,117 +1,130 @@
-# 🎯 Ritmo - Agenda Inteligente
+<!-- Logo -->
+<p align="center">
+  <img src="public/logo-ritmo.svg" alt="Ritmo Logo" width="64" height="64" />
+</p>
 
-Ritmo es una aplicación web moderna diseñada para optimizar la productividad de estudiantes y profesionales mediante técnicas de estudio avanzadas y ayuda de IA. La aplicación utiliza **Mobile First Design** y sigue los principios de **Atomic Design** para crear una experiencia de usuario limpia, intuitiva y accesible.
+# 🎯 Ritmo
 
-## ✨ Características Principales
+**Create your best day.**
 
-### 🧠 Dashboard Inteligente
-- **Racha de estudio**: Visualización motivacional del progreso diario
-- **Próximas tareas**: Vista compacta de agenda con prioridades
-- **Heatmap de actividad**: Similar a GitHub contributions para tracking de hábitos
-- **Logros y estadísticas**: Sistema de gamificación para mantener motivación
-- **Frase del día**: Mensajes motivacionales personalizados
+Ritmo is a modern web app designed to help students and professionals optimize their productivity using advanced study techniques and AI assistance. Built with a **Mobile First Design** and following **Atomic Design** principles, Ritmo delivers a clean, intuitive, and accessible user experience.
 
-### ✅ Gestión de Tareas
-- **Creación rápida**: Input simple para crear tareas en segundos
-- **Cronómetro integrado**: Timer automático de 30 minutos (configurable)
-- **Múltiples modos**: Pomodoro, Pomodoro XL, sesiones personalizadas
-- **Modo Focus**: Pantalla completa sin distracciones
-- **Estados visuales**: Pendiente, en progreso, completada
-- **Filtros avanzados**: Por categoría, estado, prioridad
+---
 
-### 🗂️ Sistema de Categorías
-- **Organización visual**: Colores e íconos personalizables
-- **Estadísticas por categoría**: Progreso y métricas detalladas
-- **Tareas recientes**: Vista rápida de actividad reciente
-- **Categorías predefinidas**: Estudio, Trabajo, Personal, Salud
+## ✨ Main Features
 
-### ⚙️ Configuración Avanzada
-- **Tiempos personalizables**: Duración de sesiones, descansos
-- **Notificaciones**: Navegador, sonidos, recordatorios automáticos
-- **Apariencia**: Temas, tamaños de fuente, modo oscuro
-- **Productividad**: Objetivos diarios, días de estudio activos
-- **Datos**: Exportación e importación de configuración
+### 🧠 Smart Dashboard
+- **Study Streak:** Motivational daily progress visualization
+- **Upcoming Tasks:** Compact agenda view with priorities
+- **Activity Heatmap:** GitHub-style habit tracking
+- **Achievements & Stats:** Gamification to keep you motivated
+- **Quote of the Day:** Personalized motivational messages
 
-## 🎨 Diseño y UX
+### ✅ Task Management
+- **Quick Creation:** Instantly add tasks
+- **Integrated Timer:** 30-minute timer (configurable)
+- **Multiple Modes:** Pomodoro, Pomodoro XL, custom sessions
+- **Focus Mode:** Distraction-free fullscreen
+- **Visual States:** Pending, in progress, completed
+- **Advanced Filters:** By category, state, priority
 
-### Paleta de Colores
-La aplicación utiliza una paleta de colores cuidadosamente diseñada:
+### 🗂️ Category System
+- **Visual Organization:** Custom colors and icons
+- **Category Stats:** Progress and detailed metrics
+- **Recent Tasks:** Quick activity overview
+- **Predefined Categories:** Study, Work, Personal, Health
 
-- **Morado (Primary)**: Color principal de la marca
-- **Azul**: Acciones secundarias y calendario
-- **Verde**: Éxito, progreso y tareas completadas
-- **Naranja**: Advertencias y elementos que requieren atención
-- **Rojo**: Errores y acciones destructivas
-- **Gris**: Elementos neutros y texto
+### ⚙️ Advanced Settings
+- **Custom Times:** Session and break durations
+- **Notifications:** Browser, sound, and reminders
+- **Appearance:** Themes, font sizes, dark mode
+- **Productivity:** Daily goals, active study days
+- **Data:** Export/import settings
 
-### Principios de Diseño
-- **Mobile First**: Diseño responsive optimizado para móviles
-- **Atomic Design**: Componentes organizados en átomos, moléculas, organismos, templates y páginas
-- **Accesibilidad WCAG**: Alto contraste, etiquetas descriptivas, navegación por teclado
-- **Simplicidad**: Interfaz limpia sin distracciones visuales
-- **Consistencia**: Patrones de diseño coherentes en toda la aplicación
+---
 
-## 🛠️ Tecnologías
+## 🎨 Design & UX
 
-- **Frontend**: Nuxt.js 3, Vue.js 3, TypeScript
-- **Styling**: Tailwind CSS con configuración personalizada
-- **Iconografía**: Lucide Vue Next
-- **Estado**: Composables de Vue 3 + Pinia
-- **Build**: Vite
-- **Linting**: ESLint, Prettier
+### Color Palette
+- **Purple (Primary):** Brand color
+- **Blue:** Secondary actions, calendar
+- **Green:** Success, progress, completed tasks
+- **Orange:** Warnings, attention
+- **Red:** Errors, destructive actions
+- **Gray:** Neutral elements, text
 
-## 📁 Estructura del Proyecto
+### Design Principles
+- **Mobile First:** Responsive, mobile-optimized
+- **Atomic Design:** Atoms, molecules, organisms, templates, pages
+- **Accessibility (WCAG):** High contrast, descriptive labels, keyboard navigation
+- **Simplicity:** Clean, distraction-free interface
+- **Consistency:** Unified design patterns
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** Nuxt.js 3, Vue.js 3, TypeScript
+- **Styling:** Tailwind CSS (custom config)
+- **Icons:** Lucide Vue Next
+- **State:** Vue 3 Composables + Pinia
+- **Build:** Vite
+- **Linting:** ESLint, Prettier
+
+---
+
+## 📁 Project Structure
 
 ```
 ritmo/
-├── components/           # Componentes Atomic Design
-│   ├── atoms/           # Componentes básicos (BaseButton, BaseCard, BaseInput, Badge)
-│   ├── molecules/       # Componentes compuestos (TaskItem, TaskList, PageHeader, etc.)
-│   ├── organisms/       # Componentes complejos (MainNavbar)
-│   └── templates/       # Layouts de página (DashboardTemplate)
-├── pages/               # Páginas de la aplicación
-├── layouts/             # Layouts de Nuxt
-├── composables/         # Composables de Vue 3
-├── stores/              # Stores de Pinia
-├── types/               # Definiciones de TypeScript
-├── utils/               # Utilidades y helpers
-│   └── routes.ts        # Rutas centralizadas
-├── assets/              # Assets estáticos
-├── public/              # Archivos públicos
-└── docs/                # Documentación
-    └── COMPONENTS.md    # Documentación de componentes
+├── components/           # Atomic Design components
+│   ├── atoms/           # Basic components (BaseButton, BaseCard, etc.)
+│   ├── molecules/       # Compound components (TaskItem, TaskList, etc.)
+│   ├── organisms/       # Complex components (MainNavbar)
+│   └── templates/       # Page layouts (DashboardTemplate)
+├── pages/               # App pages
+├── layouts/             # Nuxt layouts
+├── composables/         # Vue 3 composables
+├── stores/              # Pinia stores
+├── types/               # TypeScript definitions
+├── utils/               # Utilities and helpers
+│   └── routes.ts        # Centralized routes
+├── assets/              # Static assets
+├── public/              # Public files
+└── docs/                # Documentation
+    └── COMPONENTS.md    # Component docs
 ```
 
-## 🏗️ Arquitectura Atomic Design
+---
 
-### 🟢 Atoms (Átomos)
-Componentes básicos y reutilizables:
-- `BaseButton.vue` - Botón base con variantes
-- `BaseCard.vue` - Contenedor base
-- `BaseInput.vue` - Campo de entrada base
-- `Badge.vue` - Etiqueta pequeña
+## 🏗️ Atomic Design Architecture
 
-### 🔵 Molecules (Moléculas)
-Componentes funcionales compuestos:
-- `TaskItem.vue` - Elemento de tarea individual
-- `TaskList.vue` - Lista de tareas con filtros
-- `PageHeader.vue` - Encabezado de página
-- `FloatingTimer.vue` - Timer flotante
-- `QuickTaskInput.vue` - Input rápido de tareas
-- `StreakCard.vue` - Tarjeta de racha
-- `ProgressVisual.vue` - Visualización de progreso
+### 🟢 Atoms
+- `BaseButton.vue` - Button with variants
+- `BaseCard.vue` - Card container
+- `BaseInput.vue` - Input field
+- `Badge.vue` - Small label
 
-### 🟡 Organisms (Organismos)
-Componentes complejos:
-- `MainNavbar.vue` - Barra de navegación principal
+### 🔵 Molecules
+- `TaskItem.vue` - Single task item
+- `TaskList.vue` - Task list with filters
+- `PageHeader.vue` - Page header
+- `FloatingTimer.vue` - Floating timer
+- `QuickTaskInput.vue` - Quick task input
+- `StreakCard.vue` - Streak card
+- `ProgressVisual.vue` - Progress visualization
 
-### 🟠 Templates (Plantillas)
-Layouts de página:
-- `DashboardTemplate.vue` - Template para dashboards
+### 🟡 Organisms
+- `MainNavbar.vue` - Main navigation bar
 
-## 🛣️ Sistema de Rutas Centralizado
+### 🟠 Templates
+- `DashboardTemplate.vue` - Dashboard layout
 
-Todas las rutas están centralizadas en `utils/routes.ts`:
+---
+
+## 🛣️ Centralized Routing
+
+All routes are centralized in `utils/routes.ts`:
 
 ```typescript
 export const ROUTES = {
@@ -132,152 +145,170 @@ export const ROUTES = {
 }
 ```
 
-## 🚀 Instalación y Desarrollo
+---
 
-### Prerrequisitos
-- Node.js 18+ 
-- Yarn o npm
+## 🚀 Getting Started
 
-### Instalación
+### Prerequisites
+- Node.js 18+
+- Yarn or npm
+
+### Installation
 ```bash
-# Clonar el repositorio
-git clone https://github.com/tu-usuario/ritmo.git
+# Clone the repo
+git clone https://github.com/your-username/ritmo.git
 cd ritmo
 
-# Instalar dependencias
+# Install dependencies
 yarn install
 
-# Iniciar servidor de desarrollo
+# Start development server
 yarn dev
 ```
 
-### Scripts Disponibles
+### Available Scripts
 ```bash
-# Desarrollo
-yarn dev          # Servidor de desarrollo
-yarn build        # Build de producción
-yarn preview      # Preview del build
+# Development
+yarn dev          # Start dev server
+yarn build        # Production build
+yarn preview      # Preview production build
 
-# Linting y formateo
-yarn lint         # Ejecutar ESLint
-yarn lint:fix     # Corregir errores de linting
-yarn format       # Formatear código con Prettier
+# Linting & Formatting
+yarn lint         # Run ESLint
+yarn lint:fix     # Fix lint errors
+yarn format       # Format code with Prettier
 
 # Testing
-yarn test         # Ejecutar tests
-yarn test:watch   # Tests en modo watch
+yarn test         # Run tests
+yarn test:watch   # Watch mode
 ```
-
-## 📋 Funcionalidades Implementadas
-
-### ✅ Completadas
-- [x] Dashboard con racha de estudio y estadísticas
-- [x] Sistema de tareas con cronómetro integrado
-- [x] Gestión de categorías con colores e íconos
-- [x] Configuración completa de la aplicación
-- [x] Navbar responsive con navegación
-- [x] Modo Focus para sesiones de estudio
-- [x] Filtros y búsqueda de tareas
-- [x] Sistema de notificaciones
-- [x] Exportación de datos
-- [x] Diseño responsive (Mobile First)
-- [x] Accesibilidad WCAG
-- [x] **Limpieza de componentes no utilizados**
-- [x] **Centralización de rutas**
-- [x] **Estructura Atomic Design optimizada**
-
-### 🔄 En Desarrollo
-- [ ] Integración con backend
-- [ ] Sincronización en la nube
-- [ ] Notificaciones push
-- [ ] Modo offline
-- [ ] Análisis de patrones de estudio
-- [ ] Sugerencias de IA
-
-### 📋 Pendientes
-- [ ] Tests unitarios y de integración
-- [ ] PWA (Progressive Web App)
-- [ ] Integración con calendarios externos
-- [ ] Sistema de recordatorios avanzado
-- [ ] Reportes y analytics
-- [ ] Modo colaborativo
-
-## 🧹 Limpieza Realizada
-
-### Componentes Eliminados
-- `SimpleTimer.vue` - Reemplazado por `FloatingTimer.vue`
-- `MobileNavLink.vue` - Funcionalidad integrada en `MainNavbar.vue`
-- `NavLink.vue` - Funcionalidad integrada en `MainNavbar.vue`
-- `FormInput.vue` - Reemplazado por `BaseInput.vue`
-- `TaskSection.vue` - Funcionalidad integrada en `TaskList.vue`
-- `AuthTemplate.vue` - No se estaba utilizando
-
-### Páginas de Desarrollo Eliminadas
-- `test.vue` - Página de prueba
-- `test-navbar.vue` - Página de prueba de navbar
-- `navbar-demo.vue` - Demo de navbar
-
-### Mejoras Implementadas
-- **Rutas centralizadas**: Todas las rutas en `utils/routes.ts`
-- **Alias de importación**: Uso consistente de `@components`, `@utils`, etc.
-- **Documentación**: `docs/COMPONENTS.md` con documentación completa
-- **Estructura optimizada**: Mejor organización siguiendo Atomic Design
-
-## 🎯 Uso de la Aplicación
-
-### Para Estudiantes
-1. **Configura tu perfil**: Establece tus objetivos diarios y preferencias
-2. **Crea categorías**: Organiza tus tareas por materia o proyecto
-3. **Planifica sesiones**: Crea tareas con duración específica
-4. **Usa el modo Focus**: Elimina distracciones durante el estudio
-5. **Revisa tu progreso**: Monitorea tu racha y estadísticas
-
-### Para Profesionales
-1. **Organiza proyectos**: Usa categorías para diferentes proyectos
-2. **Gestiona tiempo**: Utiliza el cronómetro para sesiones de trabajo
-3. **Establece prioridades**: Marca tareas como alta, media o baja prioridad
-4. **Analiza productividad**: Revisa tus patrones de trabajo
-
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-### Guías de Contribución
-- Sigue los principios de Atomic Design
-- Mantén la consistencia con la paleta de colores
-- Asegura accesibilidad en todos los componentes
-- Escribe tests para nuevas funcionalidades
-- Documenta cambios importantes
-- **Usa las rutas centralizadas** de `utils/routes.ts`
-- **Sigue la estructura de componentes** documentada en `docs/COMPONENTS.md`
-
-## 📚 Documentación
-
-- **[Documentación de Componentes](./docs/COMPONENTS.md)** - Guía completa de todos los componentes
-- **[README de Componentes](./README_COMPONENTS.md)** - Documentación técnica de componentes
-- **[Flujo del Timer](./README_TIMER_FLOW.md)** - Documentación del sistema de timer
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## 🙏 Agradecimientos
-
-- **Vue.js Team**: Por el increíble framework
-- **Tailwind CSS**: Por el sistema de diseño
-- **Lucide**: Por los íconos SVG
-- **Comunidad de desarrolladores**: Por el feedback y contribuciones
-
-## 📞 Contacto
-
-- **Proyecto**: [GitHub Issues](https://github.com/tu-usuario/ritmo/issues)
-- **Email**: tu-email@ejemplo.com
-- **Twitter**: [@tu-usuario](https://twitter.com/tu-usuario)
 
 ---
 
-**Ritmo** - Optimiza tu productividad, maximiza tu potencial 🚀
+## 📋 Features & Roadmap
+
+### ✅ Completed
+- [x] Dashboard with streak and stats
+- [x] Task system with integrated timer
+- [x] Category management with colors and icons
+- [x] Full app configuration
+- [x] Responsive navbar
+- [x] Focus mode for study sessions
+- [x] Task filters and search
+- [x] Notification system
+- [x] Data export
+- [x] Responsive design (Mobile First)
+- [x] Accessibility (WCAG)
+- [x] **Unused components cleaned up**
+- [x] **Centralized routes**
+- [x] **Optimized Atomic Design structure**
+
+### 🔄 In Progress
+- [ ] Backend integration
+- [ ] Cloud sync
+- [ ] Push notifications
+- [ ] Offline mode
+- [ ] Study pattern analytics
+- [ ] AI suggestions
+
+### 📋 To Do
+- [ ] Unit & integration tests
+- [ ] PWA (Progressive Web App)
+- [ ] External calendar integration
+- [ ] Advanced reminders
+- [ ] Reports & analytics
+- [ ] Collaborative mode
+
+---
+
+## 🧹 Cleanup & Refactoring
+
+### Removed Components
+- `SimpleTimer.vue` - Replaced by `FloatingTimer.vue`
+- `MobileNavLink.vue` - Integrated into `MainNavbar.vue`
+- `NavLink.vue` - Integrated into `MainNavbar.vue`
+- `FormInput.vue` - Replaced by `BaseInput.vue`
+- `TaskSection.vue` - Integrated into `TaskList.vue`
+- `AuthTemplate.vue` - Not used
+
+### Removed Dev Pages
+- `test.vue` - Test page
+- `test-navbar.vue` - Navbar test page
+- `navbar-demo.vue` - Navbar demo
+
+### Improvements
+- **Centralized routes**: All routes in `utils/routes.ts`
+- **Import aliases**: Consistent use of `@components`, `@utils`, etc.
+- **Documentation**: `docs/COMPONENTS.md` for components
+- **Optimized structure**: Follows Atomic Design
+
+---
+
+## 🎯 How to Use
+
+### For Students
+1. **Set up your profile:** Define daily goals and preferences
+2. **Create categories:** Organize tasks by subject or project
+3. **Plan sessions:** Create tasks with specific durations
+4. **Use Focus Mode:** Eliminate distractions while studying
+5. **Track your progress:** Monitor your streak and stats
+
+### For Professionals
+1. **Organize projects:** Use categories for different projects
+2. **Manage time:** Use the timer for work sessions
+3. **Set priorities:** Mark tasks by priority
+4. **Analyze productivity:** Review your work patterns
+
+---
+
+## 🤝 Contributing
+
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### Contribution Guidelines
+- Follow Atomic Design principles
+- Keep color palette consistent
+- Ensure accessibility in all components
+- Write tests for new features
+- Document important changes
+- **Use centralized routes** from `utils/routes.ts`
+- **Follow the component structure** in `docs/COMPONENTS.md`
+
+---
+
+## 📚 Documentation
+
+- **[Component Docs](./docs/COMPONENTS.md)** – Full guide to all components
+- **[README Components](./README_COMPONENTS.md)** – Technical component docs
+- **[Timer Flow](./README_TIMER_FLOW.md)** – Timer system documentation
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+---
+
+## 🙏 Acknowledgements
+
+- **Vue.js Team** – For the amazing framework
+- **Tailwind CSS** – For the design system
+- **Lucide** – For SVG icons
+- **Dev Community** – For feedback and contributions
+
+---
+
+## 📞 Contact
+
+- **Project:** [GitHub Issues](https://github.com/your-username/ritmo/issues)
+- **Email:** your-email@example.com
+- **Twitter:** [@your-username](https://twitter.com/your-username)
+
+---
+
+**Ritmo** – Make it count 🚀
