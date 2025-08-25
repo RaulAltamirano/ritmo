@@ -1,0 +1,54 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" class="ai-ritmo-svg">
+  <!-- Background -->
+  <rect width="160" height="160" rx="40" fill="var(--ai-bg, #f8fafc)"/>
+  
+  <!-- Paper sheet -->
+  <rect x="35" y="25" width="90" height="110" rx="12" fill="var(--ai-paper, #ffffff)" stroke="var(--ai-border, #e2e8f0)" stroke-width="2"/>
+  
+  <!-- Paper fold corner -->
+  <path d="M 115 25 L 125 35 L 115 35 Z" fill="var(--ai-fold, #f1f5f9)"/>
+  
+  <!-- Neural network nodes -->
+  <circle cx="55" cy="45" r="2" fill="var(--ai-node, #3b82f6)" opacity="0.8"/>
+  <circle cx="70" cy="45" r="2" fill="var(--ai-node, #3b82f6)" opacity="0.6"/>
+  <circle cx="85" cy="45" r="2" fill="var(--ai-node, #3b82f6)" opacity="0.9"/>
+  <circle cx="100" cy="45" r="2" fill="var(--ai-node, #3b82f6)" opacity="0.7"/>
+  
+  <circle cx="60" cy="60" r="2" fill="var(--ai-node, #3b82f6)" opacity="0.8"/>
+  <circle cx="75" cy="60" r="2" fill="var(--ai-node, #3b82f6)" opacity="0.9"/>
+  <circle cx="90" cy="60" r="2" fill="var(--ai-node, #3b82f6)" opacity="0.6"/>
+  
+  <circle cx="65" cy="75" r="2" fill="var(--ai-node, #3b82f6)" opacity="0.7"/>
+  <circle cx="80" cy="75" r="2" fill="var(--ai-node, #3b82f6)" opacity="0.8"/>
+  
+  <!-- Neural connections -->
+  <line x1="55" y1="45" x2="60" y2="60" stroke="var(--ai-connection, #3b82f6)" stroke-width="0.5" opacity="0.4"/>
+  <line x1="70" y1="45" x2="60" y2="60" stroke="var(--ai-connection, #3b82f6)" stroke-width="0.5" opacity="0.4"/>
+  <line x1="85" y1="45" x2="75" y2="60" stroke="var(--ai-connection, #3b82f6)" stroke-width="0.5" opacity="0.4"/>
+  <line x1="100" y1="45" x2="90" y2="60" stroke="var(--ai-connection, #3b82f6)" stroke-width="0.5" opacity="0.4"/>
+  
+  <line x1="60" y1="60" x2="65" y2="75" stroke="var(--ai-connection, #3b82f6)" stroke-width="0.5" opacity="0.4"/>
+  <line x1="75" y1="60" x2="65" y2="75" stroke="var(--ai-connection, #3b82f6)" stroke-width="0.5" opacity="0.4"/>
+  <line x1="75" y1="60" x2="80" y2="75" stroke="var(--ai-connection, #3b82f6)" stroke-width="0.5" opacity="0.4"/>
+  <line x1="90" y1="60" x2="80" y2="75" stroke="var(--ai-connection, #3b82f6)" stroke-width="0.5" opacity="0.4"/>
+  
+  <!-- AI processing indicator -->
+  <circle cx="80" cy="95" r="4" fill="var(--ai-core, #10b981)" opacity="0.9"/>
+  <circle cx="80" cy="95" r="6" fill="none" stroke="var(--ai-core, #10b981)" stroke-width="1" opacity="0.6">
+    <animate attributeName="r" values="6;8;6" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- AI symbol with modern styling -->
+  <text x="80" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="var(--ai-symbol, #3b82f6)">AI</text>
+  
+  <!-- Circuit-like decorative elements -->
+  <line x1="45" y1="35" x2="55" y2="35" stroke="var(--ai-circuit, #64748b)" stroke-width="1" opacity="0.3"/>
+  <line x1="105" y1="35" x2="115" y2="35" stroke="var(--ai-circuit, #64748b)" stroke-width="1" opacity="0.3"/>
+  <line x1="45" y1="125" x2="55" y2="125" stroke="var(--ai-circuit, #64748b)" stroke-width="1" opacity="0.3"/>
+  <line x1="105" y1="125" x2="115" y2="125" stroke="var(--ai-circuit, #64748b)" stroke-width="1" opacity="0.3"/>
+  
+  <!-- Data flow indicators -->
+  <path d="M 50 40 L 55 40 L 55 42 L 50 42 Z" fill="var(--ai-data, #8b5cf6)" opacity="0.6"/>
+  <path d="M 105 40 L 110 40 L 110 42 L 105 42 Z" fill="var(--ai-data, #8b5cf6)" opacity="0.6"/>
+</svg> 
