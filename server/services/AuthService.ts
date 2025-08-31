@@ -19,8 +19,17 @@ export class AuthService {
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma
-    this.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production'
-    this.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-in-production'
+    
+    // Validar que las variables de entorno críticas estén configuradas
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is required')
+    }
+    if (!process.env.JWT_REFRESH_SECRET) {
+      throw new Error('JWT_REFRESH_SECRET environment variable is required')
+    }
+    
+    this.JWT_SECRET = process.env.JWT_SECRET
+    this.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET
   }
 
   /**

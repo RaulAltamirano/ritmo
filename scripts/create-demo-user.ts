@@ -15,8 +15,11 @@ async function createDemoUser() {
       return existingUser
     }
 
+    // Get demo password from environment or use default
+    const demoPassword = process.env.DEMO_USER_PASSWORD || 'Demo123!'
+    
     // Hash password
-    const hashedPassword = await bcrypt.hash('Demo123!', 12)
+    const hashedPassword = await bcrypt.hash(demoPassword, 12)
 
     // Create demo user with transaction
     const result = await prisma.$transaction(async (tx: any) => {
