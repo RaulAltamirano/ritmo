@@ -3,285 +3,383 @@
   <img src="public/logo-ritmo.svg" alt="Ritmo Logo" width="64" height="64" />
 </p>
 
-# Ritmo
+# 🚀 RITMO - Technical Documentation
 
-Boost your productivity with Ritmo: a modern web app to manage tasks, study, and work better.
+## 📋 **OVERVIEW**
 
-## 🚀 How it works
+Ritmo is a **monorepo** personal productivity application with unified configuration. Complete system with backend API, web frontend, and landing page built with modern technologies.
 
-Ritmo helps you organize your day with a smart dashboard, quick task creation, and a built-in timer. Create categories for your activities, start focused sessions, and track your progress visually. Use the focus mode to study or work without distractions, and get notified about your goals and tasks. Everything is designed to be fast, simple, and mobile-friendly.
+> **📖 Looking for product information?** See [PRODUCT.md](PRODUCT.md) for features, use cases, and user guides.
+> **📚 Complete documentation available in the [docs/](docs/) folder.**
 
-## ✨ Main Features
+## 📚 **Documentation Overview**
 
-- 🎯 Smart dashboard with productivity analytics
-- ⚡ Fast task and category management
-- ⏱️ Built-in timer (Pomodoro and custom sessions)
-- 🎨 Focus mode and notifications
-- 📱 Responsive and accessible design
-- 📊 Activity tracking and metrics
-- 📅 Intelligent scheduling system
-- 🌙 Dark/Light theme support
+- **[README.md](README.md)** - Technical setup and development (this file)
+- **[PRODUCT.md](PRODUCT.md)** - Product features and user guide
+- **[docs/](docs/)** - Complete documentation library
+  - [Quick Start](docs/QUICKSTART.md) - 5-minute setup guide
+  - [Design System](docs/COLORS.md) - Color palette and UI guidelines
+  - [API Reference](docs/API.md) - Backend development
+  - [User Manual](docs/USER-GUIDE.md) - Complete user guide
 
-## 🛠️ Tech Stack
+## 🏗️ **ARCHITECTURE**
 
-- **Frontend**: Nuxt 3, Vue 3, TypeScript
-- **Styling**: Tailwind CSS
-- **State Management**: Pinia
-- **Database**: PostgreSQL with Prisma ORM
-- **Containerization**: Docker & Docker Compose
-- **Calendar**: FullCalendar
-- **Icons**: Lucide Vue Next
-- **Internationalization**: @nuxtjs/i18n
-
-## 📋 Prerequisites
-
-- Node.js 18+ 
-- Yarn or npm
-- Docker & Docker Compose
-
-## 🚀 Quick Start
-
-### Option 1: Full Setup (Recommended)
-```bash
-# Clone the repository
-git clone https://github.com/your-username/ritmo.git
-cd ritmo
-
-# Install dependencies
-yarn install
-
-# Start everything (Docker + Database + Seed + Dev Server)
-yarn dev:full
+```
+📁 ritmo/
+├── 📄 .env                    ← Centralized configuration
+├── 📁 packages/
+│   ├── 📁 config/            ← Unified configuration system
+│   ├── 📁 shared/            ← Shared utilities
+│   └── 📁 ui/                ← UI components
+├── 📁 apps/
+│   ├── 📁 api/               ← Backend (Node.js + Express + Prisma)
+│   ├── 📁 web/               ← Frontend (Vue + Nuxt)
+│   └── 📁 landing/           ← Landing page
+├── 📁 docker/                 ← Services (PostgreSQL, Redis)
+├── 📄 docker-compose.yml      ← Orchestration
+└── 📁 scripts/                ← Unified utilities
+    ├── 📁 database/           ← Centralized seed system
+    ├── 📁 setup/              ← Environment configuration
+    └── 📁 utils/              ← Shared utilities
 ```
 
-### Option 2: Manual Setup
+## 🚀 **QUICK DEPLOYMENT**
+
+### **1. Prerequisites**
+
 ```bash
-# Clone and install dependencies
-git clone https://github.com/your-username/ritmo.git
-cd ritmo
-yarn install
-
-# Start Docker services
-yarn docker:up
-
-# Wait for database to be ready, then run migrations
-yarn db:migrate
-
-# Seed the database with sample data
-yarn db:seed
-
-# Start development server
-yarn dev
+# Node.js 18+, pnpm, Docker, Docker Compose
+node --version
+pnpm --version
+docker --version
+docker-compose --version
 ```
 
-## 📚 Available Scripts
+### **2. Initial Setup**
 
-### Development
-- `yarn dev` – Start development server
-- `yarn dev:full` – Complete setup + development server
-- `yarn build` – Production build
-- `yarn start` – Start production server
-- `yarn preview` – Preview production build
+```bash
+# Clone and configure
+git clone <repository-url>
+cd ritmo
+pnpm install -w
 
-### Database Management
-- `yarn db:generate` – Generate Prisma client
-- `yarn db:migrate` – Run database migrations
-- `yarn db:deploy` – Deploy migrations to production
-- `yarn db:studio` – Open Prisma Studio (database GUI)
-- `yarn db:seed` – Seed database with sample data
-- `yarn db:reset` – Reset database (⚠️ destructive)
-- `yarn db:push` – Push schema changes to database
-- `yarn db:pull` – Pull database schema
+# Configure environment
+pnpm run setup-env
 
-### Docker Management
-- `yarn docker:up` – Start Docker services
-- `yarn docker:down` – Stop Docker services
-- `yarn docker:logs` – View Docker logs
-- `yarn docker:reset` – Reset Docker volumes and restart
+# Validate configuration
+pnpm run validate-env
+pnpm run validate-db
+```
 
-### Code Quality
-- `yarn lint` – Run ESLint
-- `yarn format` – Format code with Prettier
-- `yarn test` – Run tests
+### **3. Start Services**
 
-### Setup & Utilities
-- `yarn setup` – Complete environment setup
-- `yarn install` – Install dependencies
+```bash
+# Start database and Redis
+docker-compose up -d
 
-## 🗄️ Database Schema
+# Verify services
+docker-compose ps
+```
 
-The application uses PostgreSQL with the following main entities:
+### **4. Initialize Database**
 
-- **Users** - User accounts and profiles
-- **Activities** - Tasks and activities with types and priorities
-- **Schedules** - Recurring schedule templates
-- **ScheduleBlocks** - Time blocks within schedules
-- **ActivityMetrics** - Productivity analytics and tracking
-- **UserPreferences** - User settings and preferences
+```bash
+# Create demo user and sample data
+pnpm run seed
 
-## 🔧 Environment Configuration
+# Verify demo user
+pnpm run demo:user --info
+```
 
-Create a `.env` file in the root directory:
+### **5. Start Development**
 
-```env
-# Database
-DATABASE_URL="postgresql://postgres:password@localhost:5432/ritmo"
+```bash
+# Backend
+pnpm run dev:api
 
-# Environment
+# Frontend (new terminal)
+pnpm run dev:web
+
+# Landing (new terminal)
+pnpm run dev:landing
+```
+
+## 🔧 **CORE SCRIPTS**
+
+### **🌱 Database**
+
+```bash
+pnpm run seed              # Complete seed
+pnpm run seed:demo         # Demo user only
+pnpm run seed:reset        # Complete reset
+pnpm run seed:validate     # Validation only
+```
+
+### **👤 Demo User**
+
+```bash
+pnpm run demo:user         # Create demo user
+pnpm run demo:user --info  # View information
+pnpm run demo:reset        # Reset demo user
+```
+
+### **🔍 Validation**
+
+```bash
+pnpm run validate-env      # Validate environment
+pnpm run validate-db       # Validate database
+pnpm run validate:all      # Validate everything
+```
+
+### **🐳 Docker**
+
+```bash
+pnpm run docker:up         # Start services
+pnpm run docker:down       # Stop services
+pnpm run docker:build      # Build images
+```
+
+## 📊 **DATA STRUCTURE**
+
+### **🗄️ Core Models**
+
+- **User**: System users with preferences
+- **Category**: Task and activity categories
+- **Task**: Tasks with priorities and deadlines
+- **Activity**: Time tracking activities
+- **UserPreferences**: Personalized configuration
+- **EmailNotificationSettings**: Email notifications
+
+### **🔐 Authentication**
+
+- JWT with refresh tokens
+- Device validation with HMAC
+- Secure sessions with Redis
+- Rate limiting and audit logs
+
+## 🌐 **APPLICATIONS**
+
+### **🚀 API Backend** (`apps/api`)
+
+- **Port**: 3001
+- **Technologies**: Node.js + Express + TypeScript + Prisma
+- **Database**: PostgreSQL + Redis
+- **Authentication**: JWT + Refresh tokens
+
+### **🌐 Web Frontend** (`apps/web`)
+
+- **Port**: 3000
+- **Technologies**: Vue.js + Nuxt.js + TypeScript
+- **UI**: Tailwind CSS + Custom components
+- **State**: Pinia + Composables
+
+### **🏠 Landing Page** (`apps/landing`)
+
+- **Port**: 3002
+- **Technologies**: Vue.js + Vite
+- **Purpose**: Product presentation page
+
+## 🔧 **CONFIGURATION**
+
+### **📄 Environment Variables** (`.env`)
+
+```bash
+# Server
 NODE_ENV=development
+PORT=3001
 
-# Optional: Redis for caching (future use)
-REDIS_URL="redis://localhost:6379"
+# Database
+DB_HOST=localhost
+DB_PORT=5433
+DB_NAME=ritmo
+DB_USER=postgres
+DB_PASSWORD=postgres
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=redis123
+
+# JWT (change in production)
+JWT_SECRET=your-super-secret-jwt-key
+JWT_REFRESH_SECRET=your-super-secret-refresh-key
+SESSION_SECRET=your-session-secret
+
+# Demo user
+DEMO_USER_EMAIL=demo@ritmo.app
+DEMO_USER_PASSWORD=Demo123!
 ```
 
-## 🐳 Docker Services
+### **🐳 Docker Compose**
 
-The project includes Docker Compose configuration for:
+```yaml
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - '5433:5432'
 
-- **PostgreSQL 16** - Main database
-- **Redis 7** - Caching layer (optional)
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    ports:
+      - '6379:6379'
+```
 
-### Docker Commands
+## 🛠️ **DEVELOPMENT**
+
+### **📦 Dependency Installation**
+
 ```bash
-# Start services
-docker compose up -d
+# Install everything
+pnpm install -w
 
-# View logs
-docker compose logs -f
+# Install only API
+pnpm --filter=@ritmo/api install
 
-# Stop services
-docker compose down
-
-# Reset everything
-docker compose down -v && docker compose up -d
+# Install only frontend
+pnpm --filter=@ritmo/web install
 ```
 
-## 📊 Sample Data
+### **🏗️ Building**
 
-The seed script creates:
-- Demo user with profile and preferences
-- Sample activities across different types
-- Default weekly schedule
-- Activity metrics for the past week
-
-**Demo User Credentials:**
-- Email: `demo@ritmo.app`
-- Password: (No authentication implemented yet)
-
-## 🏗️ Project Structure
-
-```
-ritmo/
-├── components/          # Vue components
-│   ├── atoms/          # Basic UI components
-│   ├── molecules/      # Compound components
-│   └── organisms/      # Complex components
-├── composables/        # Vue composables
-├── layouts/           # Nuxt layouts
-├── pages/             # Application pages
-├── plugins/           # Nuxt plugins
-├── prisma/            # Database schema and migrations
-│   ├── schema.prisma  # Database schema
-│   └── seed.ts        # Database seeder
-├── public/            # Static assets
-├── server/            # Server-side code
-│   ├── api/           # API endpoints
-│   ├── lib/           # Server utilities
-│   └── services/      # Business logic services
-├── stores/            # Pinia stores
-├── types/             # TypeScript type definitions
-├── docker-compose.yml # Docker services
-└── package.json       # Dependencies and scripts
-```
-
-## 🔄 Development Workflow
-
-1. **Start Development:**
-   ```bash
-   yarn dev:full
-   ```
-
-2. **Make Changes:**
-   - Edit components in `components/`
-   - Add pages in `pages/`
-   - Update API in `server/api/`
-   - Modify database schema in `prisma/schema.prisma`
-
-3. **Database Changes:**
-   ```bash
-   # After schema changes
-   yarn db:migrate
-   yarn db:generate
-   ```
-
-4. **Add Sample Data:**
-   ```bash
-   yarn db:seed
-   ```
-
-## 🚀 Deployment
-
-### Production Build
 ```bash
-yarn build
-yarn start
+# Build everything
+pnpm run build
+
+# Build only API
+pnpm run build:api
+
+# Build only frontend
+pnpm run build:web
 ```
 
-### Environment Variables for Production
-```env
-DATABASE_URL="your-production-database-url"
-NODE_ENV=production
-```
+### **🧪 Testing**
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
-
-## 📄 License
-
-MIT
-
-## 🆘 Troubleshooting
-
-### Database Connection Issues
 ```bash
-# Check if Docker is running
-docker ps
+# API tests
+pnpm --filter=@ritmo/api test
 
-# Restart database
-yarn docker:reset
+# Linting
+pnpm run lint
 
-# Check database logs
-yarn docker:logs
+# Formatting
+pnpm run format
 ```
 
-### Prisma Issues
+## 🚨 **TROUBLESHOOTING**
+
+### **❌ Error: "Cannot find module '@ritmo/config'"**
+
 ```bash
-# Regenerate Prisma client
-yarn db:generate
-
-# Reset database
-yarn db:reset
-
-# Check Prisma Studio
-yarn db:studio
+cd packages/config && pnpm run build
+cd ../.. && pnpm install -w
 ```
 
-### Port Conflicts
-If port 3000 or 5432 is in use:
+### **❌ Error: "Database connection failed"**
+
 ```bash
-# Kill processes on ports
-sudo lsof -ti:3000 | xargs kill -9
-sudo lsof -ti:5432 | xargs kill -9
+pnpm run validate-db
+docker-compose up -d postgres
 ```
 
-## 📞 Support
+### **❌ Error: "JWT invalid signature"**
 
-For issues and questions:
-- Create an issue on GitHub
-- Check the troubleshooting section
-- Review the Prisma documentation
+```bash
+pnpm run validate-env
+pnpm run seed:reset
+```
+
+### **❌ Error: "Port already in use"**
+
+```bash
+# Check ports in use
+lsof -i :3000
+lsof -i :3001
+lsof -i :5433
+lsof -i :6379
+```
+
+## 📚 **USEFUL COMMANDS**
+
+### **🔍 Diagnostics**
+
+```bash
+# System status
+pnpm run validate:all
+docker-compose ps
+
+# Service logs
+docker-compose logs postgres
+docker-compose logs redis
+docker-compose logs api
+```
+
+### **🗄️ Database**
+
+```bash
+# Prisma Studio
+pnpm run db:studio
+
+# Complete reset
+pnpm run db:reset
+
+# Schema push
+pnpm run db:push
+```
+
+### **🧹 Cleanup**
+
+```bash
+# Clean node_modules
+pnpm run clean
+
+# Clean Docker
+docker-compose down -v
+docker system prune -f
+```
+
+## 🎯 **TECHNICAL FEATURES**
+
+- ✅ **Monorepo architecture** with unified configuration
+- ✅ **TypeScript** throughout the stack
+- ✅ **Prisma ORM** with PostgreSQL
+- ✅ **Redis** for sessions and caching
+- ✅ **JWT authentication** with refresh tokens
+- ✅ **Device fingerprinting** with HMAC
+- ✅ **Complete audit logging** system
+- ✅ **Rate limiting** and security protection
+- ✅ **Docker containerization** for all services
+- ✅ **Unified seeding** and database management
+
+## 🤝 **CONTRIBUTION**
+
+1. **Fork and clone** the repository
+2. **Configure environment** with `pnpm run setup-env`
+3. **Validate system** with `pnpm run validate:all`
+4. **Create branch** for your feature
+5. **Develop and test** changes
+6. **Commit and push** with descriptive messages
+7. **Create Pull Request** with clear description
+
+## 📄 **LICENSE**
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## 🆘 **SUPPORT**
+
+- **Documentation**: This README
+- **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
+
+---
+
+## 🎉 **READY TO USE!**
+
+Ritmo is configured with **unified configuration** and **centralized seed system**. Run `pnpm run seed` to start with sample data.
+
+**🚀 Start your development journey!**
