@@ -2,20 +2,20 @@
 
 /**
  * 🔧 BUILD SCHEMA SCRIPT
- * 
+ *
  * This script combines all Prisma schema modules into a single schema.prisma file
  * for compilation and validation
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-const SCHEMA_DIR = path.join(__dirname, '../prisma');
-const OUTPUT_FILE = path.join(SCHEMA_DIR, 'schema.prisma');
+const SCHEMA_DIR = path.join(__dirname, '../prisma')
+const OUTPUT_FILE = path.join(SCHEMA_DIR, 'schema.prisma')
 
 // Schema modules in order of dependency
 const SCHEMA_MODULES = [
@@ -24,8 +24,9 @@ const SCHEMA_MODULES = [
   'models/user.prisma',
   'models/session.prisma',
   'models/security.prisma',
-  'models/business.prisma'
-];
+  'models/business.prisma',
+  'models/circadian.prisma',
+]
 
 // Header template
 const HEADER = `// =====================================================
@@ -51,59 +52,53 @@ datasource db {
 // COMBINED SCHEMA FROM MODULES
 // =====================================================
 
-`;
+`
 
 // Footer template
 const FOOTER = `
 // =====================================================
 // END OF AUTO-GENERATED SCHEMA
 // =====================================================
-`;
+`
 
 function buildSchema() {
-  console.log('🔧 Building Prisma schema from modules...');
-  
-  let combinedSchema = HEADER;
-  
+  // Building Prisma schema from modules
+
+  let combinedSchema = HEADER
+
   // Read and combine each module
   for (const modulePath of SCHEMA_MODULES) {
-    const fullPath = path.join(SCHEMA_DIR, modulePath);
-    
+    const fullPath = path.join(SCHEMA_DIR, modulePath)
+
     if (fs.existsSync(fullPath)) {
-      console.log(`  📁 Reading ${modulePath}...`);
-      const content = fs.readFileSync(fullPath, 'utf8');
-      
+      // Reading module
+      const content = fs.readFileSync(fullPath, 'utf8')
+
       // Add module separator
-      combinedSchema += `\n// =====================================================\n`;
-      combinedSchema += `// MODULE: ${modulePath}\n`;
-      combinedSchema += `// =====================================================\n\n`;
-      combinedSchema += content;
-      combinedSchema += '\n';
+      combinedSchema += `\n// =====================================================\n`
+      combinedSchema += `// MODULE: ${modulePath}\n`
+      combinedSchema += `// =====================================================\n\n`
+      combinedSchema += content
+      combinedSchema += '\n'
     } else {
-      console.warn(`  ⚠️  Warning: Module ${modulePath} not found`);
+      // Warning: Module not found
     }
   }
-  
-  combinedSchema += FOOTER;
-  
+
+  combinedSchema += FOOTER
+
   // Write combined schema
-  fs.writeFileSync(OUTPUT_FILE, combinedSchema, 'utf8');
-  
-  console.log(`✅ Schema built successfully: ${OUTPUT_FILE}`);
-  console.log(`📊 Total modules combined: ${SCHEMA_MODULES.length}`);
-  
-  return combinedSchema;
+  fs.writeFileSync(OUTPUT_FILE, combinedSchema, 'utf8')
+
+  // Schema built successfully
+  // Total modules combined
+
+  return combinedSchema
 }
 
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  try {
-    buildSchema();
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Error building schema:', error);
-    process.exit(1);
-  }
+  buildSchema()
 }
 
-export { buildSchema };
+export { buildSchema }

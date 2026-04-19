@@ -17,6 +17,10 @@ logs
 .DS_Store
 .fleet
 .idea
+Thumbs.db
+*.swp
+*.swo
+*~
 
 # Local env files
 .env
@@ -24,4 +28,41 @@ logs
 !.env.example
 .env.local
 
+# Turbo cache
+.turbo
+
+# Coverage reports
+coverage
+*.lcov
+
+# Storybook build
+storybook-static
+
+# TypeScript build info
+*.tsbuildinfo
+.tscache
+
+# Generated files
 /generated/prisma
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
