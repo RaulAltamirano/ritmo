@@ -1,44 +1,49 @@
 // ========== GENERATOR & DATASOURCE ==========
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["views", "fullTextSearch", "postgresqlExtensions", "relationJoins"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
   extensions = [pg_trgm, unaccent, pg_partman, timescaledb]
 }
 
-// ========== MODELO USUARIO OPTIMIZADO ==========
+// ========== USER ==========
 model User {
-  id                String     @id @default(uuid())
-  email             String     @unique
-  name              String?
-  avatar            String?
-  timezone          String     @default("UTC")
-  lastActiveAt      DateTime?
-  totalTasksCount   Int        @default(0)
+  id                  String   @id @default(uuid())
+  email               String   @unique
+  password            String
+  name                String?
+  avatar              String?
+  timezone            String   @default("UTC")
+  emailVerified       Boolean  @default(false)
+  lastActiveAt        DateTime?
+  totalTasksCount     Int      @default(0)
   completedTasksCount Int      @default(0)
-  currentStreakDays Int        @default(0)
-  preferences          UserPreferences?
-  tasks                UserTaskAssignment[]
-  taskSessions         TaskSession[]
-  recommendations      Recommendation[]
-  dailyJournals        DailyJournal[]
-  quickNotes           QuickNote[]
-  studyPlans           StudyPlan[]
-  workContext          WorkContext?
-  userStats            UserStats?
-  achievements         Achievement[]
-  notifications        Notification[]
-  dailyStats           UserDailyStats[]
+  currentStreakDays   Int      @default(0)
+
+  preferences   UserPreferences?
+  tasks         UserTaskAssignment[]
+  taskSessions  TaskSession[]
+  recommendations Recommendation[]
+  dailyJournals DailyJournal[]
+  notes         Note[]
+  studyPlans    StudyPlan[]
+  workContext   WorkContext?
+  userStats     UserStats?
+  achievements  Achievement[]
+  notifications Notification[]
+  dailyStats    UserDailyStats[]
+
   deletedAt DateTime?
   isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String?
   updatedBy String?
+
   @@index([email])
   @@index([isDeleted, createdAt])
   @@index([lastActiveAt])
@@ -47,22 +52,23 @@ model User {
 }
 
 model UserPreferences {
-  id                    String @id @default(uuid())
-  userId                String @unique
-  defaultTimeTechnique  TimeTechnique @default(pomodoro)
-  workingHoursStart     Int    @default(9)
-  workingHoursEnd       Int    @default(17)
-  pomodoroLength        Int    @default(25)
-  shortBreakLength      Int    @default(5)
-  longBreakLength       Int    @default(15)
-  notificationsEnabled  Boolean @default(true)
-  theme                 String  @default("light")
-  language              String  @default("en")
+  id                          String        @id @default(uuid())
+  userId                      String        @unique
+  defaultTimeTechnique        TimeTechnique @default(pomodoro)
+  workingHoursStart           Int           @default(9)
+  workingHoursEnd             Int           @default(17)
+  pomodoroLength              Int           @default(25)
+  shortBreakLength            Int           @default(5)
+  longBreakLength             Int           @default(15)
+  notificationsEnabled        Boolean       @default(true)
+  theme                       String        @default("light")
+  language                    String        @default("en")
   metricsCalculationFrequency MetricFrequency @default(daily)
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// ========== MODELOS CORE OPTIMIZADOS ==========
+// ========== CATEGORIES & TOPICS ==========
 model Category {
   id          String  @id @default(uuid())
   name        String  @unique
@@ -73,15 +79,18 @@ model Category {
   taskCount   Int     @default(0)
   path        String?
   level       Int     @default(0)
-  parent   Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children Category[] @relation("CategoryHierarchy")
   topics   Topic[]
+
   deletedAt DateTime?
   isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String?
   updatedBy String?
+
   @@index([parentId])
   @@index([isDeleted, name])
   @@index([path])
@@ -90,64 +99,71 @@ model Category {
 }
 
 model Topic {
-  id          String      @id @default(uuid())
-  name        String
-  description String?
-  category    Category    @relation(fields: [categoryId], references: [id])
-  categoryId  String
-  difficulty  Difficulty  @default(medium)
-  taskCount   Int         @default(0)
+  id               String     @id @default(uuid())
+  name             String
+  description      String?
+  categoryId       String
+  difficulty       Difficulty @default(medium)
+  taskCount        Int        @default(0)
   avgCompletionTime Int?
-  tasks        Task[]
-  studyPlans   StudyPlanTopic[]
-  topicNotes   TopicNote[]
+
+  category   Category         @relation(fields: [categoryId], references: [id])
+  tasks      Task[]
+  studyPlans StudyPlanTopic[]
+  notes      Note[]
+
   deletedAt DateTime?
   isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String?
   updatedBy String?
+
+  @@unique([name, categoryId])
   @@index([categoryId, isDeleted])
   @@index([difficulty])
   @@index([taskCount, avgCompletionTime])
-  @@unique([name, categoryId])
   @@index([isDeleted])
 }
 
+// ========== TASKS ==========
 model Task {
-  id                String     @id @default(uuid())
-  name              String
-  description       String?
-  topic             Topic      @relation(fields: [topicId], references: [id])
-  topicId           String
-  estimatedMinutes  Int?
-  timeTechnique     TimeTechnique
-  type              TaskType
-  priority          Priority   @default(medium)
-  status            TaskStatus @default(todo)
-  plannedDate       DateTime?
-  completedAt       DateTime?
-  dueDate           DateTime?
-  isSuggested       Boolean    @default(false)
-  tags              String[]
-  assigneeCount     Int        @default(0)
-  sessionCount      Int        @default(0)
-  totalMinutesSpent Int        @default(0)
-  searchVector      Unsupported("tsvector")?
-  sessions           TaskSession[]
-  recommendations    Recommendation[]
-  taskNotes          TaskNote[]
-  quizzes            Quiz[]
+  id               String        @id @default(uuid())
+  name             String
+  description      String?
+  topicId          String
+  estimatedMinutes Int?
+  timeTechnique    TimeTechnique
+  type             TaskType
+  priority         Priority      @default(medium)
+  status           TaskStatus    @default(todo)
+  plannedDate      DateTime?
+  completedAt      DateTime?
+  dueDate          DateTime?
+  isSuggested      Boolean       @default(false)
+  tags             String[]
+  assigneeCount    Int           @default(0)
+  sessionCount     Int           @default(0)
+  totalMinutesSpent Int          @default(0)
+  searchVector     Unsupported("tsvector")?
+
+  topic             Topic                  @relation(fields: [topicId], references: [id])
+  sessions          TaskSession[]
+  recommendations   Recommendation[]
+  notes             Note[]
+  quizzes           Quiz[]
   learningTechniques TaskLearningTechnique[]
-  assignedUsers      UserTaskAssignment[]
-  dependencies       TaskDependency[] @relation("DependentTask")
-  dependents         TaskDependency[] @relation("PrerequisiteTask")
+  assignedUsers     UserTaskAssignment[]
+  dependencies      TaskDependency[]       @relation("DependentTask")
+  dependents        TaskDependency[]       @relation("PrerequisiteTask")
+
   deletedAt DateTime?
   isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String?
   updatedBy String?
+
   @@index([topicId, isDeleted])
   @@index([priority, status])
   @@index([status, plannedDate], where: { isDeleted: false })
@@ -162,39 +178,44 @@ model Task {
 
 model TaskDependency {
   id             String @id @default(uuid())
-  prerequisiteTask Task  @relation("PrerequisiteTask", fields: [prerequisiteId], references: [id])
   prerequisiteId String
-  dependentTask  Task   @relation("DependentTask", fields: [dependentId], references: [id])
   dependentId    String
   dependencyType DependencyType @default(finish_to_start)
+
+  prerequisiteTask Task @relation("PrerequisiteTask", fields: [prerequisiteId], references: [id])
+  dependentTask    Task @relation("DependentTask", fields: [dependentId], references: [id])
+
   @@unique([prerequisiteId, dependentId])
   @@index([prerequisiteId])
   @@index([dependentId])
 }
 
-// ========== MODELO DE SESIONES PARTICIONADO ==========
+// ========== TASK SESSIONS (partitioned) ==========
 model TaskSession {
-  id                String     @id @default(uuid())
-  task              Task       @relation(fields: [taskId], references: [id])
+  id                String            @id @default(uuid())
   taskId            String
-  user              User       @relation(fields: [userId], references: [id])
   userId            String
   startTime         DateTime
   endTime           DateTime?
   plannedMinutes    Int?
   notes             String?
   interruptionLevel InterruptionLevel @default(none)
-  productivityScore Int?       @db.SmallInt
+  productivityScore Int?              @db.SmallInt
   mood              Mood?
   energy            EnergyLevel?
-  isBreak           Boolean @default(false)
+  isBreak           Boolean           @default(false)
   breakType         BreakType?
   durationMinutes   Int?
+  partitionKey      DateTime          @default(now())
+
+  task Task @relation(fields: [taskId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String?
   updatedBy String?
-  partitionKey DateTime @default(now())
+
   @@index([taskId, startTime])
   @@index([userId, startTime])
   @@index([userId, endTime])
@@ -204,50 +225,56 @@ model TaskSession {
   @@map("task_sessions")
 }
 
-// ========== NUEVO: CACHE DE MÉTRICAS DIARIAS ==========
+// ========== DAILY STATS CACHE ==========
 model UserDailyStats {
-  id                String   @id @default(uuid())
+  id                String         @id @default(uuid())
   userId            String
-  date              DateTime @db.Date
-  tasksPlanned      Int      @default(0)
-  tasksCompleted    Int      @default(0)
-  tasksInProgress   Int      @default(0)
-  minutesWorked     Int      @default(0)
-  sessionsCount     Int      @default(0)
-  avgProductivity   Float?   @db.Real
+  date              DateTime       @db.Date
+  tasksPlanned      Int            @default(0)
+  tasksCompleted    Int            @default(0)
+  tasksInProgress   Int            @default(0)
+  minutesWorked     Int            @default(0)
+  sessionsCount     Int            @default(0)
+  avgProductivity   Float?         @db.Real
   mostUsedTechnique TimeTechnique?
-  avgMood           Float?   @db.Real
-  avgEnergy         Float?   @db.Real
+  avgMood           Float?         @db.Real
+  avgEnergy         Float?         @db.Real
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String?
   updatedBy String?
+
   @@unique([userId, date])
   @@index([date])
   @@index([userId, date(sort: Desc)])
   @@index([tasksCompleted, minutesWorked])
 }
 
-// ========== SISTEMA DE NOTAS OPTIMIZADO ==========
+// ========== NOTES ==========
 model Note {
-  id          String @id @default(uuid())
-  content     String
-  type        NoteType
-  tags        String[]
-  isPinned    Boolean @default(false)
-  userId      String?
-  taskId      String?
-  topicId     String?
-  user        User?  @relation(fields: [userId], references: [id])
-  task        Task?  @relation(fields: [taskId], references: [id])
-  topic       Topic? @relation(fields: [topicId], references: [id])
+  id       String   @id @default(uuid())
+  content  String
+  type     NoteType
+  tags     String[]
+  isPinned Boolean  @default(false)
+  userId   String?
+  taskId   String?
+  topicId  String?
+
+  user  User?  @relation(fields: [userId], references: [id])
+  task  Task?  @relation(fields: [taskId], references: [id])
+  topic Topic? @relation(fields: [topicId], references: [id])
+
   deletedAt DateTime?
   isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String?
   updatedBy String?
+
   @@index([userId, type, createdAt])
   @@index([taskId, type])
   @@index([topicId, type])
@@ -256,210 +283,278 @@ model Note {
   @@index([isDeleted])
 }
 
-// ========== SISTEMA DE RECOMENDACIONES OPTIMIZADO ==========
+// ========== RECOMMENDATIONS ==========
 model RecommendationRule {
-  id          String @id @default(uuid())
-  name        String
-  type        RecommendationType
-  conditions  Json   // Condiciones dinámicas
-  actions     Json   // Acciones a ejecutar
-  priority    Int    @default(1)
-  isActive    Boolean @default(true)
+  id         String             @id @default(uuid())
+  name       String
+  type       RecommendationType
+  conditions Json
+  actions    Json
+  priority   Int                @default(1)
+  isActive   Boolean            @default(true)
+
   @@index([type, priority])
   @@index([isActive])
 }
 
-model Recommendation extends Auditable {
-  id          String   @id @default(uuid())
-  user        User     @relation(fields: [userId], references: [id])
+model Recommendation {
+  id          String             @id @default(uuid())
   userId      String
-  task        Task     @relation(fields: [taskId], references: [id])
   taskId      String
-  ruleId      String?  // Referencia a la regla que generó la recomendación
+  ruleId      String?
   type        RecommendationType
   title       String
   description String
-  confidence  Float    @db.Real
+  confidence  Float              @db.Real
   isAccepted  Boolean?
   acceptedAt  DateTime?
   expiresAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+  task Task @relation(fields: [taskId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([userId, createdAt])
   @@index([taskId])
   @@index([type, confidence])
-  @@index([expiresAt]) // Para limpieza automática
+  @@index([expiresAt])
 }
 
-// ========== QUIZZES OPTIMIZADOS ==========
-model Quiz extends SoftDeletable, Auditable {
-  id          String   @id @default(uuid())
-  task        Task     @relation(fields: [taskId], references: [id])
-  taskId      String
-  title       String
-  description String?
-  generatedBy String
+// ========== QUIZZES ==========
+model Quiz {
+  id            String  @id @default(uuid())
+  taskId        String
+  title         String
+  description   String?
+  generatedBy   String
   questionCount Int     @default(0)
   attemptCount  Int     @default(0)
   avgScore      Float?  @db.Real
-  questions   QuizQuestion[]
-  attempts    QuizAttempt[]
+
+  task      Task           @relation(fields: [taskId], references: [id])
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+
+  deletedAt DateTime?
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([taskId])
-  @@index([avgScore, attemptCount]) // Para estadísticas
+  @@index([avgScore, attemptCount])
 }
 
 model QuizQuestion {
-  id            String @id @default(uuid())
-  quiz          Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  quizId        String
-  question      String
-  type          QuestionType
-  correctAnswer String
-  options       String[]
-  explanation   String?
-  order         Int
-  correctAnswers Int @default(0)
-  totalAnswers   Int @default(0)
+  id             String       @id @default(uuid())
+  quizId         String
+  question       String
+  type           QuestionType
+  correctAnswer  String
+  options        String[]
+  explanation    String?
+  order          Int
+  correctAnswers Int          @default(0)
+  totalAnswers   Int          @default(0)
+
+  quiz    Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
   answers QuizAnswer[]
+
   @@index([quizId, order])
-  @@index([correctAnswers, totalAnswers]) // Para análisis de dificultad
+  @@index([correctAnswers, totalAnswers])
 }
 
-model QuizAttempt extends Auditable {
-  id        String @id @default(uuid())
-  quiz      Quiz   @relation(fields: [quizId], references: [id])
-  quizId    String
-  userId    String
-  score     Float  @db.Real
-  maxScore  Float  @db.Real
-  duration  Int?
-  answers   QuizAnswer[]
+model QuizAttempt {
+  id       String @id @default(uuid())
+  quizId   String
+  userId   String
+  score    Float  @db.Real
+  maxScore Float  @db.Real
+  duration Int?
+
+  quiz    Quiz         @relation(fields: [quizId], references: [id])
+  answers QuizAnswer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([quizId, userId])
   @@index([userId, createdAt])
-  @@index([score, duration]) // Para análisis de rendimiento
+  @@index([score, duration])
 }
 
 model QuizAnswer {
-  id          String @id @default(uuid())
-  attempt     QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  attemptId   String
-  question    QuizQuestion @relation(fields: [questionId], references: [id])
-  questionId  String
-  answer      String
-  isCorrect   Boolean
-  timeSpent   Int?
+  id         String  @id @default(uuid())
+  attemptId  String
+  questionId String
+  answer     String
+  isCorrect  Boolean
+  timeSpent  Int?
+
+  attempt  QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question QuizQuestion @relation(fields: [questionId], references: [id])
+
   @@unique([attemptId, questionId])
-  @@index([isCorrect, timeSpent]) // Para análisis
+  @@index([isCorrect, timeSpent])
 }
 
-// ========== ASIGNACIONES SIMPLIFICADAS ==========
-model UserTaskAssignment extends Auditable {
-  id          String     @id @default(uuid())
-  task        Task       @relation(fields: [taskId], references: [id])
-  taskId      String
-  user        User       @relation(fields: [userId], references: [id])
-  userId      String
-  assignedBy  String?
-  role        AssignmentRole @default(assignee)
-  progress    Int        @default(0) @db.SmallInt
-  completedAt DateTime?
-  estimatedHours Float?   @db.Real
+// ========== ASSIGNMENTS ==========
+model UserTaskAssignment {
+  id             String         @id @default(uuid())
+  taskId         String
+  userId         String
+  assignedBy     String?
+  role           AssignmentRole @default(assignee)
+  progress       Int            @default(0) @db.SmallInt
+  completedAt    DateTime?
+  estimatedHours Float?         @db.Real
+
+  task Task @relation(fields: [taskId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@unique([taskId, userId])
   @@index([userId, completedAt])
   @@index([taskId, role])
-  @@index([progress, completedAt]) // Para métricas
+  @@index([progress, completedAt])
 }
 
 model TaskLearningTechnique {
-  id          String @id @default(uuid())
-  task        Task   @relation(fields: [taskId], references: [id])
-  taskId      String
-  technique   LearningTechnique
-  effectiveness Float? @db.Real
+  id            String            @id @default(uuid())
+  taskId        String
+  technique     LearningTechnique
+  effectiveness Float?            @db.Real
+
+  task Task @relation(fields: [taskId], references: [id])
+
   @@unique([taskId, technique])
   @@index([technique, effectiveness])
 }
 
-// ========== PLANES DE ESTUDIO OPTIMIZADOS ==========
-model StudyPlan extends SoftDeletable, Auditable {
-  id          String   @id @default(uuid())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String
-  name        String
-  description String?
-  startDate   DateTime
-  endDate     DateTime
-  goal        String
-  status      StudyPlanStatus @default(draft)
-  totalTopics     Int   @default(0)
-  completedTopics Int   @default(0)
-  totalHours      Float @default(0) @db.Real
-  completedHours  Float @default(0) @db.Real
+// ========== STUDY PLANS ==========
+model StudyPlan {
+  id              String          @id @default(uuid())
+  userId          String
+  name            String
+  description     String?
+  startDate       DateTime
+  endDate         DateTime
+  goal            String
+  status          StudyPlanStatus @default(draft)
+  totalTopics     Int             @default(0)
+  completedTopics Int             @default(0)
+  totalHours      Float           @default(0) @db.Real
+  completedHours  Float           @default(0) @db.Real
+
+  user        User                 @relation(fields: [userId], references: [id])
   focusTopics StudyPlanTopic[]
   milestones  StudyPlanMilestone[]
+
+  deletedAt DateTime?
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([userId, status])
   @@index([startDate, endDate])
-  @@index([totalTopics, completedTopics]) // Para progreso
+  @@index([totalTopics, completedTopics])
 }
 
 model StudyPlanTopic {
-  id          String    @id @default(uuid())
-  studyPlan   StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
-  studyPlanId String
-  topic       Topic     @relation(fields: [topicId], references: [id])
-  topicId     String
-  priority    Int       @default(1)
-  estimatedHours Float  @db.Real
-  actualHours    Float? @db.Real
+  id             String    @id @default(uuid())
+  studyPlanId    String
+  topicId        String
+  priority       Int       @default(1)
+  estimatedHours Float     @db.Real
+  actualHours    Float?    @db.Real
+
+  studyPlan StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+  topic     Topic     @relation(fields: [topicId], references: [id])
+
   @@unique([studyPlanId, topicId])
   @@index([studyPlanId, priority])
-  @@index([estimatedHours, actualHours]) // Para análisis
+  @@index([estimatedHours, actualHours])
 }
 
-model StudyPlanMilestone extends Auditable {
-  id            String    @id @default(uuid())
-  studyPlan     StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
-  studyPlanId   String
-  title         String
-  description   String?
-  targetDate    DateTime
-  completedAt   DateTime?
-  isCompleted   Boolean   @default(false)
+model StudyPlanMilestone {
+  id          String    @id @default(uuid())
+  studyPlanId String
+  title       String
+  description String?
+  targetDate  DateTime
+  completedAt DateTime?
+  isCompleted Boolean   @default(false)
+
+  studyPlan StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([studyPlanId, targetDate])
-  @@index([targetDate, isCompleted]) // Para deadlines
+  @@index([targetDate, isCompleted])
 }
 
-// ========== CONTEXTO DE TRABAJO OPTIMIZADO ==========
-model WorkContext extends Auditable {
-  id           String      @id @default(uuid())
-  user         User        @relation(fields: [userId], references: [id])
-  userId       String      @unique
+// ========== WORK CONTEXT ==========
+model WorkContext {
+  id           String             @id @default(uuid())
+  userId       String             @unique
   role         String
   currentFocus String?
-  energyLevel  EnergyLevel @default(medium)
-  environment  WorkEnvironment @default(office)
+  energyLevel  EnergyLevel        @default(medium)
+  environment  WorkEnvironment    @default(office)
   availability AvailabilityStatus @default(available)
   activeUntil  DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([availability])
   @@index([activeUntil])
 }
 
-// ========== MÉTRICAS BATCH OPTIMIZADAS ==========
-model MetricsBatch extends Auditable {
-  id            String      @id @default(uuid())
-  batchId       String      @unique
-  type          BatchType
-  status        BatchStatus @default(pending)
-  startTime     DateTime?
-  endTime       DateTime?
-  processedRecords Int      @default(0)
-  errorCount    Int         @default(0)
-  errorDetails  Json?
+// ========== METRICS ==========
+model MetricsBatch {
+  id               String      @id @default(uuid())
+  batchId          String      @unique
+  type             BatchType
+  status           BatchStatus @default(pending)
+  startTime        DateTime?
+  endTime          DateTime?
+  processedRecords Int         @default(0)
+  errorCount       Int         @default(0)
+  errorDetails     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([type, status])
   @@index([startTime, endTime])
   @@index([status, createdAt])
 }
 
 model MetricCache {
-  id          String @id @default(uuid())
+  id          String   @id @default(uuid())
   userId      String
   metricType  String
   period      String
@@ -468,34 +563,41 @@ model MetricCache {
   value       Json
   computedAt  DateTime @default(now())
   expiresAt   DateTime
+
   @@unique([userId, metricType, period, periodStart])
-  @@index([expiresAt]) // Para limpieza automática
+  @@index([expiresAt])
   @@index([userId, metricType, period])
 }
 
-// ========== ESTADÍSTICAS SIMPLIFICADAS ==========
-model UserStats extends Auditable {
-  id                      String   @id @default(uuid())
-  user                    User     @relation(fields: [userId], references: [id])
-  userId                  String   @unique
-  currentStreak           Int      @default(0)
-  longestStreak           Int      @default(0)
-  level                   Int      @default(1)
-  experience              Int      @default(0)
-  totalMinutesSpent       Int      @default(0)
-  totalTasksCompleted     Int      @default(0)
-  averageProductivity     Float    @db.Real @default(0)
-  lastCalculatedAt        DateTime @default(now())
+// ========== USER STATS ==========
+model UserStats {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  currentStreak       Int      @default(0)
+  longestStreak       Int      @default(0)
+  level               Int      @default(1)
+  experience          Int      @default(0)
+  totalMinutesSpent   Int      @default(0)
+  totalTasksCompleted Int      @default(0)
+  averageProductivity Float    @default(0) @db.Real
+  lastCalculatedAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([level, experience])
   @@index([totalTasksCompleted, totalMinutesSpent])
 }
 
-// ========== JOURNAL OPTIMIZADO ==========
-model DailyJournal extends Auditable {
-  id         String   @id @default(uuid())
-  user       User     @relation(fields: [userId], references: [id])
+// ========== JOURNAL ==========
+model DailyJournal {
+  id         String      @id @default(uuid())
   userId     String
-  date       DateTime @db.Date
+  date       DateTime    @db.Date
   highlights String?
   challenges String?
   mood       Mood
@@ -503,68 +605,93 @@ model DailyJournal extends Auditable {
   nextSteps  String?
   gratitude  String?
   learnings  String?
-  rating     Int?     @db.SmallInt
+  rating     Int?        @db.SmallInt
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@unique([userId, date])
   @@index([userId, date(sort: Desc)])
-  @@index([mood, energy, rating]) // Para análisis de bienestar
+  @@index([mood, energy, rating])
 }
 
-// ========== GAMIFICACIÓN OPTIMIZADA ==========
-model Achievement extends Auditable {
-  id          String @id @default(uuid())
-  user        User   @relation(fields: [userId], references: [id])
+// ========== GAMIFICATION ==========
+model Achievement {
+  id          String            @id @default(uuid())
   userId      String
   type        AchievementType
   title       String
   description String
   points      Int
   rarity      AchievementRarity @default(common)
-  metadata    Json? // Datos específicos del logro
+  metadata    Json?
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([userId, type])
   @@index([type, rarity])
-  @@index([points, rarity]) // Para rankings
+  @@index([points, rarity])
 }
 
-// ========== NOTIFICACIONES PARTICIONADAS ==========
-model Notification extends Auditable, TimePartitioned {
-  id        String @id @default(uuid())
-  user      User   @relation(fields: [userId], references: [id])
-  userId    String
-  type      NotificationType
-  title     String
-  message   String
-  isRead    Boolean @default(false)
-  readAt    DateTime?
-  priority  NotificationPriority @default(normal)
-  metadata  Json?
-  expiresAt DateTime?
+// ========== NOTIFICATIONS (partitioned) ==========
+model Notification {
+  id           String               @id @default(uuid())
+  userId       String
+  type         NotificationType
+  title        String
+  message      String
+  isRead       Boolean              @default(false)
+  readAt       DateTime?
+  priority     NotificationPriority @default(normal)
+  metadata     Json?
+  expiresAt    DateTime?
+  partitionKey DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
   @@index([userId, isRead, createdAt])
   @@index([type, priority])
-  @@index([expiresAt]) // Para limpieza automática
-  @@index([partitionKey, userId]) // Para particionado
+  @@index([expiresAt])
+  @@index([partitionKey, userId])
   @@map("notifications")
 }
 
-// ========== AUDITORÍA PARTICIONADA ==========
-model AuditEvent extends TimePartitioned {
-  id         String   @id @default(uuid())
-  entityType String
-  entityId   String
-  action     AuditAction
-  userId     String?
-  changes    Json
-  metadata   Json?
-  timestamp  DateTime @default(now())
-  ipAddress  String?
-  userAgent  String?
+// ========== AUDIT LOG (partitioned) ==========
+model AuditEvent {
+  id           String      @id @default(uuid())
+  entityType   String
+  entityId     String
+  action       AuditAction
+  userId       String?
+  changes      Json
+  metadata     Json?
+  timestamp    DateTime    @default(now())
+  ipAddress    String?
+  userAgent    String?
+  partitionKey DateTime    @default(now())
+
   @@index([entityType, entityId])
   @@index([userId, timestamp])
   @@index([action, timestamp])
-  @@index([partitionKey, entityType]) // Para particionado
+  @@index([partitionKey, entityType])
   @@map("audit_events")
 }
 
-// ========== ENUMS ACTUALIZADOS ==========
+// ========== ENUMS ==========
 enum TimeTechnique {
   pomodoro
   deep_work
@@ -780,7 +907,6 @@ enum AuditAction {
   LOGOUT
 }
 
-// ========== NUEVOS ENUMS ==========
 enum MetricFrequency {
   realtime
   hourly
