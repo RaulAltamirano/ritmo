@@ -1,0 +1,21 @@
+/* Transiciones minimalistas para Dark Mode - Ritmo 2025 */
+/* Enfoque profesional y simple */
+
+/* Variables CSS para transiciones */
+:root {
+  --theme-transition: 0.3s ease;
+}
+
+/* Transiciones base minimalistas */
+* {
+  transition:
+    background-color var(--theme-transition),
+    color var(--theme-transition);
+}
+
+/* Respetar preferencias de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

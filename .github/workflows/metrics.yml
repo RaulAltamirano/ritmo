@@ -1,0 +1,51 @@
+# .github/workflows/metrics.yml
+name: Metrics & Monitoring
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Weekly on Monday
+  workflow_dispatch:
+
+jobs:
+  metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '9'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate bundle analysis
+        run: |
+          pnpm build
+          echo "📊 Bundle Analysis Complete"
+
+      - name: Generate dependency report
+        run: |
+          pnpm audit --audit-level moderate --json > security-report.json || true
+          echo "🔒 Security Report Generated"
+
+      - name: Generate test coverage report
+        run: |
+          pnpm test:coverage
+          echo "🧪 Coverage Report Generated"
+
+      - name: Upload metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-${{ github.run_number }}
+          path: |
+            coverage/
+            security-report.json
+          retention-days: 30

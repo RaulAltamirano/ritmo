@@ -1,0 +1,146 @@
+// =====================================================
+// CORE BUSINESS MODELS
+// =====================================================
+
+model Activity {
+  id                String         @id @default(cuid())
+  userId            String
+  title             String         @db.VarChar(255)
+  description       String?
+  type              ActivityType
+  status            ActivityStatus @default(active)
+  
+  // Time Management
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int?     // in minutes
+  estimatedDuration Int?     // in minutes
+  
+  // Classification
+  priority          Priority @default(medium)
+  tags              String[]
+  categoryId        String?
+  
+  // Metadata
+  isDeleted         Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  deletedAt         DateTime?
+  
+  // Relations
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category          Category?      @relation(fields: [categoryId], references: [id])
+  tasks             Task[]
+  sessions          WorkSession[]
+  
+  // Indexes
+  @@index([userId, status])
+  @@index([userId, startTime])
+  @@index([categoryId])
+  @@index([type, status])
+  @@map("activities")
+}
+
+model Task {
+  id                String        @id @default(cuid())
+  userId            String
+  activityId        String?
+  title             String        @db.VarChar(255)
+  description       String?
+  status            TaskStatus    @default(todo)
+  priority          Priority      @default(medium)
+  
+  // Time Management
+  estimatedDuration Int?     // in minutes
+  actualDuration    Int?     // in minutes
+  dueDate           DateTime?
+  completedAt       DateTime?
+  
+  // Classification
+  tags              String[]
+  categoryId        String?
+  
+  // Metadata
+  isDeleted         Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+  
+  // Relations
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity          Activity?     @relation(fields: [activityId], references: [id])
+  category          Category?     @relation(fields: [categoryId], references: [id])
+  sessions          WorkSession[]
+  
+  // Indexes
+  @@index([userId, status])
+  @@index([userId, dueDate])
+  @@index([activityId])
+  @@index([categoryId])
+  @@map("tasks")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  userId      String
+  name        String     @db.VarChar(100)
+  description String?
+  color       String?    @db.VarChar(7) // Hex color
+  icon        String?    @db.VarChar(50)
+  parentId    String?
+  
+  // Metadata
+  isDeleted   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+  
+  // Relations
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  activities  Activity[]
+  tasks       Task[]
+  
+  // Indexes
+  @@index([userId, parentId])
+  @@index([userId, isDeleted])
+  @@map("categories")
+}
+
+model WorkSession {
+  id                String    @id @default(cuid())
+  userId            String
+  activityId        String?
+  taskId            String?
+  circadianPhaseId  String?  // Relación con la fase circadiana activa
+  
+  // Time Tracking
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int?     // in minutes
+  
+  // Metrics
+  focusScore        Int?     // 1-10
+  productivityScore Int?     // 1-10
+  notes             String?
+  
+  // Metadata
+  isDeleted         Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+  
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity          Activity? @relation(fields: [activityId], references: [id])
+  task              Task?     @relation(fields: [taskId], references: [id])
+  circadianPhase    CircadianPhase? @relation(fields: [circadianPhaseId], references: [id])
+  
+  // Indexes
+  @@index([userId, startTime])
+  @@index([activityId])
+  @@index([taskId])
+  @@index([circadianPhaseId])
+  @@map("work_sessions")
+}

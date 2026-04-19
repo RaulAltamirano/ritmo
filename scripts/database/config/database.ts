@@ -1,0 +1,190 @@
+import { PrismaClient } from '@prisma/client'
+
+export const prisma = new PrismaClient()
+
+export const DEMO_USER_DATA = {
+  email: process.env.DEMO_USER_EMAIL || 'demo@ritmo.app',
+  username: process.env.DEMO_USER_USERNAME || 'demo',
+  firstName: process.env.DEMO_USER_FIRST_NAME || 'Demo',
+  lastName: process.env.DEMO_USER_LAST_NAME || 'User',
+  displayName: `${process.env.DEMO_USER_FIRST_NAME || 'Demo'} ${process.env.DEMO_USER_LAST_NAME || 'User'}`,
+  avatar:
+    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+  bio: 'Productivity enthusiast and lifelong learner',
+  timezone: process.env.DEMO_USER_TIMEZONE || 'America/Mexico_City',
+  language: process.env.DEMO_USER_LANGUAGE || 'es',
+  password: process.env.DEMO_USER_PASSWORD || 'Demo123!',
+}
+
+export const DEMO_ACTIVITIES = [
+  {
+    title: 'Complete project documentation',
+    description: 'Write comprehensive documentation for the new feature',
+    type: 'work' as const,
+    duration: 120,
+    priority: 'high' as const,
+    tags: ['documentation', 'project'],
+    hoursFromNow: 2,
+  },
+  {
+    title: 'Study React patterns',
+    description: 'Review advanced React patterns and best practices',
+    type: 'learning' as const,
+    duration: 90,
+    priority: 'medium' as const,
+    tags: ['react', 'learning'],
+    hoursFromNow: 5,
+  },
+  {
+    title: 'Morning workout',
+    description: 'Cardio and strength training session',
+    type: 'health' as const,
+    duration: 45,
+    priority: 'high' as const,
+    tags: ['fitness', 'health'],
+    hoursFromNow: 24, // Tomorrow
+  },
+  {
+    title: 'Design new logo concepts',
+    description: 'Create initial logo concepts for the brand refresh',
+    type: 'creative' as const,
+    duration: 60,
+    priority: 'medium' as const,
+    tags: ['design', 'branding'],
+    hoursFromNow: 26, // Tomorrow + 2 hours
+  },
+  {
+    title: 'Team meeting',
+    description: 'Weekly team sync and project updates',
+    type: 'work' as const,
+    duration: 60,
+    priority: 'high' as const,
+    tags: ['meeting', 'team', 'sync'],
+    hoursFromNow: 48, // Day after tomorrow
+  },
+]
+
+export const USER_PREFERENCES = {
+  notificationSettings: {
+    email: true,
+    push: true,
+    reminders: true,
+  },
+  privacySettings: {
+    profileVisibility: 'private' as const,
+    activityVisibility: 'private' as const,
+  },
+  accessibilitySettings: {
+    theme: 'dark' as const,
+    fontSize: 'medium' as const,
+    highContrast: false,
+  },
+}
+
+export const CIRCADIAN_PHASES = [
+  {
+    id: 'dawn',
+    type: 'slow_activation' as const,
+    category: 'activation' as const,
+    priority: 'high' as const,
+    startHour: 5,
+    endHour: 7,
+    duration: 120, // 2 hours in minutes
+    name: 'Dawn',
+    keyword: 'awakening',
+    description: 'Natural awakening and preparation phase',
+    idealFor: 'Morning meditation, light exercise, day planning, hydration',
+    color: '#FFE4B5',
+    icon: 'sunrise',
+    emoji: '🌅',
+    isPremium: false,
+    isIntuitive: true,
+    scientificReferences: ['Circadian rhythm research', 'Sleep-wake cycle studies'],
+    evidenceLevel: 'high',
+    sortOrder: 1,
+  },
+  {
+    id: 'morning',
+    type: 'morning_focus_peak' as const,
+    category: 'performance' as const,
+    priority: 'high' as const,
+    startHour: 7,
+    endHour: 12,
+    duration: 300, // 5 hours in minutes
+    name: 'Morning',
+    keyword: 'peak',
+    description: 'High energy and concentration phase',
+    idealFor: 'Complex tasks, important meetings, creative work, critical decisions',
+    color: '#FFD700',
+    icon: 'sun',
+    emoji: '☀️',
+    isPremium: false,
+    isIntuitive: true,
+    scientificReferences: ['Cortisol peak studies', 'Cognitive performance research'],
+    evidenceLevel: 'high',
+    sortOrder: 2,
+  },
+  {
+    id: 'afternoon',
+    type: 'cognitive_peak' as const,
+    category: 'performance' as const,
+    priority: 'medium' as const,
+    startHour: 12,
+    endHour: 17,
+    duration: 300, // 5 hours in minutes
+    name: 'Afternoon',
+    keyword: 'moderate',
+    description: 'Moderate energy and collaboration phase',
+    idealFor: 'Team meetings, administrative tasks, communication, work review',
+    color: '#FFA500',
+    icon: 'cloud-sun',
+    emoji: '🌤️',
+    isPremium: false,
+    isIntuitive: true,
+    scientificReferences: ['Post-lunch dip studies', 'Collaboration research'],
+    evidenceLevel: 'medium',
+    sortOrder: 3,
+  },
+  {
+    id: 'evening',
+    type: 'transition' as const,
+    category: 'reflection' as const,
+    priority: 'medium' as const,
+    startHour: 17,
+    endHour: 20,
+    duration: 180, // 3 hours in minutes
+    name: 'Evening',
+    keyword: 'transition',
+    description: 'Transition and reflection phase',
+    idealFor: 'Day review, next day planning, social activities, moderate exercise',
+    color: '#FF6347',
+    icon: 'sunset',
+    emoji: '🌅',
+    isPremium: false,
+    isIntuitive: true,
+    scientificReferences: ['Circadian transition studies', 'Reflection research'],
+    evidenceLevel: 'medium',
+    sortOrder: 4,
+  },
+  {
+    id: 'night',
+    type: 'sleep_preparation' as const,
+    category: 'rest' as const,
+    priority: 'high' as const,
+    startHour: 20,
+    endHour: 5,
+    duration: 540, // 9 hours in minutes (crosses midnight)
+    name: 'Night',
+    keyword: 'rest',
+    description: 'Rest and recovery phase',
+    idealFor: 'Light reading, meditation, sleep preparation, relaxing activities',
+    color: '#191970',
+    icon: 'moon',
+    emoji: '🌙',
+    isPremium: false,
+    isIntuitive: true,
+    scientificReferences: ['Sleep hygiene research', 'Recovery studies'],
+    evidenceLevel: 'high',
+    sortOrder: 5,
+  },
+]

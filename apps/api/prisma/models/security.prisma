@@ -1,0 +1,36 @@
+// =====================================================
+// SECURITY & AUDIT
+// =====================================================
+
+model SecurityLog {
+  id               String            @id @default(cuid())
+  userId           String?
+  sessionId        String?           @db.VarChar(255)
+  eventType        SecurityEventType
+  eventDescription String
+  severity         SecuritySeverity  @default(info)
+  
+  // Context
+  ipAddress        String?           @db.VarChar(45)
+  userAgent        String?
+  country          String?           @db.VarChar(100)
+  region           String?           @db.VarChar(100)
+  city             String?           @db.VarChar(100)
+  latitude         Float?
+  longitude        Float?
+  timezone         String?           @db.VarChar(50)
+  metadata         Json?
+  
+  // Timestamps
+  createdAt        DateTime          @default(now())
+  
+  // Relations
+  user             User?             @relation(fields: [userId], references: [id])
+  
+  // Indexes
+  @@index([userId, eventType])
+  @@index([eventType, createdAt])
+  @@index([severity, createdAt])
+  @@index([ipAddress, createdAt])
+  @@map("security_logs")
+}

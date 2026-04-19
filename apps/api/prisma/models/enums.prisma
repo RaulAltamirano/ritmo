@@ -1,0 +1,172 @@
+// =====================================================
+// ENUMS
+// =====================================================
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+  banned
+  pending_verification
+}
+
+enum UserRole {
+  user
+  premium
+  admin
+  moderator
+}
+
+enum Theme {
+  light
+  dark
+  system
+}
+
+enum DeviceType {
+  desktop
+  mobile
+  tablet
+  tv
+  wearable
+  other
+}
+
+enum ActivityType {
+  work
+  study
+  exercise
+  social
+  personal
+  health
+  learning
+  creative
+  other
+}
+
+enum ActivityStatus {
+  planned
+  active
+  paused
+  completed
+  cancelled
+  archived
+}
+
+enum TaskStatus {
+  todo
+  in_progress
+  review
+  completed
+  cancelled
+  archived
+}
+
+enum Priority {
+  low
+  medium
+  high
+  urgent
+  critical
+}
+
+enum SecurityEventType {
+  // Authentication
+  login_success
+  login_failed
+  logout
+  register
+  password_change
+  password_reset_request
+  password_reset_complete
+  
+  // Two-Factor
+  two_factor_enabled
+  two_factor_disabled
+  two_factor_verification
+  backup_code_used
+  
+  // Sessions
+  session_created
+  session_expired
+  session_revoked
+  session_suspicious
+  
+  // Tokens
+  token_refreshed
+  token_revoked
+  token_expired
+  token_not_found
+  token_reuse_attack
+  
+  // Security
+  suspicious_activity
+  session_info
+  session_limit_enforced
+  brute_force_attempt
+  account_locked
+  account_unlocked
+  email_verified
+  phone_verified
+  
+  // Device Validation
+  device_validation_attempt
+  device_validation_success
+  device_validation_failed
+  device_challenge_generated
+  device_anomaly_detected
+  
+  // Profile
+  profile_updated
+  security_settings_changed
+  privacy_settings_changed
+  
+  // System
+  admin_action
+  system_event
+}
+
+enum SecuritySeverity {
+  info
+  low
+  medium
+  high
+  critical
+}
+
+// =====================================================
+// CIRCADIAN RHYTHM ENUMS - 2025 BEST PRACTICES
+// =====================================================
+
+enum CircadianPhaseType {
+  slow_activation      // 5-7 AM: Slow Activation Phase
+  morning_focus_peak  // 7-9 AM: Morning Focus Peak
+  cognitive_peak      // 9-12 PM: Cognitive Performance Peak
+  second_productivity // 13-15 PM: Second Productivity Peak
+  creative_window     // 15-17 PM: Creative/Verbal Window
+  transition          // 17-19 PM: Transition Phase
+  introspective      // 19-21 PM: Introspective Phase
+  sleep_preparation  // 21-23 PM: Sleep Preparation
+}
+
+enum CircadianPhaseCategory {
+  activation      // Morning activation phases
+  performance     // High performance phases
+  creative        // Creative and verbal phases
+  reflection      // Reflection and planning phases
+  rest            // Rest and preparation phases
+}
+
+enum CircadianPhasePriority {
+  low         // Less critical phases
+  medium      // Standard phases
+  high        // High performance phases
+  critical    // Critical for productivity
+}
+
+enum CircadianPhaseStatus {
+  active      // Currently active phase
+  upcoming    // Next phase
+  completed   // Completed phase
+  inactive    // Not yet active
+}

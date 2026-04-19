@@ -1,0 +1,5 @@
+# Add Node.js and pnpm to PATH
+export PATH="$HOME/.nvm/versions/node/v23.1.0/bin:$PATH"
+
+# Ejecutar type check antes del push
+pnpm type-check
