@@ -1,302 +1,108 @@
-import { PrismaClient } from '@prisma/client'
-import type { Activity, ActivityType, Priority } from '@prisma/client'
+import { prisma } from '../lib/prisma'
+import { NotFoundError } from '../utils/errors'
+import type { TaskSession, Prisma } from '@prisma/client'
 
-export interface CreateActivityData {
+export interface CreateSessionData {
+  taskId: string
   userId: string
-  title: string
-  description?: string
-  type: ActivityType
-  duration: number
   startTime: Date
-  endTime: Date
-  priority?: Priority
-  tags?: string[]
-}
-
-export interface UpdateActivityData {
-  title?: string
-  description?: string
-  type?: ActivityType
-  duration?: number
-  startTime?: Date
   endTime?: Date
-  isCompleted?: boolean
-  priority?: Priority
-  tags?: string[]
+  plannedMinutes?: number
+  notes?: string
 }
 
-export interface ActivityFilters {
+export interface SessionFilters {
   userId?: string
-  type?: ActivityType
-  priority?: Priority
-  isCompleted?: boolean
+  taskId?: string
   startDate?: Date
   endDate?: Date
-  tags?: string[]
+  isBreak?: boolean
 }
 
 export class ActivityService {
-  private prisma: PrismaClient
-
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma
+  async createSession(data: CreateSessionData): Promise<TaskSession> {
+    return prisma.taskSession.create({ data })
   }
 
-  /**
-   * Create a new activity
-   */
-  async create(data: CreateActivityData): Promise<Activity> {
-    try {
-      const activity = await this.prisma.activity.create({
-        data: {
-          userId: data.userId,
-          title: data.title,
-          description: data.description,
-          type: data.type,
-          duration: data.duration,
-          startTime: data.startTime,
-          endTime: data.endTime,
-          priority: data.priority || 'MEDIUM',
-          tags: data.tags || []
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
-      })
+  async endSession(
+    sessionId: string,
+    userId: string,
+    endTime: Date,
+    productivityScore?: number,
+  ): Promise<TaskSession> {
+    const session = await prisma.taskSession.findFirst({
+      where: { id: sessionId, userId },
+    })
+    if (!session) throw new NotFoundError('Session')
 
-      return activity
-    } catch (error) {
-      console.error('Error creating activity:', error)
-      throw new Error('Failed to create activity')
-    }
+    const durationMinutes = session.startTime
+      ? Math.round((endTime.getTime() - session.startTime.getTime()) / 60000)
+      : undefined
+
+    return prisma.taskSession.update({
+      where: { id: sessionId },
+      data: { endTime, durationMinutes, ...(productivityScore !== undefined && { productivityScore }) },
+    })
   }
 
-  /**
-   * Get activity by ID
-   */
-  async findById(id: string): Promise<Activity | null> {
-    try {
-      return await this.prisma.activity.findUnique({
-        where: { id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
-      })
-    } catch (error) {
-      console.error('Error finding activity:', error)
-      throw new Error('Failed to find activity')
-    }
-  }
+  async findMany(filters: SessionFilters = {}): Promise<TaskSession[]> {
+    const where: Prisma.TaskSessionWhereInput = {}
 
-  /**
-   * Get activities with filters
-   */
-  async findMany(filters: ActivityFilters = {}): Promise<Activity[]> {
-    try {
-      const where: any = {}
-
-      if (filters.userId) where.userId = filters.userId
-      if (filters.type) where.type = filters.type
-      if (filters.priority) where.priority = filters.priority
-      if (filters.isCompleted !== undefined) where.isCompleted = filters.isCompleted
-      if (filters.startDate) where.startTime = { gte: filters.startDate }
-      if (filters.endDate) where.endTime = { lte: filters.endDate }
-      if (filters.tags && filters.tags.length > 0) {
-        where.tags = { hasSome: filters.tags }
+    if (filters.userId) where.userId = filters.userId
+    if (filters.taskId) where.taskId = filters.taskId
+    if (filters.isBreak !== undefined) where.isBreak = filters.isBreak
+    if (filters.startDate || filters.endDate) {
+      where.startTime = {
+        ...(filters.startDate && { gte: filters.startDate }),
+        ...(filters.endDate && { lte: filters.endDate }),
       }
+    }
 
-      return await this.prisma.activity.findMany({
+    return prisma.taskSession.findMany({
+      where,
+      orderBy: { startTime: 'desc' },
+    })
+  }
+
+  async getTodaySessions(userId: string): Promise<TaskSession[]> {
+    const today = new Date()
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999)
+
+    return this.findMany({ userId, startDate: start, endDate: end })
+  }
+
+  async getStats(
+    userId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{
+    totalSessions: number
+    totalMinutes: number
+    avgProductivity: number | null
+  }> {
+    const where: Prisma.TaskSessionWhereInput = {
+      userId,
+      ...(startDate || endDate
+        ? { startTime: { ...(startDate && { gte: startDate }), ...(endDate && { lte: endDate }) } }
+        : {}),
+    }
+
+    const [count, aggregate] = await Promise.all([
+      prisma.taskSession.count({ where }),
+      prisma.taskSession.aggregate({
         where,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        },
-        orderBy: [
-          { priority: 'desc' },
-          { startTime: 'asc' }
-        ]
-      })
-    } catch (error) {
-      console.error('Error finding activities:', error)
-      throw new Error('Failed to find activities')
+        _sum: { durationMinutes: true },
+        _avg: { productivityScore: true },
+      }),
+    ])
+
+    return {
+      totalSessions: count,
+      totalMinutes: aggregate._sum.durationMinutes ?? 0,
+      avgProductivity: aggregate._avg.productivityScore,
     }
   }
+}
 
-  /**
-   * Get today's activities for a user
-   */
-  async getTodayActivities(userId: string): Promise<Activity[]> {
-    try {
-      const today = new Date()
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59)
-
-      return await this.prisma.activity.findMany({
-        where: {
-          userId,
-          startTime: {
-            gte: startOfDay,
-            lte: endOfDay
-          }
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        },
-        orderBy: [
-          { priority: 'desc' },
-          { startTime: 'asc' }
-        ]
-      })
-    } catch (error) {
-      console.error('Error getting today activities:', error)
-      throw new Error('Failed to get today activities')
-    }
-  }
-
-  /**
-   * Update activity
-   */
-  async update(id: string, data: UpdateActivityData): Promise<Activity> {
-    try {
-      return await this.prisma.activity.update({
-        where: { id },
-        data: {
-          ...data,
-          updatedAt: new Date()
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
-      })
-    } catch (error) {
-      console.error('Error updating activity:', error)
-      throw new Error('Failed to update activity')
-    }
-  }
-
-  /**
-   * Mark activity as completed
-   */
-  async markAsCompleted(id: string): Promise<Activity> {
-    try {
-      return await this.prisma.activity.update({
-        where: { id },
-        data: {
-          isCompleted: true,
-          updatedAt: new Date()
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
-      })
-    } catch (error) {
-      console.error('Error marking activity as completed:', error)
-      throw new Error('Failed to mark activity as completed')
-    }
-  }
-
-  /**
-   * Delete activity
-   */
-  async delete(id: string): Promise<void> {
-    try {
-      await this.prisma.activity.delete({
-        where: { id }
-      })
-    } catch (error) {
-      console.error('Error deleting activity:', error)
-      throw new Error('Failed to delete activity')
-    }
-  }
-
-  /**
-   * Get activity statistics for a user
-   */
-  async getStats(userId: string, startDate?: Date, endDate?: Date) {
-    try {
-      const where: any = { userId }
-      
-      if (startDate && endDate) {
-        where.startTime = {
-          gte: startDate,
-          lte: endDate
-        }
-      }
-
-      const [total, completed, pending] = await Promise.all([
-        this.prisma.activity.count({ where }),
-        this.prisma.activity.count({ where: { ...where, isCompleted: true } }),
-        this.prisma.activity.count({ where: { ...where, isCompleted: false } })
-      ])
-
-      const byType = await this.prisma.activity.groupBy({
-        by: ['type'],
-        where,
-        _count: {
-          type: true
-        }
-      })
-
-      const byPriority = await this.prisma.activity.groupBy({
-        by: ['priority'],
-        where,
-        _count: {
-          priority: true
-        }
-      })
-
-      return {
-        total,
-        completed,
-        pending,
-        completionRate: total > 0 ? (completed / total) * 100 : 0,
-        byType: byType.reduce((acc: Record<string, number>, item: any) => {
-          acc[item.type] = item._count.type
-          return acc
-        }, {} as Record<string, number>),
-        byPriority: byPriority.reduce((acc: Record<string, number>, item: any) => {
-          acc[item.priority] = item._count.priority
-          return acc
-        }, {} as Record<string, number>)
-      }
-    } catch (error) {
-      console.error('Error getting activity stats:', error)
-      throw new Error('Failed to get activity statistics')
-    }
-  }
-} 
+export const activityService = new ActivityService()

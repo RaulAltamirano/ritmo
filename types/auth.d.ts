@@ -1,53 +1,20 @@
-// Auth Types and Interfaces
-export interface User {
+export interface AuthUser {
   id: string
   email: string
-  name: string
-  avatar?: string
-  emailVerified?: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export interface AuthUser extends User {
-  profile?: UserProfile
-  preferences?: UserPreferences
-}
-
-export interface UserProfile {
-  id: string
-  userId: string
-  bio?: string
+  name: string | null
+  avatar: string | null
   timezone: string
-  language: string
+  emailVerified: boolean
   createdAt: string
   updatedAt: string
-}
-
-export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system'
-  notifications: {
-    email: boolean
-    push: boolean
-    reminders: boolean
-  }
-  privacy: {
-    profileVisibility: 'public' | 'private'
-    activityVisibility: 'public' | 'private' | 'friends'
+  preferences?: {
+    theme: string
+    language: string
+    notificationsEnabled: boolean
+    defaultTimeTechnique: string
   }
 }
 
-// Auth State
-export interface AuthState {
-  user: AuthUser | null
-  token: string | null
-  refreshToken: string | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  error: string | null
-}
-
-// Auth Actions
 export interface LoginCredentials {
   email: string
   password: string
@@ -67,6 +34,15 @@ export interface AuthTokens {
   expiresIn: number
 }
 
+export interface AuthState {
+  user: AuthUser | null
+  accessToken: string | null
+  refreshToken: string | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  error: string | null
+}
+
 export interface LoginResponse {
   user: AuthUser
   tokens: AuthTokens
@@ -84,7 +60,6 @@ export interface RefreshTokenResponse {
   expiresIn: number
 }
 
-// Auth Errors
 export interface AuthError {
   code: string
   message: string
@@ -102,21 +77,12 @@ export enum AuthErrorCode {
   EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED',
   RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
   NETWORK_ERROR = 'NETWORK_ERROR',
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
 }
 
-// Auth Guards
-export interface AuthGuard {
-  requiresAuth: boolean
-  roles?: string[]
-  permissions?: string[]
-  redirectTo?: string
-}
-
-// Auth Events
 export interface AuthEvent {
   type: 'login' | 'logout' | 'register' | 'token_refresh' | 'password_reset' | 'email_verification'
   user?: AuthUser
   timestamp: Date
-  metadata?: Record<string, any>
-} 
+  metadata?: Record<string, unknown>
+}
