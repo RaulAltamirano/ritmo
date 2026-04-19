@@ -139,9 +139,18 @@ If `TURBO_TOKEN` and `TURBO_TEAM` secrets are present (Vercel Remote Cache), Tur
 
 ## SonarCloud Workflow — `.github/workflows/sonar.yml`
 
-### Triggers
+### Trigger Strategy
 
-Same as `ci.yml` (push to main/develop, PRs to main/develop).
+Uses `workflow_run` triggered on `ci.yml` completion — not parallel. This guarantees coverage artifacts exist before analysis starts:
+
+```yaml
+on:
+  workflow_run:
+    workflows: ['CI/CD Pipeline']
+    types: [completed]
+```
+
+The job runs only when `ci.yml` succeeded (`github.event.workflow_run.conclusion == 'success'`).
 
 ### Flow
 
