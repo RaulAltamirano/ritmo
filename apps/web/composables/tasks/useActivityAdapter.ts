@@ -1,5 +1,16 @@
-import type { Activity } from '@/types/activity'
+import type { Activity, ActivityPayloadPriority } from '@/types/activity'
 import type { Task } from '@/types/task'
+
+/** Shape returned by taskToActivity — used to build API update/create payloads */
+export interface TaskActivityPayload {
+  title?: string
+  description?: string
+  type?: string
+  duration: number
+  priority: ActivityPayloadPriority
+  tags: string[]
+  isCompleted: boolean
+}
 
 export const useActivityAdapter = () => {
   const activityToTask = (activity: Activity): Task => {
@@ -32,9 +43,7 @@ export const useActivityAdapter = () => {
     }
   }
 
-  const taskToActivity = (
-    task: Task,
-  ): Partial<Activity> & { priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' } => {
+  const taskToActivity = (task: Task): TaskActivityPayload => {
     const priorityMap: Record<string, 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'> = {
       baja: 'LOW',
       media: 'MEDIUM',
@@ -64,7 +73,7 @@ export const useActivityAdapter = () => {
   const activitiesToTasks = (activities: Activity[]): Task[] =>
     activities.map(activityToTask)
 
-  const tasksToActivities = (tasks: Task[]): Array<Partial<Activity>> =>
+  const tasksToActivities = (tasks: Task[]): TaskActivityPayload[] =>
     tasks.map(taskToActivity)
 
   return { activityToTask, taskToActivity, activitiesToTasks, tasksToActivities }
