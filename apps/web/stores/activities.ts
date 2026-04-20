@@ -20,20 +20,20 @@ export const useActivitiesStore = defineStore('activities', () => {
   const lastFetched = ref<Date | null>(null)
 
   // ── Getters ──────────────────────────────────────────
+  // Note: comparison uses local-time boundaries vs startTime ISO string parsed as UTC.
+  // This is intentional — the API already scopes /activities/today by server day, so
+  // this getter is a client-side safety net that filters by the user's local calendar day.
   const todayActivities = computed(() => {
     const now = new Date()
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const endOfDayHour = 23
-    const endOfDayMinSec = 59
-    const endOfDayMs = 999
     const endOfDay = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
-      endOfDayHour,
-      endOfDayMinSec,
-      endOfDayMinSec,
-      endOfDayMs,
+      23,
+      59,
+      59,
+      999,
     )
     return activities.value.filter(a => {
       const d = new Date(a.startTime)
@@ -115,7 +115,7 @@ export const useActivitiesStore = defineStore('activities', () => {
       return { success: false, error: `Activity ${id} not found` }
     }
 
-    const snapshot = { ...activities.value[index] }
+    // Pessimistic: no pre-call mutation — only write to the array on confirmed success.
     loading.value = true
     error.value = null
 
@@ -127,7 +127,6 @@ export const useActivitiesStore = defineStore('activities', () => {
       }
       throw new Error('Failed to update activity')
     } catch (err: unknown) {
-      activities.value[index] = snapshot
       const e = err as { userMessage?: string; message?: string }
       const msg = e?.userMessage ?? e?.message ?? 'Failed to update activity'
       error.value = msg

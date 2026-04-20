@@ -60,6 +60,7 @@ describe('useActivitiesStore', () => {
       expect(store.activities).toEqual(data)
       expect(store.error).toBeNull()
       expect(store.loading).toBe(false)
+      expect(store.lastFetched).toBeInstanceOf(Date)
     })
 
     it('sets error on network failure, leaves activities unchanged', async () => {
@@ -184,8 +185,9 @@ describe('useActivitiesStore', () => {
       expect(store.activities).toHaveLength(1)
     })
 
-    it('does not crash for unknown id', async () => {
-      await expect(store.remove('nonexistent')).resolves.not.toThrow()
+    it('does not crash for unknown id, returns error', async () => {
+      const result = await store.remove('nonexistent')
+      expect(result.success).toBe(false)
       expect(store.activities).toHaveLength(2)
     })
 
