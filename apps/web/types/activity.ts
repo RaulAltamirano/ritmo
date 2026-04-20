@@ -2,11 +2,14 @@ export interface Activity {
   id: string
   title: string
   description?: string
+  /** Constrained to API values e.g. 'TASK', 'EVENT', 'HABIT' */
   type: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
   isCompleted: boolean
   startTime: string
-  endTime: string
+  /** Optional: the API may omit endTime for open-ended activities */
+  endTime?: string
+  /** Duration in minutes */
   duration: number
   category?: string
   tags: string[]
@@ -15,13 +18,14 @@ export interface Activity {
 }
 
 export type ActivityPriority = Activity['priority']
+export type ActivityPayloadPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
 
 export interface CreateActivityPayload {
   title: string
   description?: string
   startTime: Date
   endTime?: Date
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+  priority: ActivityPayloadPriority
   category: string
   tags?: string[]
 }
@@ -31,7 +35,7 @@ export interface UpdateActivityPayload {
   description?: string
   startTime?: Date
   endTime?: Date
-  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+  priority?: ActivityPayloadPriority
   category?: string
   isCompleted?: boolean
   tags?: string[]
