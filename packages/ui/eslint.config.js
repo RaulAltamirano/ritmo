@@ -49,6 +49,8 @@ export default [
       'no-var': 'error',
       'no-console': 'warn',
       'no-debugger': 'error',
+      'no-undef': 'off',
+      'no-unused-vars': 'off',
       'prefer-template': 'error',
       'prefer-arrow-callback': 'error',
       'object-shorthand': 'error',
@@ -102,6 +104,7 @@ export default [
     languageOptions: {
       parser: vueParser,
       parserOptions: {
+        parser: typescriptParser,
         ecmaVersion: 2025,
         sourceType: 'module',
       },
@@ -110,6 +113,7 @@ export default [
       vue
     },
     rules: {
+      'no-undef': 'off',
       // === VUE 3 ESPECÍFICO ===
       'vue/no-unused-vars': 'error',
       'vue/component-name-in-template-casing': ['error', 'PascalCase'],

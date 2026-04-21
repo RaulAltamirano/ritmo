@@ -66,3 +66,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Vite dependency scan cache (no versionar)
+**/vite.config.ts.timestamp-*.mjs

@@ -83,6 +83,15 @@ docker-compose ps
 
 ### **4. Initialize Database**
 
+Apply migrations, then seed (required for `circadian_phases` and related catalog data):
+
+```bash
+pnpm --filter @ritmo/api db:deploy
+pnpm --filter @ritmo/api db:seed
+```
+
+Local convenience (if your root scripts wrap the same):
+
 ```bash
 # Create demo user and sample data
 pnpm run seed
@@ -90,6 +99,8 @@ pnpm run seed
 # Verify demo user
 pnpm run demo:user --info
 ```
+
+Use the same **migrate → seed** order in staging and production after deploy.
 
 ### **5. Start Development**
 
