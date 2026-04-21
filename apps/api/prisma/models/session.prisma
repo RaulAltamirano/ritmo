@@ -1,0 +1,66 @@
+// =====================================================
+// SESSION MANAGEMENT
+// =====================================================
+
+model UserSession {
+  id             String     @id @default(cuid())
+  userId         String
+  sessionId      String     @unique @db.VarChar(255)
+  deviceId       String?    @db.VarChar(255)
+  deviceName     String?    @db.VarChar(255)
+  deviceType     DeviceType
+  browser        String?    @db.VarChar(100)
+  browserVersion String?    @db.VarChar(50)
+  os             String?    @db.VarChar(100)
+  osVersion      String?    @db.VarChar(50)
+  ipAddress      String?    @db.VarChar(45) // IPv6 compatible
+  userAgent      String?
+  country        String?    @db.VarChar(100)
+  region         String?    @db.VarChar(100)
+  city           String?    @db.VarChar(100)
+  latitude       Float?
+  longitude      Float?
+  timezone       String?    @db.VarChar(50)
+  
+  // Session State
+  isActive       Boolean    @default(true)
+  isTrusted      Boolean    @default(false)
+  lastActivity   DateTime   @default(now())
+  expiresAt      DateTime
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  
+  // Relations
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Indexes - 🔥 OPTIMIZED FOR 2025 SESSION QUERIES
+  @@index([userId, isActive])
+  @@index([sessionId])
+  @@index([expiresAt])
+  @@index([deviceId])
+  @@index([userId, deviceId, isActive]) // 🔥 NEW: Composite for intelligent login
+  @@index([isActive, expiresAt])        // 🔥 NEW: For cleanup queries
+  @@index([lastActivity])               // 🔥 NEW: For session activity tracking
+  @@map("user_sessions")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique @db.VarChar(255)
+  sessionId String?  @db.VarChar(255)
+  familyId  String   @db.VarChar(255)
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Indexes
+  @@index([userId, isRevoked])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}

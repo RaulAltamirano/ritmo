@@ -1,0 +1,136 @@
+/* Estilos globales para Storybook */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/*
+ * Fondo/canvas del manager: preferir tokens del sistema cuando ya están
+ * aplicados en :root (initializeDesignSystem). `color-scheme` refuerza
+ * scrollbars y controles nativos acordes al tema.
+ */
+html {
+  color-scheme: light dark;
+}
+
+/* Variables CSS del sistema de diseño */
+:root {
+  /* Colores */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  /* Tipografía */
+  --font-family-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-display:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+
+  /* Espaciado */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* Bordes */
+  --border-radius-sm: 0.25rem;
+  --border-radius-md: 0.375rem;
+  --border-radius-lg: 0.5rem;
+  --border-radius-xl: 0.75rem;
+  --border-radius-2xl: 1rem;
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Modo oscuro */
+.dark {
+  --color-primary-50: #172554;
+  --color-primary-100: #1e3a8a;
+  --color-primary-200: #1e40af;
+  --color-primary-300: #1d4ed8;
+  --color-primary-400: #2563eb;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #60a5fa;
+  --color-primary-700: #93c5fd;
+  --color-primary-800: #bfdbfe;
+  --color-primary-900: #dbeafe;
+  --color-primary-950: #eff6ff;
+}
+
+/* Estilos base para Storybook */
+.sb-show-main {
+  background: transparent !important;
+}
+
+/* Contenedor de historias */
+.story-container {
+  min-height: 100vh;
+  padding: 2rem;
+  background: var(--color-surface-primary, #ffffff);
+  color: var(--color-text-primary, #0f172a);
+}
+
+.dark .story-container {
+  background: var(--color-surface-primary, #0f172a);
+  color: var(--color-text-primary, #ffffff);
+}
+
+/* Utilidades para testing */
+.story-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.story-flex {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.story-space {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Estados de componentes */
+.component-state {
+  border: 2px dashed var(--color-border-primary, #e2e8f0);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.component-state:hover {
+  border-color: var(--color-border-focus, #3b82f6);
+}
+
+/* Debug info */
+.debug-info {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  z-index: 9999;
+}

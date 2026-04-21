@@ -1,0 +1,22 @@
+/* Theme transition — Ritmo */
+/* Applied only during the switch via .is-switching-theme class.
+   Using a global * rule would repaint every DOM element on every
+   hover/focus; scoping to the class limits repaints to theme-change only. */
+
+html.is-switching-theme,
+html.is-switching-theme *,
+html.is-switching-theme *::before,
+html.is-switching-theme *::after {
+  transition-property: color, background-color, border-color, fill, stroke, box-shadow !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition-duration: 200ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.is-switching-theme,
+  html.is-switching-theme *,
+  html.is-switching-theme *::before,
+  html.is-switching-theme *::after {
+    transition: none !important;
+  }
+}

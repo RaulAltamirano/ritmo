@@ -1,0 +1,233 @@
+/**
+ * 🔐 AUTHENTICATION TESTS - RITMO API 2025
+ *
+ * Tests esenciales de autenticación usando API real y Docker
+ * Implementando mejores prácticas de testing
+ */
+
+import request from 'supertest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { getAuthHeaders, testContext } from '../setup/test-setup.js'
+
+describe('🔐 Authentication Tests', () => {
+  // Limpiar datos antes y después de cada test
+  beforeEach(async () => {
+    // La limpieza se maneja automáticamente en test-setup.ts
+  })
+
+  afterEach(async () => {
+    // La limpieza se maneja automáticamente en test-setup.ts
+  })
+
+  describe('User Registration', () => {
+    it('should register a new user successfully', async () => {
+      const timestamp = Date.now()
+      const userData = {
+        email: `user${timestamp}@example.com`,
+        username: `user${timestamp}`,
+        password: 'SecurePass123!',
+        firstName: 'Test',
+        lastName: 'User',
+      }
+
+      const response = await request(testContext.app)
+        .post('/api/auth/register')
+        .set(getAuthHeaders())
+        .send(userData)
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.data.user.email).toBe(userData.email)
+      expect(response.body.data.user.username).toBe(userData.username)
+      expect(response.body.data.accessToken).toBeTruthy()
+      expect(response.body.data.refreshToken).toBeTruthy()
+      expect(response.body.data.sessionId).toBeTruthy()
+    })
+
+    it('should reject registration with existing email', async () => {
+      const timestamp = Date.now()
+      const userData = {
+        email: `existing${timestamp}@example.com`,
+        username: `existing${timestamp}`,
+        password: 'SecurePass123!',
+      }
+
+      // First registration
+      await request(testContext.app)
+        .post('/api/auth/register')
+        .set(getAuthHeaders())
+        .send(userData)
+
+      // Second registration with same email
+      const response = await request(testContext.app)
+        .post('/api/auth/register')
+        .set(getAuthHeaders())
+        .send(userData)
+
+      expect([409, 500]).toContain(response.status)
+      expect(response.body.success).toBe(false)
+    })
+
+    it('should reject registration with weak password', async () => {
+      const timestamp = Date.now()
+      const userData = {
+        email: `weak${timestamp}@example.com`,
+        username: `weak${timestamp}`,
+        password: '123', // Weak password
+      }
+
+      const response = await request(testContext.app)
+        .post('/api/auth/register')
+        .set(getAuthHeaders())
+        .send(userData)
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.error.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('should reject registration with missing required fields', async () => {
+      const userData = {
+        email: 'test@example.com',
+        // Missing username and password
+      }
+
+      const response = await request(testContext.app)
+        .post('/api/auth/register')
+        .set(getAuthHeaders())
+        .send(userData)
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.error.code).toBe('VALIDATION_ERROR')
+    })
+  })
+
+  describe('User Login', () => {
+    it('should login with valid credentials', async () => {
+      const timestamp = Date.now()
+      const email = `login${timestamp}@example.com`
+      const password = 'SecurePass123!'
+
+      // Register user first
+      await request(testContext.app)
+        .post('/api/auth/register')
+        .set(getAuthHeaders())
+        .send({
+          email,
+          username: `login${timestamp}`,
+          password,
+        })
+
+      // Login
+      const response = await request(testContext.app)
+        .post('/api/auth/login')
+        .set(getAuthHeaders())
+        .send({ email, password })
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.data.user.email).toBe(email)
+      expect(response.headers['set-cookie']).toBeDefined()
+    })
+
+    it('should reject invalid credentials', async () => {
+      const response = await request(testContext.app)
+        .post('/api/auth/login')
+        .set(getAuthHeaders())
+        .send({
+          email: 'nonexistent@example.com',
+          password: 'wrongpassword',
+        })
+
+      expect(response.status).toBe(401)
+      expect(response.body.success).toBe(false)
+      expect(response.body.error.code).toBe('UNAUTHORIZED')
+    })
+
+    it('should reject login with missing credentials', async () => {
+      const response = await request(testContext.app)
+        .post('/api/auth/login')
+        .set(getAuthHeaders())
+        .send({
+          email: 'test@example.com',
+          // Missing password
+        })
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.error.code).toBe('VALIDATION_ERROR')
+    })
+  })
+
+  describe('Protected Endpoints', () => {
+    it('should reject access to /api/auth/me without token', async () => {
+      const response = await request(testContext.app)
+        .get('/api/auth/me')
+        .set(getAuthHeaders())
+
+      expect(response.status).toBe(401)
+      expect(response.body.success).toBe(false)
+      expect(response.body.error.code).toBe('UNAUTHORIZED')
+    })
+
+    it('should reject access to /api/auth/sessions without token', async () => {
+      const response = await request(testContext.app)
+        .get('/api/auth/sessions')
+        .set(getAuthHeaders())
+
+      expect(response.status).toBe(401)
+      expect(response.body.success).toBe(false)
+      expect(response.body.error.code).toBe('UNAUTHORIZED')
+    })
+
+    it('should reject access with invalid token', async () => {
+      const response = await request(testContext.app)
+        .get('/api/auth/me')
+        .set({
+          ...getAuthHeaders(),
+          Authorization: 'Bearer invalid-token',
+        })
+
+      expect(response.status).toBe(401)
+      expect(response.body.success).toBe(false)
+    })
+  })
+
+  describe('API Health', () => {
+    it('should return health status', async () => {
+      const response = await request(testContext.app)
+        .get('/api/health')
+        .set(getAuthHeaders())
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.data.status).toBe('healthy')
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('should handle invalid JSON', async () => {
+      const response = await request(testContext.app)
+        .post('/api/auth/register')
+        .set({
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        })
+        .send('invalid json')
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+    })
+
+    it('should handle non-existent endpoints', async () => {
+      const response = await request(testContext.app)
+        .get('/api/nonexistent')
+        .set(getAuthHeaders())
+
+      expect(response.status).toBe(404)
+      expect(response.body.success).toBe(false)
+      expect(response.body.error.code).toBe('NOT_FOUND')
+    })
+  })
+})

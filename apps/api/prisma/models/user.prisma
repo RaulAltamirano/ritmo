@@ -1,0 +1,154 @@
+// =====================================================
+// CORE USER MANAGEMENT
+// =====================================================
+
+model User {
+  id                      String                     @id @default(cuid())
+  email                   String                     @unique @db.VarChar(255)
+  username                String                     @unique @db.VarChar(50)
+  passwordHash            String                     @db.VarChar(255)
+  firstName               String?                    @db.VarChar(100)
+  lastName                String?                    @db.VarChar(100)
+  displayName             String?                    @db.VarChar(150)
+  avatar                  String?
+  bio                     String?
+  dateOfBirth             DateTime?
+  phone                   String?                    @db.VarChar(20)
+  
+  // Security & Verification
+  isEmailVerified         Boolean                    @default(false)
+  isPhoneVerified         Boolean                    @default(false)
+  isTwoFactorEnabled      Boolean                    @default(false)
+  twoFactorSecret         String?                    @db.VarChar(255)
+  backupCodes             String[]
+  
+  // Account Status
+  status                  UserStatus                 @default(active)
+  role                    UserRole                   @default(user)
+  isActive                Boolean                    @default(true)
+  isDeleted               Boolean                    @default(false)
+  
+  // Preferences
+  timezone                String                     @default("UTC") @db.VarChar(50)
+  language                String                     @default("es") @db.VarChar(10)
+  locale                  String                     @default("es-ES") @db.VarChar(10)
+  theme                   Theme                      @default(system)
+  emailNotifications      EmailNotificationSettings?
+  
+  // Security Tracking
+  lastLoginAt             DateTime?
+  lastPasswordChange      DateTime                   @default(now())
+  lastActivityAt          DateTime                   @default(now())
+  failedLoginAttempts     Int                        @default(0)
+  lockedUntil             DateTime?
+  passwordHistory         PasswordHistory[]
+  
+  // Timestamps
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+  deletedAt               DateTime?
+  
+  // Relations
+  sessions                UserSession[]
+  refreshTokens           RefreshToken[]
+  securityLogs            SecurityLog[]
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  phoneVerificationTokens PhoneVerificationToken[]
+  activities              Activity[]
+  tasks                   Task[]
+  categories              Category[]
+  workSessions            WorkSession[]
+  preferences             UserPreferences?
+  
+  // Circadian Rhythm Relations
+  circadianPhasePreferences CircadianPhasePreference[]
+  circadianPhaseSessions   CircadianPhaseSession[]
+  
+  // Indexes
+  @@index([email, isActive])
+  @@index([username, isActive])
+  @@index([status, isActive])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model UserPreferences {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  notificationSettings  Json?
+  privacySettings       Json?
+  accessibilitySettings Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_preferences")
+}
+
+model EmailNotificationSettings {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  marketing    Boolean  @default(false)
+  security     Boolean  @default(true)
+  updates      Boolean  @default(true)
+  weeklyDigest Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("email_notification_settings")
+}
+
+model PasswordHistory {
+  id           String   @id @default(cuid())
+  userId       String
+  passwordHash String   @db.VarChar(255)
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+  @@map("password_history")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique @db.VarChar(255)
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, isUsed])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
+}
+
+model PhoneVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique @db.VarChar(255)
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, isUsed])
+  @@index([expiresAt])
+  @@map("phone_verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique @db.VarChar(255)
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, isUsed])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}

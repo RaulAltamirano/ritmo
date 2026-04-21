@@ -1,0 +1,30 @@
+<style>
+  /* Estilos globales para Storybook */
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+      'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: Canvas;
+    color: CanvasText;
+  }
+
+  /* Asegurar que los estilos de componentes se apliquen correctamente */
+  .storybook-wrapper {
+    min-height: 100vh;
+    padding: 2rem;
+    /* Superficie secundaria del token (light); preview.ts + tokens pisan el tema real */
+    background-color: var(--color-surface-secondary, #f8fafc);
+    color: var(--color-text-primary, CanvasText);
+  }
+
+  /* Estilos específicos para Storybook */
+  .sb-show-main {
+    background: transparent;
+  }
+</style>

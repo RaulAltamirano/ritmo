@@ -1,0 +1,159 @@
+import { flushPromises, mount } from '@vue/test-utils'
+import { ref } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import TodayPage from '@/pages/today/index.vue'
+
+const mockActivities = ref([
+  {
+    id: 'activity-1',
+    title: 'Estudiar algoritmos',
+    type: 'STUDY',
+    priority: 'HIGH',
+    duration: 45,
+    isCompleted: false,
+    description: '',
+    createdAt: '2026-04-19T09:00:00.000Z',
+    updatedAt: '2026-04-19T09:00:00.000Z',
+    startTime: '2026-04-19T09:00:00.000Z',
+    endTime: '2026-04-19T09:45:00.000Z',
+    tags: [],
+  },
+])
+
+const fetchTodayActivities = vi.fn()
+const createActivity = vi.fn()
+const deleteActivity = vi.fn()
+const markActivityCompleted = vi.fn()
+
+vi.mock('@/composables/tasks/useActivities', () => ({
+  useActivities: () => ({
+    todayActivities: mockActivities,
+    createActivity,
+    deleteActivity,
+    fetchTodayActivities,
+    markActivityCompleted,
+  }),
+}))
+
+vi.mock('@/composables/tasks/useActivityAdapter', () => ({
+  useActivityAdapter: () => ({
+    activitiesToTasks: (activities: typeof mockActivities.value) =>
+      activities.map(activity => ({
+        id: activity.id,
+        name: activity.title,
+        title: activity.title,
+        createdAt: new Date(activity.createdAt),
+        category: 'Estudio',
+        priority: 'alta' as const,
+        completed: activity.isCompleted,
+        duration: `${activity.duration}m`,
+      })),
+  }),
+}))
+
+vi.mock('@/composables/useCircadian', () => ({
+  useCircadian: () => ({
+    isLoading: ref(false),
+    getPhaseDataForHeader: { color: '#94a3b8', name: 'Focus' },
+  }),
+}))
+
+vi.mock('@/stores/timer', () => ({
+  useTimerStore: () => ({
+    loadPreferences: vi.fn(),
+    loadDaySummary: vi.fn(),
+  }),
+}))
+
+const createWrapper = () =>
+  mount(TodayPage, {
+    global: {
+      stubs: {
+        TodayHeader: { template: '<div />' },
+        QuickTaskInput: { template: '<div />' },
+        TaskFilters: { template: '<div />' },
+        TaskNoteModal: { template: '<div />' },
+        TaskEditModal: { template: '<div />' },
+        BaseModal: {
+          props: ['isOpen', 'title'],
+          emits: ['update:isOpen', 'close'],
+          template:
+            '<div v-if="isOpen"><div data-testid="base-modal"><slot /></div><div><slot name="footer" /></div></div>',
+        },
+        BaseButton: {
+          props: ['disabled', 'loading', 'variant', 'size', 'type'],
+          emits: ['click'],
+          template:
+            '<button :disabled="disabled || loading" :type="type || \'button\'" @click="$emit(\'click\', $event)"><slot /></button>',
+        },
+      },
+    },
+  })
+
+describe('today feedback flow', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockActivities.value = [
+      {
+        id: 'activity-1',
+        title: 'Estudiar algoritmos',
+        type: 'STUDY',
+        priority: 'HIGH',
+        duration: 45,
+        isCompleted: false,
+        description: '',
+        createdAt: '2026-04-19T09:00:00.000Z',
+        updatedAt: '2026-04-19T09:00:00.000Z',
+        startTime: '2026-04-19T09:00:00.000Z',
+        endTime: '2026-04-19T09:45:00.000Z',
+        tags: [],
+      },
+    ]
+    fetchTodayActivities.mockResolvedValue(undefined)
+    createActivity.mockResolvedValue({ success: true, activity: null })
+    deleteActivity.mockResolvedValue({ success: true })
+    markActivityCompleted.mockImplementation(async (id: string) => {
+      const activity = mockActivities.value.find(item => item.id === id)
+      if (activity) {
+        activity.isCompleted = true
+      }
+      return { success: true }
+    })
+  })
+
+  it('does not complete the task when the modal is closed', async () => {
+    const wrapper = createWrapper()
+    await flushPromises()
+
+    await wrapper.get('button[aria-label="Marcar como completada"]').trigger('click')
+    expect(wrapper.get('[data-testid="base-modal"]').exists()).toBe(true)
+
+    await wrapper.get('button[aria-label="Cerrar feedback post tarea"]').trigger('click')
+
+    expect(markActivityCompleted).not.toHaveBeenCalled()
+    expect(wrapper.find('[data-testid="base-modal"]').exists()).toBe(false)
+    expect(wrapper.find('button[aria-label="Marcar como completada"]').exists()).toBe(true)
+  })
+
+  it('completes the activity only after submitting the required feedback', async () => {
+    const wrapper = createWrapper()
+    await flushPromises()
+
+    await wrapper.get('button[aria-label="Marcar como completada"]').trigger('click')
+
+    await wrapper.get('button[aria-label="Energia 4 de 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Momento del dia si"]').trigger('click')
+    await wrapper.get('button[aria-label="Continuar al paso 2"]').trigger('click')
+    await wrapper.get('button[aria-label="Enfoque 5 de 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Progreso 4 de 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Carga mental 3 de 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Continuar al paso 3"]').trigger('click')
+    await wrapper.get('button[aria-label="Bloqueador ninguno"]').trigger('click')
+    await wrapper.get('button[aria-label="Enviar feedback de cierre"]').trigger('click')
+    await flushPromises()
+
+    expect(markActivityCompleted).toHaveBeenCalledWith('activity-1', true)
+    expect(wrapper.find('[data-testid="base-modal"]').exists()).toBe(false)
+    expect(wrapper.find('button[aria-label="Marcar como completada"]').exists()).toBe(false)
+  })
+})
