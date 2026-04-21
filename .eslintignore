@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+.nuxt/
+**/.nuxt/
+.output/
+**/.output/
+.turbo/
+**/.turbo/
+
+# Coverage reports
+coverage/
+**/coverage/
+
+# Generated files
+storybook-static/
+**/storybook-static/
+.storybook/
+**/.storybook/
+public/
+**/public/
+
+# Database
+prisma/migrations/
+**/prisma/migrations/
+
+# Logs
+logs/
+**/logs/
+
+# Lock files
+yarn.lock
+pnpm-lock.yaml
+package-lock.json
+
+# Minified files
+*.min.js
+*.bundle.js
+vite-inject-mocker-entry.js
+
+# Test coverage
+apps/api/coverage/
+packages/ui/public/
+packages/ui/storybook-static/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+**/.cache/

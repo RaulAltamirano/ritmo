@@ -1,0 +1,158 @@
+name: Release
+
+on:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.15.0'
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+
+      - name: Build for production
+        run: pnpm build
+        env:
+          NODE_ENV: production
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            apps/*/dist
+            packages/*/dist
+            apps/*/.output
+          retention-days: 1
+
+  deploy-api:
+    name: Deploy API
+    runs-on: ubuntu-latest
+    needs: prepare-release
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+
+      # ── Deploy Strategy (uncomment ONE) ──────────────────────────────────
+      #
+      # Option A: Fly.io
+      #   Required secret: FLY_API_TOKEN
+      # - uses: superfly/flyctl-actions/setup-flyctl@master
+      # - run: flyctl deploy --remote-only --config apps/api/fly.toml
+      #   env:
+      #     FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      #
+      # Option B: Railway
+      #   Required secret: RAILWAY_DEPLOY_HOOK (webhook URL from Railway dashboard)
+      # - name: Trigger Railway deploy
+      #   run: curl -X POST "${{ secrets.RAILWAY_DEPLOY_HOOK }}"
+      #
+      # Option C: Docker + SSH to VPS
+      #   Required secrets: GHCR_TOKEN, DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY
+      # - name: Build and push Docker image
+      #   run: |
+      #     echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      #     docker build -t ghcr.io/${{ github.repository }}/api:${{ github.sha }} apps/api
+      #     docker push ghcr.io/${{ github.repository }}/api:${{ github.sha }}
+      # - name: Deploy via SSH
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{ secrets.DEPLOY_HOST }}
+      #     username: ${{ secrets.DEPLOY_USER }}
+      #     key: ${{ secrets.DEPLOY_SSH_KEY }}
+      #     script: |
+      #       docker pull ghcr.io/${{ github.repository }}/api:${{ github.sha }}
+      #       docker compose -f /srv/ritmo/docker-compose.yml up -d api
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: Deploy placeholder
+        run: echo "API deploy not configured. Uncomment a strategy above and add required secrets."
+
+  deploy-web:
+    name: Deploy Web
+    runs-on: ubuntu-latest
+    needs: prepare-release
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── Deploy Strategy (uncomment ONE) ──────────────────────────────────
+      #
+      # Option A: Vercel (recommended for Nuxt)
+      #   Required secret: VERCEL_DEPLOY_HOOK (from Vercel project settings → Git)
+      # - name: Trigger Vercel deploy
+      #   run: curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
+      #
+      # Option B: Netlify
+      #   Required secret: NETLIFY_BUILD_HOOK
+      # - name: Trigger Netlify build
+      #   run: curl -X POST "${{ secrets.NETLIFY_BUILD_HOOK }}"
+      #
+      # Option C: Self-hosted via SSH
+      #   Required secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY
+      # - name: Deploy via SSH
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{ secrets.DEPLOY_HOST }}
+      #     username: ${{ secrets.DEPLOY_USER }}
+      #     key: ${{ secrets.DEPLOY_SSH_KEY }}
+      #     script: |
+      #       cd /srv/ritmo-web && git pull && pnpm build && pm2 restart ritmo-web
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: Deploy placeholder
+        run: echo "Web deploy not configured. Uncomment a strategy above and add required secrets."
+
+  notify:
+    name: Release Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-api, deploy-web]
+    if: always()
+    steps:
+      # ── Notification Strategy (uncomment ONE) ────────────────────────────
+      #
+      # Option A: Slack
+      #   Required secret: SLACK_WEBHOOK_URL
+      # - name: Notify Slack
+      #   uses: slackapi/slack-github-action@v1
+      #   with:
+      #     payload: |
+      #       {
+      #         "text": "Release ${{ github.sha }} — API: ${{ needs.deploy-api.result }}, Web: ${{ needs.deploy-web.result }}"
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #
+      # Option B: Discord
+      #   Required secret: DISCORD_WEBHOOK
+      # - name: Notify Discord
+      #   run: |
+      #     curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+      #       -H "Content-Type: application/json" \
+      #       -d "{\"content\": \"Release ${{ github.sha }} deployed — API: ${{ needs.deploy-api.result }}, Web: ${{ needs.deploy-web.result }}\"}"
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: Notify placeholder
+        run: echo "Release notification not configured. Uncomment a strategy above."
