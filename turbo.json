@@ -1,0 +1,124 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        ".nuxt/**",
+        "!.nuxt/cache/**",
+        "coverage/**"
+      ],
+      "env": ["NODE_ENV"],
+      "cache": true
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "env": ["NODE_ENV", "PORT"]
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"],
+      "env": [
+        "NODE_ENV",
+        "CI",
+        "DATABASE_URL",
+        "TEST_DATABASE_URL",
+        "JWT_SECRET",
+        "JWT_REFRESH_SECRET",
+        "JWT_ACCESS_SECRET",
+        "SESSION_SECRET",
+        "DEVICE_HMAC_SECRET",
+        "API_SECRET"
+      ],
+      "cache": true
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:coverage": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"],
+      "env": [
+        "NODE_ENV",
+        "CI",
+        "DATABASE_URL",
+        "TEST_DATABASE_URL",
+        "JWT_SECRET",
+        "JWT_REFRESH_SECRET",
+        "JWT_ACCESS_SECRET",
+        "SESSION_SECRET",
+        "DEVICE_HMAC_SECRET",
+        "API_SECRET"
+      ],
+      "cache": true
+    },
+    "lint": {
+      "outputs": [],
+      "env": ["NODE_ENV"],
+      "cache": true
+    },
+    "lint:fix": {
+      "outputs": [],
+      "env": ["NODE_ENV"],
+      "cache": false
+    },
+    "format": {
+      "outputs": [],
+      "env": ["NODE_ENV"],
+      "cache": true
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "env": ["NODE_ENV"],
+      "cache": true
+    },
+    "clean": {
+      "cache": false
+    },
+    "db:generate": {
+      "outputs": ["node_modules/.prisma/**"],
+      "cache": true
+    },
+    "db:migrate": {
+      "cache": false,
+      "env": ["DATABASE_URL"]
+    },
+    "db:seed": {
+      "cache": false,
+      "env": ["DATABASE_URL"]
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true,
+      "env": ["DATABASE_URL"]
+    }
+  },
+  "globalDependencies": [
+    "package.json",
+    "tsconfig.json",
+    "tailwind.config.ts",
+    "eslint.config.js",
+    ".env*"
+  ],
+  "globalEnv": [
+    "NODE_ENV",
+    "CI",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "JWT_SECRET",
+    "JWT_REFRESH_SECRET",
+    "JWT_ACCESS_SECRET",
+    "SESSION_SECRET",
+    "DEVICE_HMAC_SECRET",
+    "API_SECRET",
+    "PORT"
+  ]
+}

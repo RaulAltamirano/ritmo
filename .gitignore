@@ -26,6 +26,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+!.env.template
 .env.local
 
 # Turbo cache
@@ -69,3 +70,21 @@ Thumbs.db
 
 # Vite dependency scan cache (no versionar)
 **/vite.config.ts.timestamp-*.mjs
+
+# Local test env files (without leading dot — not caught by .env.*)
+env.test
+env.local
+apps/*/env.test
+apps/*/env.local
+
+# Superpowers planning artifacts (kept local, not in repo)
+docs/superpowers/plans/
+docs/superpowers/specs/
+docs/superpowers/reports/
+
+# Playwright outputs
+**/playwright-report/
+**/test-results/
+
+# Graphify outputs
+graphify-out/

@@ -1,0 +1,28 @@
+# pnpm-workspace.yaml
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - '.'
+
+# Configuración de pnpm para mejor rendimiento y hoisting
+node-linker: hoisted
+enable-pre-post-scripts: true
+auto-install-peers: true
+strict-peer-dependencies: false
+save-exact: true
+prefer-frozen-lockfile: true
+
+# Configuración de hoisting para reducir node_modules
+hoist-pattern:
+  - '*'
+  - '**/node_modules/**'
+
+# Configuración de shamefully-hoist para compatibilidad
+shamefully-hoist: false
+
+# Configuración de public-hoist-pattern para paquetes públicos
+public-hoist-pattern:
+  - '@types/*'
+  - 'eslint*'
+  - 'prettier'
+  - 'typescript'
