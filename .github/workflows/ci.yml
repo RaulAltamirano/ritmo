@@ -63,7 +63,14 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://test:test@localhost:5432/ritmo_test
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      TEST_DATABASE_URL: postgresql://test:test@localhost:5432/ritmo_test
+      # Test-only JWT fixtures — matching apps/api/env.test (no real secrets)
+      JWT_SECRET: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+      JWT_REFRESH_SECRET: 'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210'
+      JWT_ACCESS_SECRET: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+      JWT_ACCESS_EXPIRES_IN: '15m'
+      JWT_REFRESH_EXPIRES_IN: '7d'
+      BCRYPT_SALT_ROUNDS: '10'
       NODE_ENV: test
       CI: true
     steps:
@@ -85,6 +92,12 @@ jobs:
 
       - name: Run Prisma migrations
         run: pnpm --filter=@ritmo/api db:deploy
+
+      - name: Run DB-level regression tests (Prisma)
+        run: pnpm --filter=@ritmo/api test:db
+
+      - name: Seed database (circadian phases and demo data)
+        run: pnpm --filter=@ritmo/api db:seed
 
       - name: Run tests with coverage
         run: pnpm test:coverage
