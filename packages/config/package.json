@@ -1,0 +1,47 @@
+{
+  "name": "@ritmo/config",
+  "version": "1.0.0",
+  "description": "Shared configuration files for Ritmo monorepo",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**",
+    "eslint.config.js",
+    "prettier.config.cjs",
+    "tsconfig.json",
+    "tailwind-preset.js",
+    "ritmo-app-theme.cjs",
+    "eslint-preset.js",
+    "prettier-preset.js",
+    "typescript-preset.json",
+    "src/**"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint . --fix",
+    "format": "prettier --write .",
+    "type-check": "tsc --noEmit",
+    "validate": "tsx src/validation.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/parser": "^8.43.0",
+    "eslint": "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.4.0",
+    "prettier": "^3.6.2",
+    "prettier-plugin-vue": "^1.1.6",
+    "typescript": "^5.9.2",
+    "tsx": "^4.20.5",
+    "vue-eslint-parser": "^10.0.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.21"
+  }
+}

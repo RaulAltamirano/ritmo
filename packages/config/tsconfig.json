@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    // Configuración base
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+
+    // Configuración estricta
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Configuración de paths
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@ritmo/shared": ["../shared/src"],
+      "@ritmo/ui": ["../ui/src"],
+      "@ritmo/config": ["./src"]
+    },
+
+    // Configuración de tipos
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Configuración de decoradores
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["**/*.ts", "**/*.tsx", "**/*.vue", "**/*.js", "**/*.jsx"],
+  "exclude": ["node_modules", "dist", ".nuxt", ".output", "coverage"]
+}
