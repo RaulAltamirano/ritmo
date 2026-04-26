@@ -1,0 +1,43 @@
+/* Navigation Utilities */
+@layer utilities {
+  /* Common button styles */
+  .nav-button {
+    @apply p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  /* Common dropdown item styles */
+  .nav-dropdown-item {
+    @apply flex items-center space-x-3 px-3 py-2 text-sm transition-colors duration-200;
+  }
+
+  .nav-dropdown-item-active {
+    @apply text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20;
+  }
+
+  .nav-dropdown-item-inactive {
+    @apply text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700;
+  }
+
+  /* Mobile menu item styles */
+  .nav-mobile-item {
+    @apply flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  .nav-mobile-item-active {
+    @apply text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20;
+  }
+
+  .nav-mobile-item-inactive {
+    @apply text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800;
+  }
+
+  /* Section headers */
+  .nav-section-header {
+    @apply text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide;
+  }
+
+  /* Avatar skeleton */
+  .avatar-skeleton {
+    @apply bg-gray-300 dark:bg-gray-600 animate-pulse rounded;
+  }
+}
