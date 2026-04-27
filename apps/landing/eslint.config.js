@@ -106,6 +106,7 @@ export default [
       '**/build/**',
       '**/.turbo/**',
       '**/public/**',
+      'tailwind.config.js',
     ],
   },
 
