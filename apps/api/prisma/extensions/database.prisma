@@ -1,0 +1,9 @@
+// =====================================================
+// DATABASE EXTENSIONS & CONFIGURATION
+// =====================================================
+
+// Enable pgcrypto for secure hashing
+// Enable pg_trgm for text search capabilities
+
+// This file contains database-level configurations
+// and extensions that are applied to the entire database

@@ -1,0 +1,36 @@
+services:
+  # Base de datos de test
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: ritmo-test-db
+    environment:
+      POSTGRES_DB: ritmo_test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    ports:
+      - '5436:5432'
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U test -d ritmo_test']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis para cache de test (opcional)
+  redis-test:
+    image: redis:7-alpine
+    container_name: ritmo-test-redis
+    ports:
+      - '6381:6379'
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_test_data:
+  redis_test_data:

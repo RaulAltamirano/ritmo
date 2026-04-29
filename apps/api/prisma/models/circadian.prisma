@@ -1,0 +1,139 @@
+// =====================================================
+// CIRCADIAN RHYTHM MODELS - 2025 BEST PRACTICES
+// =====================================================
+// 
+// Este modelo implementa las mejores prácticas para:
+// - Gestión de fases circadianas del usuario
+// - Optimización de productividad basada en ritmos biológicos
+// - Personalización de experiencias según el momento del día
+// - Análisis de patrones de rendimiento temporal
+
+model CircadianPhase {
+  id          String   @id @default(cuid())
+  
+  // Identificación y clasificación
+  type        CircadianPhaseType
+  category    CircadianPhaseCategory
+  priority    CircadianPhasePriority @default(medium)
+  
+  // Configuración temporal
+  startHour   Int      // Hora de inicio (0-23)
+  endHour     Int      // Hora de fin (0-23)
+  duration    Int      // Duración en minutos
+  
+  // Características de la fase
+  name        String   @db.VarChar(100)
+  keyword     String   @db.VarChar(50)
+  description String   @db.Text
+  idealFor    String   @db.Text
+  
+  // Personalización visual
+  color       String   @db.VarChar(7) // Color hexadecimal
+  icon        String   @db.VarChar(50) // Nombre del icono
+  emoji       String   @db.VarChar(10) // Emoji representativo
+  
+  // Características premium
+  isPremium   Boolean  @default(false)
+  isIntuitive Boolean  @default(true)
+  
+  // Metadatos científicos
+  scientificReferences String[] // Referencias científicas
+  evidenceLevel       String   @db.VarChar(20) // Nivel de evidencia científica
+  
+  // Configuración del sistema
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relaciones
+  preferences CircadianPhasePreference[]
+  userSessions WorkSession[]
+  sessions CircadianPhaseSession[]
+  
+  // Índices para optimización
+  @@index([type])
+  @@index([category])
+  @@index([startHour])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@unique([type])
+  @@map("circadian_phases")
+}
+
+model CircadianPhasePreference {
+  id              String   @id @default(cuid())
+  userId          String
+  phaseId         String
+  
+  // Personalización del usuario
+  isEnabled       Boolean  @default(true)
+  customStartHour Int?     // Hora personalizada de inicio
+  customEndHour   Int?     // Hora personalizada de fin
+  
+  // Notificaciones
+  notificationsEnabled Boolean @default(true)
+  notificationType     String  @db.VarChar(20) // 'push', 'email', 'both'
+  
+  // Configuración de tareas
+  autoTaskScheduling Boolean @default(false)
+  preferredTaskTypes String[] // Tipos de tareas preferidos para esta fase
+  
+  // Métricas de rendimiento
+  averageProductivityScore Float? // Puntuación promedio de productividad (0-10)
+  totalSessionsInPhase    Int    @default(0)
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relaciones
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phase          CircadianPhase   @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  
+  // Índices
+  @@index([userId])
+  @@index([phaseId])
+  @@unique([userId, phaseId])
+  @@map("circadian_phase_preferences")
+}
+
+model CircadianPhaseSession {
+  id              String   @id @default(cuid())
+  userId          String
+  phaseId         String
+  
+  // Información de la sesión
+  startTime       DateTime
+  endTime         DateTime?
+  duration        Int?     // Duración en minutos
+  
+  // Métricas de rendimiento
+  productivityScore Int?     // Puntuación de productividad (1-10)
+  focusScore       Int?     // Puntuación de enfoque (1-10)
+  energyLevel      Int?     // Nivel de energía (1-10)
+  
+  // Actividades realizadas
+  activitiesCompleted Int    @default(0)
+  tasksCompleted      Int    @default(0)
+  
+  // Notas y observaciones
+  notes           String?
+  mood            String?   @db.VarChar(50)
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relaciones
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phase          CircadianPhase   @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  
+  // Índices
+  @@index([userId, startTime])
+  @@index([phaseId])
+  @@index([startTime])
+  @@map("circadian_phase_sessions")
+}

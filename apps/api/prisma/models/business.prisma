@@ -1,0 +1,161 @@
+// =====================================================
+// CORE BUSINESS MODELS
+// =====================================================
+
+model Task {
+  id                String        @id @default(cuid())
+  userId            String
+  title             String        @db.VarChar(255)
+  description       String?
+  status            TaskStatus    @default(todo)
+  priority          Priority      @default(medium)
+  
+  // Scheduling (replaces Activity.startTime/endTime)
+  startTime         DateTime      @default(now())
+  endTime           DateTime?
+  duration          Int?     // in minutes
+  estimatedDuration Int?     // in minutes (legacy)
+  actualDuration    Int?     // in minutes
+  dueDate           DateTime?
+  completedAt       DateTime?
+
+  // Classification
+  type              String?       @db.VarChar(50) // work, study, exercise, etc.
+  tags              String[]
+  categoryId        String?
+  
+  // Metadata
+  isDeleted         Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+  
+  // Relations
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category          Category?     @relation(fields: [categoryId], references: [id])
+  sessions          WorkSession[]
+  
+  // Indexes
+  @@index([userId, status])
+  @@index([userId, startTime])
+  @@index([userId, dueDate])
+  @@index([categoryId])
+  @@map("tasks")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  userId      String
+  name        String     @db.VarChar(100)
+  description String?
+  color       String?    @db.VarChar(7) // Hex color
+  icon        String?    @db.VarChar(50)
+  parentId    String?
+  
+  // Metadata
+  isDeleted   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+  
+  // Relations
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  tasks       Task[]
+  
+  // Indexes
+  @@index([userId, parentId])
+  @@index([userId, isDeleted])
+  @@map("categories")
+}
+
+model DailyCheckin {
+  id            String   @id @default(cuid())
+  userId        String
+  calendarDate  DateTime @db.Date
+  energy        Int      // 1–5
+  stress        Int      // 1–5
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workSessions  WorkSession[]
+
+  @@unique([userId, calendarDate])
+  @@index([userId, calendarDate])
+  @@map("daily_checkins")
+}
+
+model WorkSessionIdempotency {
+  id             String   @id @default(cuid())
+  userId         String
+  idempotencyKey String   @db.VarChar(128)
+  workSessionId  String
+  createdAt      DateTime @default(now())
+
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workSession    WorkSession @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, idempotencyKey])
+  @@index([workSessionId])
+  @@map("work_session_idempotency")
+}
+
+model WorkSession {
+  id                String    @id @default(cuid())
+  userId            String
+  taskId            String
+  circadianPhaseId  String?  // Relación con la fase circadiana activa
+
+  state             WorkSessionState @default(running)
+  timerMode         WorkSessionTimerMode?
+  targetDurationSec Int?
+  /// Descanso configurado para el preset (segundos); opcional
+  breakDurationSec  Int?
+  pausedDurationSec Int       @default(0)
+  lastClientSeenAt  DateTime?
+  dailyCheckinId    String?
+  /// Clave de preset del cliente (ej. pomodoro_25_5); opcional
+  presetKey         String?   @db.VarChar(64)
+
+  // Time Tracking (UTC)
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int?     // in minutes (legacy / informes)
+
+  // Metrics (legacy 1–10)
+  focusScore        Int?
+  productivityScore Int?
+  notes             String?
+
+  // Reflexión post-bloque (1–5 salvo timeFit / blocker)
+  rpeCognitive      Int?
+  frictionScore     Int?
+  frictionBlocker   WorkSessionFrictionBlocker?
+  energyAfter       Int?
+  perceivedFocus    Int?
+  perceivedProgress Int?
+  timeFit           WorkSessionTimeFit?
+
+  // Metadata
+  isDeleted         Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task              Task      @relation(fields: [taskId], references: [id])
+  circadianPhase    CircadianPhase? @relation(fields: [circadianPhaseId], references: [id])
+  dailyCheckin      DailyCheckin? @relation(fields: [dailyCheckinId], references: [id], onDelete: SetNull)
+  idempotencyKeys   WorkSessionIdempotency[]
+
+  // Indexes
+  @@index([userId, startTime])
+  @@index([userId, state])
+  @@index([taskId])
+  @@index([circadianPhaseId])
+  @@index([dailyCheckinId])
+  @@map("work_sessions")
+}
