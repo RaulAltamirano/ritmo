@@ -1,0 +1,625 @@
+{
+  "testSpecification": {
+    "metadata": {
+      "version": "2025.1.0",
+      "createdAt": "2025-01-15T10:30:00Z",
+      "module": "Authentication",
+      "framework": "Jest + Supertest",
+      "coverageTarget": 95,
+      "contextEngineering": {
+        "approach": "Behavior-Driven Development (BDD)",
+        "contextLayers": [
+          "User Journey",
+          "Security Context",
+          "Session Management",
+          "Error Handling"
+        ],
+        "testStrategy": "Context-Aware Testing"
+      }
+    },
+    "contextDefinitions": {
+      "userJourney": {
+        "newUser": {
+          "context": "First-time user registration and onboarding",
+          "userState": "Unauthenticated",
+          "deviceContext": "New device, no existing sessions",
+          "securityContext": "Initial trust level: low"
+        },
+        "returningUser": {
+          "context": "Existing user with previous sessions",
+          "userState": "Authenticated",
+          "deviceContext": "Known device, existing sessions",
+          "securityContext": "Trust level: medium to high"
+        },
+        "suspiciousUser": {
+          "context": "User with unusual behavior patterns",
+          "userState": "Authenticated but flagged",
+          "deviceContext": "Unknown device or location",
+          "securityContext": "Trust level: low, monitoring required"
+        }
+      },
+      "securityContext": {
+        "normalFlow": {
+          "riskLevel": "low",
+          "expectedBehavior": "Standard authentication flow",
+          "monitoringLevel": "basic"
+        },
+        "highRiskFlow": {
+          "riskLevel": "high",
+          "expectedBehavior": "Enhanced security measures",
+          "monitoringLevel": "intensive"
+        },
+        "attackFlow": {
+          "riskLevel": "critical",
+          "expectedBehavior": "Block and alert",
+          "monitoringLevel": "maximum"
+        }
+      }
+    },
+    "testSuites": {
+      "authenticationFlow": {
+        "suiteName": "Authentication Flow Tests",
+        "description": "Complete user authentication journey testing",
+        "context": "User Journey + Security Context",
+        "testCases": [
+          {
+            "id": "AUTH-001",
+            "name": "User Registration - New User",
+            "context": {
+              "userJourney": "newUser",
+              "securityContext": "normalFlow",
+              "deviceContext": "desktop-chrome-windows"
+            },
+            "scenario": "Given a new user wants to register\nWhen they provide valid registration data\nThen their account should be created successfully\nAnd they should receive a welcome response",
+            "testData": {
+              "input": {
+                "email": "newuser@example.com",
+                "username": "newuser123",
+                "password": "SecurePass123!",
+                "firstName": "John",
+                "lastName": "Doe",
+                "timezone": "UTC",
+                "language": "es"
+              },
+              "expectedOutput": {
+                "statusCode": 201,
+                "response": {
+                  "success": true,
+                  "data": {
+                    "user": {
+                      "id": "string",
+                      "email": "newuser@example.com",
+                      "username": "newuser123",
+                      "isEmailVerified": false,
+                      "role": "user"
+                    },
+                    "accessToken": "string",
+                    "refreshToken": "string",
+                    "sessionId": "string"
+                  }
+                }
+              }
+            },
+            "assertions": [
+              "User should be created in database",
+              "Password should be hashed with bcrypt",
+              "Email verification should be required",
+              "Session should be created",
+              "Cookies should be set with HttpOnly flag"
+            ],
+            "securityChecks": [
+              "Password strength validation",
+              "Email format validation",
+              "Username uniqueness check",
+              "Rate limiting compliance"
+            ]
+          },
+          {
+            "id": "AUTH-002",
+            "name": "User Login - Returning User",
+            "context": {
+              "userJourney": "returningUser",
+              "securityContext": "normalFlow",
+              "deviceContext": "known-device"
+            },
+            "scenario": "Given a registered user wants to login\nWhen they provide valid credentials\nThen they should be authenticated successfully\nAnd their session should be managed",
+            "testData": {
+              "input": {
+                "email": "existinguser@example.com",
+                "password": "SecurePass123!",
+                "deviceInfo": {
+                  "deviceId": "known-device-fingerprint",
+                  "deviceName": "Chrome on Windows",
+                  "deviceType": "desktop",
+                  "browser": "Chrome",
+                  "os": "Windows",
+                  "ipAddress": "192.168.1.100"
+                }
+              },
+              "expectedOutput": {
+                "statusCode": 200,
+                "response": {
+                  "success": true,
+                  "data": {
+                    "user": {
+                      "id": "string",
+                      "email": "existinguser@example.com",
+                      "username": "existinguser"
+                    },
+                    "accessToken": "string",
+                    "refreshToken": "string",
+                    "sessionId": "string",
+                    "deviceTrust": "high"
+                  }
+                }
+              }
+            },
+            "assertions": [
+              "User should be authenticated",
+              "Failed login attempts should be reset",
+              "Session should be created or reused",
+              "Device trust level should be calculated",
+              "Last login timestamp should be updated"
+            ],
+            "securityChecks": [
+              "Password verification",
+              "Account lockout check",
+              "Device fingerprint validation",
+              "Session consolidation"
+            ]
+          },
+          {
+            "id": "AUTH-003",
+            "name": "User Login - Suspicious Activity",
+            "context": {
+              "userJourney": "suspiciousUser",
+              "securityContext": "highRiskFlow",
+              "deviceContext": "unknown-device"
+            },
+            "scenario": "Given a user attempts login from unknown device\nWhen they provide valid credentials\nThen they should be authenticated with enhanced security\nAnd security monitoring should be triggered",
+            "testData": {
+              "input": {
+                "email": "existinguser@example.com",
+                "password": "SecurePass123!",
+                "deviceInfo": {
+                  "deviceId": "unknown-device-fingerprint",
+                  "deviceName": "Unknown Browser",
+                  "deviceType": "mobile",
+                  "browser": "Unknown",
+                  "os": "Unknown",
+                  "ipAddress": "203.0.113.1"
+                }
+              },
+              "expectedOutput": {
+                "statusCode": 200,
+                "response": {
+                  "success": true,
+                  "data": {
+                    "user": {
+                      "id": "string",
+                      "email": "existinguser@example.com"
+                    },
+                    "accessToken": "string",
+                    "refreshToken": "string",
+                    "sessionId": "string",
+                    "deviceTrust": "low"
+                  }
+                }
+              }
+            },
+            "assertions": [
+              "User should be authenticated",
+              "Device trust level should be low",
+              "Security event should be logged",
+              "Session should be created with restrictions",
+              "Enhanced monitoring should be enabled"
+            ],
+            "securityChecks": [
+              "Geographic anomaly detection",
+              "Device fingerprint analysis",
+              "Security event logging",
+              "Trust score calculation"
+            ]
+          }
+        ]
+      },
+      "sessionManagement": {
+        "suiteName": "Session Management Tests",
+        "description": "Comprehensive session lifecycle testing",
+        "context": "Session Management + Security Context",
+        "testCases": [
+          {
+            "id": "SESS-001",
+            "name": "Get User Sessions",
+            "context": {
+              "userJourney": "returningUser",
+              "securityContext": "normalFlow",
+              "sessionContext": "multiple-active-sessions"
+            },
+            "scenario": "Given an authenticated user\nWhen they request their active sessions\nThen they should receive a list of their sessions\nAnd session details should be accurate",
+            "testData": {
+              "input": {
+                "headers": {
+                  "Authorization": "Bearer valid-access-token"
+                }
+              },
+              "expectedOutput": {
+                "statusCode": 200,
+                "response": {
+                  "success": true,
+                  "data": {
+                    "sessions": [
+                      {
+                        "id": "session-id-1",
+                        "deviceId": "device-fingerprint-1",
+                        "deviceName": "Chrome on Windows",
+                        "deviceType": "desktop",
+                        "browser": "Chrome",
+                        "os": "Windows",
+                        "ipAddress": "192.168.1.100",
+                        "isActive": true,
+                        "lastActivity": "2025-01-15T10:30:00Z",
+                        "expiresAt": "2025-01-22T10:30:00Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "assertions": [
+              "Only active sessions should be returned",
+              "Session data should be accurate",
+              "User should only see their own sessions",
+              "Sensitive data should be filtered"
+            ],
+            "securityChecks": [
+              "Authentication token validation",
+              "Session ownership verification",
+              "Data privacy compliance",
+              "Rate limiting"
+            ]
+          },
+          {
+            "id": "SESS-002",
+            "name": "Session Consolidation",
+            "context": {
+              "userJourney": "returningUser",
+              "securityContext": "normalFlow",
+              "sessionContext": "duplicate-sessions"
+            },
+            "scenario": "Given a user has multiple sessions for the same device\nWhen they login again\nThen duplicate sessions should be consolidated\nAnd only the most recent session should remain active",
+            "testData": {
+              "input": {
+                "email": "user@example.com",
+                "password": "password123",
+                "deviceInfo": {
+                  "deviceId": "same-device-fingerprint"
+                }
+              },
+              "expectedOutput": {
+                "statusCode": 200,
+                "response": {
+                  "success": true,
+                  "data": {
+                    "session": {
+                      "id": "newest-session-id",
+                      "isActive": true
+                    },
+                    "isNewSession": false,
+                    "message": "Sesión existente reutilizada exitosamente"
+                  }
+                }
+              }
+            },
+            "assertions": [
+              "Duplicate sessions should be deactivated",
+              "Only the newest session should remain active",
+              "Session consolidation should be logged",
+              "User experience should be seamless"
+            ],
+            "securityChecks": [
+              "Session deduplication logic",
+              "Data integrity verification",
+              "Audit trail maintenance"
+            ]
+          }
+        ]
+      },
+      "securityTests": {
+        "suiteName": "Security Tests",
+        "description": "Comprehensive security validation",
+        "context": "Security Context + Attack Scenarios",
+        "testCases": [
+          {
+            "id": "SEC-001",
+            "name": "Brute Force Attack Prevention",
+            "context": {
+              "userJourney": "suspiciousUser",
+              "securityContext": "attackFlow",
+              "attackType": "brute-force"
+            },
+            "scenario": "Given an attacker attempts multiple failed logins\nWhen they exceed the maximum attempts\nThen the account should be locked\nAnd security alerts should be triggered",
+            "testData": {
+              "input": {
+                "attempts": [
+                  { "email": "user@example.com", "password": "wrong1" },
+                  { "email": "user@example.com", "password": "wrong2" },
+                  { "email": "user@example.com", "password": "wrong3" },
+                  { "email": "user@example.com", "password": "wrong4" },
+                  { "email": "user@example.com", "password": "wrong5" },
+                  { "email": "user@example.com", "password": "wrong6" }
+                ]
+              },
+              "expectedOutput": {
+                "statusCode": 423,
+                "response": {
+                  "success": false,
+                  "error": {
+                    "code": "ACCOUNT_LOCKED",
+                    "message": "Account temporarily locked due to multiple failed attempts"
+                  }
+                }
+              }
+            },
+            "assertions": [
+              "Account should be locked after 5 failed attempts",
+              "Lockout duration should be 15 minutes",
+              "Security event should be logged",
+              "Rate limiting should be enforced"
+            ],
+            "securityChecks": [
+              "Failed attempt tracking",
+              "Account lockout mechanism",
+              "Security event logging",
+              "Rate limiting compliance"
+            ]
+          },
+          {
+            "id": "SEC-002",
+            "name": "Session Hijacking Prevention",
+            "context": {
+              "userJourney": "suspiciousUser",
+              "securityContext": "attackFlow",
+              "attackType": "session-hijacking"
+            },
+            "scenario": "Given a session token is compromised\nWhen an attacker uses it from a different device\nThen the session should be invalidated\nAnd security measures should be triggered",
+            "testData": {
+              "input": {
+                "sessionId": "compromised-session-id",
+                "deviceInfo": {
+                  "deviceId": "attacker-device-fingerprint",
+                  "ipAddress": "attacker-ip-address"
+                }
+              },
+              "expectedOutput": {
+                "statusCode": 401,
+                "response": {
+                  "success": false,
+                  "error": {
+                    "code": "SESSION_INVALID",
+                    "message": "Session validation failed"
+                  }
+                }
+              }
+            },
+            "assertions": [
+              "Session should be invalidated",
+              "Security alert should be triggered",
+              "User should be notified",
+              "Audit trail should be maintained"
+            ],
+            "securityChecks": [
+              "Device fingerprint validation",
+              "IP address verification",
+              "Session integrity check",
+              "Security event logging"
+            ]
+          }
+        ]
+      },
+      "errorHandling": {
+        "suiteName": "Error Handling Tests",
+        "description": "Comprehensive error scenario testing",
+        "context": "Error Context + User Experience",
+        "testCases": [
+          {
+            "id": "ERR-001",
+            "name": "Invalid Credentials",
+            "context": {
+              "userJourney": "returningUser",
+              "errorContext": "authentication-failure",
+              "userExperience": "graceful-degradation"
+            },
+            "scenario": "Given a user provides invalid credentials\nWhen they attempt to login\nThen they should receive a clear error message\nAnd no sensitive information should be exposed",
+            "testData": {
+              "input": {
+                "email": "user@example.com",
+                "password": "wrongpassword"
+              },
+              "expectedOutput": {
+                "statusCode": 401,
+                "response": {
+                  "success": false,
+                  "error": {
+                    "code": "INVALID_CREDENTIALS",
+                    "message": "Invalid credentials"
+                  }
+                }
+              }
+            },
+            "assertions": [
+              "Error message should be generic",
+              "No user existence information should be revealed",
+              "Failed attempt should be logged",
+              "Rate limiting should be applied"
+            ],
+            "securityChecks": [
+              "Information disclosure prevention",
+              "Security logging",
+              "Rate limiting"
+            ]
+          }
+        ]
+      }
+    },
+    "testImplementation": {
+      "framework": {
+        "name": "Jest",
+        "version": "29.0.0",
+        "plugins": ["jest-extended", "supertest", "testcontainers"]
+      },
+      "testStructure": {
+        "beforeAll": [
+          "Setup test database",
+          "Initialize test users",
+          "Configure test environment"
+        ],
+        "beforeEach": [
+          "Clear test data",
+          "Reset rate limiting",
+          "Setup request context"
+        ],
+        "afterEach": ["Cleanup test data", "Reset mocks", "Clear cookies"],
+        "afterAll": [
+          "Teardown test database",
+          "Cleanup test files",
+          "Generate coverage report"
+        ]
+      },
+      "testData": {
+        "fixtures": {
+          "users": [
+            {
+              "id": "test-user-1",
+              "email": "testuser1@example.com",
+              "username": "testuser1",
+              "password": "SecurePass123!",
+              "isActive": true,
+              "isEmailVerified": true
+            }
+          ],
+          "sessions": [
+            {
+              "id": "test-session-1",
+              "userId": "test-user-1",
+              "deviceId": "test-device-1",
+              "isActive": true,
+              "expiresAt": "2025-12-31T23:59:59Z"
+            }
+          ]
+        },
+        "mocks": {
+          "emailService": "Mock email sending",
+          "deviceValidation": "Mock device fingerprinting",
+          "securityMonitoring": "Mock security alerts"
+        }
+      }
+    },
+    "performanceTests": {
+      "loadTesting": {
+        "scenarios": [
+          {
+            "name": "Concurrent User Login",
+            "users": 100,
+            "duration": "5 minutes",
+            "rampUp": "30 seconds",
+            "expectedResponseTime": "< 500ms",
+            "expectedThroughput": "> 200 req/sec"
+          },
+          {
+            "name": "Session Management",
+            "users": 50,
+            "duration": "10 minutes",
+            "rampUp": "1 minute",
+            "expectedResponseTime": "< 200ms",
+            "expectedThroughput": "> 100 req/sec"
+          }
+        ]
+      },
+      "stressTesting": {
+        "scenarios": [
+          {
+            "name": "Database Connection Pool",
+            "users": 500,
+            "duration": "15 minutes",
+            "expectedBehavior": "Graceful degradation",
+            "expectedErrorRate": "< 5%"
+          }
+        ]
+      }
+    },
+    "securityAudit": {
+      "owaspTop10": [
+        {
+          "category": "A01:2021 - Broken Access Control",
+          "tests": [
+            "Session hijacking prevention",
+            "Privilege escalation prevention",
+            "Resource access control"
+          ]
+        },
+        {
+          "category": "A02:2021 - Cryptographic Failures",
+          "tests": [
+            "Password hashing verification",
+            "Token encryption validation",
+            "Secure cookie configuration"
+          ]
+        },
+        {
+          "category": "A03:2021 - Injection",
+          "tests": [
+            "SQL injection prevention",
+            "Input validation",
+            "Parameterized queries"
+          ]
+        }
+      ],
+      "penetrationTesting": {
+        "scenarios": [
+          "Session fixation attacks",
+          "CSRF attacks",
+          "XSS attacks",
+          "Rate limiting bypass attempts"
+        ]
+      }
+    },
+    "monitoringAndAlerting": {
+      "metrics": [
+        "Authentication success rate",
+        "Failed login attempts",
+        "Session creation rate",
+        "Security event frequency",
+        "Response time percentiles"
+      ],
+      "alerts": [
+        {
+          "name": "High Failed Login Rate",
+          "condition": "Failed logins > 10 per minute",
+          "severity": "high",
+          "action": "Send security alert"
+        },
+        {
+          "name": "Account Lockout",
+          "condition": "Account locked",
+          "severity": "medium",
+          "action": "Log security event"
+        }
+      ]
+    },
+    "deploymentChecklist": {
+      "preDeployment": [
+        "All tests passing",
+        "Code coverage > 95%",
+        "Security scan clean",
+        "Performance benchmarks met"
+      ],
+      "postDeployment": [
+        "Health checks passing",
+        "Monitoring alerts configured",
+        "Backup procedures verified",
+        "Rollback plan tested"
+      ]
+    }
+  }
+}
