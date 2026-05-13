@@ -1,10 +1,11 @@
 <template>
   <div
     class="tcard"
+    data-testid="task-card"
     :class="[
       task.isRunning
         ? 'bg-primary-50/70 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800/50'
-        : 'bg-white/70 dark:bg-gray-800/70 border-gray-200 dark:border-gray-700/60',
+        : 'bg-white/70 dark:bg-gray-800/70 border-gray-200/80 dark:border-gray-700/45 hover:border-gray-300 dark:hover:border-gray-600/60',
       task.completed && 'opacity-60',
       isDragging && 'tcard--dragging',
     ]"
@@ -12,15 +13,23 @@
     <div class="tcard-accent" :style="{ background: accentColor }"></div>
 
     <div class="tcard-body">
-      <div v-if="showDragHandle" class="tcard-grip" aria-hidden="true">
+      <button
+        v-if="showDragHandle"
+        type="button"
+        class="tcard-grip"
+        :class="{ 'tcard-grip--grabbed': isKeyboardGrabbed }"
+        :aria-label="`Mover tarea: ${displayTitle}`"
+        :aria-pressed="isKeyboardGrabbed"
+        @keydown="$emit('grip-keydown', $event)"
+        @click.stop
+      >
         <GripVertical class="tcard-grip-icon" />
-      </div>
+      </button>
 
-      <div
+      <button
+        type="button"
         class="tcard-content tcard-content--clickable"
-        role="button"
-        tabindex="0"
-        :aria-label="`Editar: ${task.title || task.name}`"
+        :aria-label="`Editar: ${displayTitle}`"
         @click="$emit('open-edit')"
         @keydown.enter.prevent="$emit('open-edit')"
         @keydown.space.prevent="$emit('open-edit')"
@@ -33,7 +42,7 @@
               : 'text-gray-900 dark:text-white',
           ]"
         >
-          {{ task.title || task.name }}
+          {{ displayTitle }}
         </span>
         <div class="tcard-meta">
           <span v-if="task.duration" class="text-xs text-gray-400 dark:text-gray-500">
@@ -61,13 +70,13 @@
             >
           </template>
         </div>
-      </div>
+      </button>
 
       <div
         v-if="task.isRunning"
         class="font-mono text-sm font-semibold text-primary-600 dark:text-primary-400 tracking-wide flex-shrink-0"
       >
-        {{ formatTime(task.timeRemaining || 0) }}
+        {{ formatTime(task.timeRemaining ?? 0) }}
       </div>
 
       <div class="tcard-actions">
@@ -93,7 +102,7 @@
 
         <button
           v-if="!task.completed"
-          class="tcard-btn bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400"
+          class="tcard-btn bg-surface-overlay text-gray-400 dark:text-gray-500 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400"
           aria-label="Marcar como completada"
           @click.stop="$emit('request-complete')"
         >
@@ -111,7 +120,7 @@
 
         <button
           v-if="!task.completed"
-          class="tcard-btn bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400"
+          class="tcard-btn bg-surface-overlay text-gray-400 dark:text-gray-500 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400"
           aria-label="Eliminar tarea"
           @click.stop="$emit('delete-task')"
         >
@@ -149,24 +158,41 @@
 </template>
 
 <script setup lang="ts">
+  /**
+   * Tarjeta de tarea para listas/kanban: temporizador, prioridad, acciones y edición por teclado.
+   * Emits: start-timer, request-complete, open-edit, delete-task.
+   */
   import { computed } from 'vue'
   import { GripVertical } from 'lucide-vue-next'
-  import type { Task } from '@/types/task'
+  import type { Task } from '../../types/task'
 
   interface TaskCardProps {
     task: Task
     showDragHandle?: boolean
     isDragging?: boolean
+    isKeyboardGrabbed?: boolean
   }
 
-  const props = defineProps<TaskCardProps>()
+  const props = withDefaults(defineProps<TaskCardProps>(), {
+    showDragHandle: false,
+    isDragging: false,
+    isKeyboardGrabbed: false,
+  })
 
   defineEmits<{
     'start-timer': []
     'request-complete': []
     'open-edit': []
     'delete-task': []
+    'grip-keydown': [event: KeyboardEvent]
   }>()
+
+  const FALLBACK_TITLE = 'Sin título'
+
+  const displayTitle = computed(() => {
+    const raw = props.task.title?.trim() || props.task.name?.trim()
+    return raw || FALLBACK_TITLE
+  })
 
   /* Accent bar colors — design system hex values */
   const priorityAccentHex: Record<string, string> = {
@@ -188,17 +214,22 @@
     baja: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20',
   }
 
+  /** Segundos no finitos o negativos se muestran como 00:00 para evitar NaN en UI. */
   const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60)
+    const n = Number(seconds)
+    const safe = Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0
+    const m = Math.floor(safe / 60)
       .toString()
       .padStart(2, '0')
-    const s = (seconds % 60).toString().padStart(2, '0')
+    const s = (safe % 60).toString().padStart(2, '0')
     return `${m}:${s}`
   }
 
   const formatAccumulated = (seconds: number) => {
-    const h = Math.floor(seconds / 3600)
-    const min = Math.floor((seconds % 3600) / 60)
+    const n = Number(seconds)
+    const safe = Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0
+    const h = Math.floor(safe / 3600)
+    const min = Math.floor((safe % 3600) / 60)
     return h > 0 ? `${h}h ${min}m` : `${min}m`
   }
 </script>
@@ -217,6 +248,23 @@
       opacity 0.2s ease;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tcard,
+    .tcard-accent,
+    .tcard-btn,
+    .tcard-grip {
+      transition: none !important;
+    }
+
+    .tcard:not(.opacity-60):hover {
+      transform: none;
+    }
+
+    .tcard-btn:active {
+      transform: none;
+    }
   }
 
   .tcard:not(.opacity-60):hover {
@@ -250,6 +298,13 @@
     margin: -2px;
     padding: 2px;
     outline: none;
+    appearance: none;
+    border: none;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    width: 100%;
+    display: block;
   }
 
   .tcard-content--clickable:hover {
@@ -341,8 +396,12 @@
     opacity: 0;
     transition:
       opacity 0.15s ease,
-      color 0.15s ease;
+      color 0.15s ease,
+      background 0.15s ease;
     border-radius: 4px;
+    border: none;
+    background: transparent;
+    padding: 0;
   }
 
   .tcard:hover .tcard-grip {
@@ -355,6 +414,19 @@
 
   .tcard-grip:active {
     cursor: grabbing;
+  }
+
+  .tcard-grip--grabbed {
+    opacity: 1;
+    color: var(--ph, #0ea5e9);
+    background: rgba(14, 165, 233, 0.1);
+  }
+
+  .tcard-grip:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--ph, #0ea5e9);
+    outline-offset: 1px;
+    border-radius: 4px;
   }
 
   .tcard-grip-icon {

@@ -1,9 +1,12 @@
 <template>
-  <div class="canvas bg-gray-50 dark:bg-gray-900" :style="canvasVars">
+  <div class="canvas">
+    <AbandonedWorkSessionBanner />
     <div class="wrapper">
       <TodayHeader
         :phase-data="phaseData"
         :phase-loading="phaseLoading"
+        :day-total-seconds="dayTotalSeconds"
+        :last-session-ended-at="lastSessionEndedAt"
         @toggle-filters="$emit('toggle-filters')"
       />
       <TodayContent
@@ -18,6 +21,7 @@
       />
     </div>
 
+    <!-- Feedback al *completar tarea* (escala / notas de tarea), distinto de WorkBlockFeedbackModal (reflexión de bloque remoto). -->
     <TodayTaskFeedbackModal
       :is-open="isFeedbackModalOpen"
       :task="selectedTaskForCompletion"
@@ -31,7 +35,8 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
+  import AbandonedWorkSessionBanner from '@/components/molecules/AbandonedWorkSessionBanner.vue'
+  import { ref } from 'vue'
   import type { Task, TaskCompletionFeedback } from '../../../types/task'
   import TodayContent from './TodayContent.vue'
   import TodayTaskFeedbackModal from './TodayTaskFeedbackModal.vue'
@@ -42,9 +47,11 @@
     isQuickTaskLoading: boolean
     phaseData?: any
     phaseLoading?: boolean
+    dayTotalSeconds: number
+    lastSessionEndedAt: string | null
   }
 
-  const props = defineProps<Props>()
+  defineProps<Props>()
 
   const emit = defineEmits<{
     (e: 'toggle-filters'): void
@@ -67,20 +74,6 @@
   const isFeedbackModalOpen = ref(false)
   const pendingFeedbackSubmit = ref(false)
   const feedbackError = ref<string | null>(null)
-
-  const canvasVars = computed(() => {
-    const color = props.phaseData?.color || '#94a3b8'
-    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color)
-    const r = m ? Number.parseInt(m[1], 16) : 148
-    const g = m ? Number.parseInt(m[2], 16) : 163
-    const b = m ? Number.parseInt(m[3], 16) : 184
-    return {
-      '--ph': color,
-      '--ph-r': r,
-      '--ph-g': g,
-      '--ph-b': b,
-    }
-  })
 
   const resetFeedbackState = () => {
     selectedTaskForCompletion.value = null
@@ -140,21 +133,98 @@
 <style>
   .canvas {
     min-height: 100vh;
-    background-image:
-      radial-gradient(
-        ellipse 90% 55% at -5% -10%,
-        rgba(var(--ph-r), var(--ph-g), var(--ph-b), 0.09) 0%,
-        transparent 60%
-      ),
-      radial-gradient(
-        ellipse 65% 55% at 108% 108%,
-        rgba(var(--ph-r), var(--ph-g), var(--ph-b), 0.05) 0%,
-        transparent 55%
-      );
-    transition: background-image 1.8s ease;
+    position: relative;
+    background-color: #f7f6f3;
+    overflow-x: hidden;
+    overflow-y: visible;
+    border-bottom: none;
+    outline: none;
+    box-shadow: none;
+  }
+
+  .dark .canvas {
+    background-color: #141418;
+  }
+
+  /*
+   * Fade grain + glow at TOP (under fixed nav) and BOTTOM.
+   * Bottom seam: ::after radial sits low (white tint) and reads as a horizontal line above whatever is below the canvas.
+   */
+  .canvas::before,
+  .canvas::after {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      black 5.25rem,
+      black max(5.25rem, calc(100% - 5.25rem)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      black 5.25rem,
+      black max(5.25rem, calc(100% - 5.25rem)),
+      transparent 100%
+    );
+    mask-repeat: no-repeat;
+    mask-size: 100% 100%;
+  }
+
+  /* Paper grain texture */
+  .canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .dark .canvas::before {
+    opacity: 0.03;
+  }
+
+  /*
+   * Breathing glow — opacity only (no scale).
+   */
+  .canvas::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    /* Centered — avoids brightening the bottom edge (was ~82% Y → visible “line” at end of .canvas) */
+    background: radial-gradient(
+      ellipse 70% 45% at 50% 42%,
+      rgba(255, 255, 255, 0.06) 0%,
+      transparent 68%
+    );
+    animation: breathe-glow 75s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .dark .canvas::after {
+    background: radial-gradient(
+      ellipse 65% 42% at 50% 38%,
+      rgba(255, 255, 255, 0.014) 0%,
+      transparent 70%
+    );
+  }
+
+  @keyframes breathe-glow {
+    0%,
+    100% {
+      opacity: 0.92;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 
   .wrapper {
+    position: relative;
+    z-index: 1;
     max-width: 680px;
     margin: 0 auto;
     padding: 2.5rem 1.5rem 5rem;
@@ -164,20 +234,5 @@
     .wrapper {
       padding: 3.5rem 2.5rem 6rem;
     }
-  }
-
-  /* Dark: reduce gradient intensity */
-  .dark .canvas {
-    background-image:
-      radial-gradient(
-        ellipse 90% 55% at -5% -10%,
-        rgba(var(--ph-r), var(--ph-g), var(--ph-b), 0.07) 0%,
-        transparent 60%
-      ),
-      radial-gradient(
-        ellipse 65% 55% at 108% 108%,
-        rgba(var(--ph-r), var(--ph-g), var(--ph-b), 0.04) 0%,
-        transparent 55%
-      );
   }
 </style>

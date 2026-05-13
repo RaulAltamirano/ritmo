@@ -4,6 +4,8 @@
     :is-quick-task-loading="isQuickTaskLoading"
     :phase-data="getPhaseDataForHeader"
     :phase-loading="circadianLoading"
+    :day-total-seconds="dayTotalSeconds"
+    :last-session-ended-at="summaryStore.lastSessionEndedAt"
     @toggle-filters="showFilters = !showFilters"
     @create-task="handleQuickTask"
     @delete-task="handleDeleteTask"
@@ -17,13 +19,14 @@
 <script setup lang="ts">
   import TodayLayout from '@/components/organisms/today/TodayLayout.vue'
   import { useTodayHandlers } from '@/composables/tasks/useTodayHandlers'
-  import { useActivityAdapter } from '@/composables/tasks/useActivityAdapter'
+  import { useTodayTaskView } from '@/composables/tasks/useTodayTaskView'
   import { useUserData } from '@/composables/shared/useUserData'
   import { useCircadian } from '@/composables/useCircadian'
-  import { useActivitiesStore } from '@/stores/activities'
+  import { useTasksStore } from '@/stores/tasks'
   import { useTimerStore } from '@/stores/timer'
+  import { useWorkSessionSummaryStore } from '@/stores/workSessionSummary'
   import type { Task } from '@/types/task'
-  import { computed, onMounted, ref } from 'vue'
+  import { onMounted, ref, watch } from 'vue'
 
   definePageMeta({
     title: 'Today',
@@ -31,9 +34,9 @@
       "Focus on today's immediate tasks and optimize your daily productivity",
   })
 
-  const activitiesStore = useActivitiesStore()
+  const tasksStore = useTasksStore()
   const timerStore = useTimerStore()
-  const { activitiesToTasks } = useActivityAdapter()
+  const summaryStore = useWorkSessionSummaryStore()
   const { userTimezone } = useUserData()
 
   const { isLoading: circadianLoading, getPhaseDataForHeader } = useCircadian({
@@ -51,7 +54,7 @@
     handleCompleteTaskWithFeedback,
   } = useTodayHandlers()
 
-  const tasks = computed(() => activitiesToTasks(activitiesStore.todayActivities))
+  const { tasks, dayTotalSeconds } = useTodayTaskView()
   const showFilters = ref(false)
 
   const handleReorderTasks = (_reorderedTasks: Task[]) => {
@@ -62,7 +65,7 @@
 
   const loadSampleTasks = async () => {
     if (!import.meta.env.DEV) return
-    if (activitiesStore.activities.length > 0) return
+    if (tasksStore.tasks.length > 0) return
 
     const samples = [
       { title: 'Study React Hooks and Context API', priority: 'HIGH' as const },
@@ -79,7 +82,7 @@
     ]
 
     for (const sample of samples) {
-      await activitiesStore.create({
+      await tasksStore.create({
         title: sample.title,
         startTime: new Date(),
         priority: sample.priority,
@@ -92,7 +95,17 @@
   onMounted(async () => {
     timerStore.loadPreferences()
     timerStore.loadDaySummary()
-    await activitiesStore.fetchToday()
+    await Promise.all([tasksStore.fetchToday(), summaryStore.refresh()])
     await loadSampleTasks()
   })
+
+  // Refresh summary whenever the active session ends (activeTask goes set → null)
+  watch(
+    () => timerStore.activeTask?.id ?? null,
+    (curr, prev) => {
+      if (prev && !curr) {
+        void summaryStore.refresh()
+      }
+    },
+  )
 </script>
