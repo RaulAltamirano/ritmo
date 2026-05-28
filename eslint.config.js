@@ -249,6 +249,42 @@ export default [
     },
   },
 
+  // Archivos de configuración y build (CommonJS por necesidad de tooling)
+  {
+    name: 'config-files',
+    files: [
+      '**/*.config.{js,cjs,mjs}',
+      '**/tailwind.config.{js,cjs}',
+      '**/postcss.config.{js,cjs}',
+      '**/*.cjs',
+      '**/scripts/**/*.{js,cjs}',
+    ],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-undef': 'off',
+    },
+  },
+
+  // Scripts CLI y utilidades: console y process son válidos
+  {
+    name: 'scripts-and-tooling',
+    files: ['**/scripts/**/*.{ts,js}', '**/*.config.ts'],
+    rules: {
+      'no-console': 'off',
+      'no-process-env': 'off',
+    },
+  },
+
+  // Entry points y scripts CLI de la API: process.exit() es idiomático
+  // (bootstrap del servidor, handlers de señales SIGTERM/SIGINT, salida de scripts)
+  {
+    name: 'api-entrypoints',
+    files: ['apps/api/src/server.ts', 'apps/api/scripts/**/*.{ts,js}'],
+    rules: {
+      'no-process-exit': 'off',
+    },
+  },
+
   // Configuración de archivos a ignorar
   {
     name: 'ignore-files',
