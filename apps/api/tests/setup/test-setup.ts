@@ -146,4 +146,4 @@ export function getAuthCookies(token?: string) {
 // EXPORTS
 // ========================================
 
-export { request } from 'supertest'
+export { default as request } from 'supertest'

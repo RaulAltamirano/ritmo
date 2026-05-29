@@ -19,17 +19,6 @@ const createTestPrismaClient = () => {
     },
     // Configuración optimizada para tests
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-
-    // Pool de conexiones optimizado para tests
-    __internal: {
-      engine: {
-        // Configuración del pool de conexiones
-        connectionLimit: 5, // Menos conexiones para tests
-        idleTimeout: 30000, // 30 segundos de timeout
-        acquireTimeout: 10000, // 10 segundos para adquirir conexión
-        timeout: 10000, // 10 segundos de timeout general
-      },
-    },
   })
 }
 
@@ -67,7 +56,6 @@ export const clearTestDatabaseWithRetry = async (maxRetries = 3) => {
       await testPrisma.workSession.deleteMany()
       await testPrisma.circadianPhaseSession.deleteMany()
       await testPrisma.task.deleteMany()
-      await testPrisma.activity.deleteMany()
       await testPrisma.circadianPhasePreference.deleteMany()
       await testPrisma.circadianPhase.deleteMany()
       await testPrisma.category.deleteMany()
@@ -97,7 +85,7 @@ export const forceClearDatabase = async () => {
     console.log('🔄 Attempting forced database cleanup...')
 
     // Usar SQL directo para limpieza completa
-    await testPrisma.$executeRaw`TRUNCATE TABLE security_logs, refresh_tokens, password_reset_tokens, user_sessions, work_sessions, circadian_phase_sessions, tasks, activities, circadian_phase_preferences, circadian_phases, categories, users CASCADE`
+    await testPrisma.$executeRaw`TRUNCATE TABLE security_logs, refresh_tokens, password_reset_tokens, user_sessions, work_sessions, circadian_phase_sessions, tasks, circadian_phase_preferences, circadian_phases, categories, users CASCADE`
 
     console.log('✅ Forced database cleanup completed')
   } catch (error) {

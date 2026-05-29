@@ -239,11 +239,11 @@ describe('🔥 Critical Security Tests', () => {
 
       expect(response.status).toBe(200)
 
-      const cookies = response.headers['set-cookie']
+      const cookies = response.headers['set-cookie'] as unknown as string[]
       expect(cookies).toBeDefined()
 
       // Buscar cookie de acceso
-      const authCookie = cookies.find(c => c.includes('access_token'))
+      const authCookie = cookies.find((c: string) => c.includes('access_token'))
       expect(authCookie).toBeDefined()
 
       // Verificar atributos de seguridad

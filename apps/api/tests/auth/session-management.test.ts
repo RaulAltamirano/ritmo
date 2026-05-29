@@ -42,9 +42,11 @@ describe('🔐 Session Management Tests', () => {
   }
 
   // Helper para hacer requests autenticados usando cookies
-  const authenticatedRequest = (method: string, url: string, token: string) => {
-    return request(testContext.app)
-      [method.toLowerCase()](url)
+  type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+  const authenticatedRequest = (method: HttpMethod, url: string, token: string) => {
+    const agent = request(testContext.app)
+    const verb = method.toLowerCase() as Lowercase<HttpMethod>
+    return agent[verb](url)
       .set(getAuthHeaders())
       .set('Cookie', [`access_token=${token}`])
   }

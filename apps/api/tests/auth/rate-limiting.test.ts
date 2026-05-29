@@ -6,6 +6,8 @@
  */
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import type { Request } from 'express'
+import type { IncomingHttpHeaders } from 'http'
 import rateLimit from 'express-rate-limit'
 
 // Mock de express-rate-limit
@@ -14,15 +16,19 @@ vi.mock('express-rate-limit', () => ({
 }))
 
 // Mock de express
-const mockRequest = (ip = '127.0.0.1', headers: any = {}) => ({
-  ip,
-  headers: {
-    'user-agent': 'test-agent',
-    ...headers,
-  },
-  path: '/api/auth/login',
-  method: 'POST',
-})
+const mockRequest = (
+  ip: string | undefined = '127.0.0.1',
+  headers: IncomingHttpHeaders = {},
+): Request =>
+  ({
+    ip,
+    headers: {
+      'user-agent': 'test-agent',
+      ...headers,
+    },
+    path: '/api/auth/login',
+    method: 'POST',
+  }) as unknown as Request
 
 const mockResponse = () => {
   const res: any = {}
