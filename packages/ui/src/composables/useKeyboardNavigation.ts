@@ -315,7 +315,7 @@ export const useKeyboardNavigation = (options: KeyboardNavigationOptions = {}) =
 
     // Get focusable elements
     const elements = Array.from(
-      container.querySelectorAll(
+      container.querySelectorAll<HTMLElement>(
         'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"]), [contenteditable="true"]',
       ),
     )

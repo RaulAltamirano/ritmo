@@ -44,7 +44,7 @@ export function useFocusTrap(options: FocusTrapOptions = {}) {
       '[contenteditable="true"]',
     ].join(', ')
 
-    const elements = Array.from(container.querySelectorAll(selector))
+    const elements = Array.from(container.querySelectorAll<HTMLElement>(selector))
 
     // Filtrar elementos visibles
     return elements.filter(element => {
