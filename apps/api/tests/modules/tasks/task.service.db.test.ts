@@ -107,3 +107,12 @@ describe('TaskService CRITICAL priority', () => {
     expect(created.priority).toBe('critical')
   })
 })
+
+describe('TaskService title validation', () => {
+  it('rejects whitespace-only titles', async () => {
+    const user = await createUser()
+    await expect(
+      service.createTask({ title: '   ' }, user.id),
+    ).rejects.toMatchObject({ statusCode: 400, code: 'INVALID_INPUT' })
+  })
+})

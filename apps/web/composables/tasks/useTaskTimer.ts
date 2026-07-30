@@ -60,7 +60,12 @@ export function useTaskTimer() {
           timerMode,
         )
       } catch (e) {
-        if ((e as Error)?.message === 'CHECKIN_REQUIRED') {
+        const msg = (e as Error)?.message
+        if (msg === 'CHECKIN_REQUIRED') return
+        if (
+          msg === 'WORK_SESSION_CONFLICT' ||
+          msg === 'WORK_SESSION_CONFLICT_UNRESOLVED'
+        ) {
           return
         }
         console.warn('Remote work session (continuando timer local):', e)

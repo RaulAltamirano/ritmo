@@ -64,13 +64,9 @@ export async function tryStartRemoteWorkSession(
       if (aid && st) {
         gate.setPendingStart(task, mode)
         gate.openConflict(aid, st)
-      } else {
-        console.warn(
-          'Work session conflict: 409 sin activeSessionId/state válidos',
-          parsed,
-        )
+        throw new Error('WORK_SESSION_CONFLICT')
       }
-      return
+      throw new Error('WORK_SESSION_CONFLICT_UNRESOLVED')
     }
     throw e
   }

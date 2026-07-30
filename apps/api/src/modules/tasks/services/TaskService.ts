@@ -1,7 +1,10 @@
 import { Prisma, Priority, TaskStatus } from '@prisma/client'
 import { DateTime } from 'luxon'
 import prisma from '../../../core/database/prisma.js'
-import { ResourceNotFoundException } from '../../../shared/exceptions/app.exceptions.js'
+import {
+  InvalidInputException,
+  ResourceNotFoundException,
+} from '../../../shared/exceptions/app.exceptions.js'
 
 export type TaskPriorityInput = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' | 'CRITICAL'
 
@@ -81,11 +84,18 @@ export class TaskService {
   }
 
   async createTask(payload: CreateTaskInput, userId: string): Promise<FrontendTask> {
+    const title = payload.title.trim()
+    if (!title) {
+      throw new InvalidInputException('title is required')
+    }
+    if (title.length > 255) {
+      throw new InvalidInputException('title must be at most 255 characters')
+    }
     const categoryId = await this.resolveCategoryId(userId, payload.category)
     const task = await prisma.task.create({
       data: {
         userId,
-        title: payload.title.trim(),
+        title,
         description: payload.description?.trim() ?? null,
         status: TaskStatus.todo,
         priority: this.toPriority(payload.priority),
@@ -114,7 +124,14 @@ export class TaskService {
     if (!existing) throw new ResourceNotFoundException('Task', taskId)
 
     const data: Prisma.TaskUpdateInput = {}
-    if (payload.title !== undefined) data.title = payload.title.trim()
+    if (payload.title !== undefined) {
+      const title = payload.title.trim()
+      if (!title) throw new InvalidInputException('title is required')
+      if (title.length > 255) {
+        throw new InvalidInputException('title must be at most 255 characters')
+      }
+      data.title = title
+    }
     if (payload.description !== undefined)
       data.description = payload.description?.trim() || null
     if (payload.startTime !== undefined) data.startTime = new Date(payload.startTime)

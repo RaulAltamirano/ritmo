@@ -54,8 +54,14 @@ export class TaskController {
         return
       }
       const payload = req.body as CreateTaskInput
-      if (!payload?.title) {
+      if (!payload?.title?.trim()) {
         ApiResponses.badRequest('title is required')
+          .withRequestId((req as any).requestId)
+          .send(res, 400)
+        return
+      }
+      if (payload.title.trim().length > 255) {
+        ApiResponses.badRequest('title must be at most 255 characters')
           .withRequestId((req as any).requestId)
           .send(res, 400)
         return

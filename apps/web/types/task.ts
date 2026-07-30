@@ -57,6 +57,8 @@ export interface Task {
   updatedAt?: Date
   category?: string
   priority?: 'alta' | 'media' | 'baja'
+  /** Prioridad canónica del API; preserva urgent/critical en round-trip */
+  apiPriority?: TaskPriority
   completed?: boolean
   isRunning?: boolean
   timeRemaining?: number
@@ -144,20 +146,29 @@ export interface TaskCompletionFeedback {
 
 // ── Conversión FrontendTask → Task (para UI) ───────────────────────────────
 export function frontendTaskToUiTask(t: FrontendTask): Task {
-  const priorityMap: Record<string, 'alta' | 'media' | 'baja'> = {
+  const visualPriorityMap: Record<string, 'alta' | 'media' | 'baja'> = {
     low: 'baja',
     medium: 'media',
     high: 'alta',
     urgent: 'alta',
     critical: 'alta',
   }
+  const apiPriorityMap: Record<string, TaskPriority> = {
+    low: 'LOW',
+    medium: 'MEDIUM',
+    high: 'HIGH',
+    urgent: 'URGENT',
+    critical: 'CRITICAL',
+  }
+  const p = t.priority?.toLowerCase() ?? 'medium'
   return {
     id: t.id,
     name: t.title,
     title: t.title,
     description: t.description,
     category: t.type ?? t.category,
-    priority: priorityMap[t.priority?.toLowerCase() ?? 'medium'] ?? 'media',
+    priority: visualPriorityMap[p] ?? 'media',
+    apiPriority: apiPriorityMap[p] ?? 'MEDIUM',
     completed: t.isCompleted,
     isRunning: false,
     timeRemaining: (t.estimatedDuration ?? t.duration ?? 25) * 60,
@@ -177,7 +188,7 @@ export function frontendTaskToUiTask(t: FrontendTask): Task {
 
 // ── Conversión Task (UI) → UpdateTaskPayload ───────────────────────────────
 export function uiTaskToUpdatePayload(task: Task): UpdateTaskPayload {
-  const priorityMap: Record<string, TaskPriority> = {
+  const visualToApi: Record<string, TaskPriority> = {
     baja: 'LOW',
     media: 'MEDIUM',
     alta: 'HIGH',
@@ -194,7 +205,7 @@ export function uiTaskToUpdatePayload(task: Task): UpdateTaskPayload {
     title: task.name ?? task.title,
     description: task.notes,
     category: task.category,
-    priority: priorityMap[task.priority ?? 'media'] ?? 'MEDIUM',
+    priority: task.apiPriority ?? visualToApi[task.priority ?? 'media'] ?? 'MEDIUM',
     tags: task.tags ?? [],
     isCompleted: task.completed ?? false,
     estimatedDuration,

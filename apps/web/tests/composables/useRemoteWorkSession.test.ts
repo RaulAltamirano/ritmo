@@ -93,7 +93,7 @@ describe('tryStartRemoteWorkSession', () => {
     expect(gate.requestDailyCheckinForPendingStart).toHaveBeenCalled()
   })
 
-  it('on 409 for create, opens conflict with active session', async () => {
+  it('on 409 for create, opens conflict with active session and throws', async () => {
     const fetchMock = vi.fn()
     fetchMock.mockResolvedValueOnce({ data: { id: 'c' } })
     fetchMock.mockRejectedValueOnce({
@@ -106,10 +106,34 @@ describe('tryStartRemoteWorkSession', () => {
       '@/composables/timer/useRemoteWorkSession'
     )
 
-    await tryStartRemoteWorkSession(
-      { id: 'task-1', name: 'T' },
-      { minutes: 25, name: 'Pomodoro' },
-    )
+    await expect(
+      tryStartRemoteWorkSession(
+        { id: 'task-1', name: 'T' },
+        { minutes: 25, name: 'Pomodoro' },
+      ),
+    ).rejects.toThrow('WORK_SESSION_CONFLICT')
     expect(gate.openConflict).toHaveBeenCalledWith('act-1', 'running')
+  })
+
+  it('on 409 without session ids, throws unresolved conflict', async () => {
+    const fetchMock = vi.fn()
+    fetchMock.mockResolvedValueOnce({ data: { id: 'c' } })
+    fetchMock.mockRejectedValueOnce({
+      status: 409,
+      data: { error: { code: 'ACTIVE_SESSION_EXISTS' } },
+    })
+    ;(globalThis as any).$fetch = fetchMock
+
+    const { tryStartRemoteWorkSession } = await import(
+      '@/composables/timer/useRemoteWorkSession'
+    )
+
+    await expect(
+      tryStartRemoteWorkSession(
+        { id: 'task-1', name: 'T' },
+        { minutes: 25, name: 'Pomodoro' },
+      ),
+    ).rejects.toThrow('WORK_SESSION_CONFLICT_UNRESOLVED')
+    expect(gate.openConflict).not.toHaveBeenCalled()
   })
 })

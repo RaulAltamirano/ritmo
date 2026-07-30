@@ -15,6 +15,7 @@ import {
   setLastTrackedWorkSessionId,
 } from '@/utils/lastTrackedWorkSession'
 import { needsWorkSessionFeedback } from '@/utils/workSessionFeedback'
+import { parseFetchError } from '@/utils/parseFetchError'
 import { secureSet, secureGet } from '@/utils/secureStorage'
 
 interface TimerTask {
@@ -70,6 +71,8 @@ export const useTimerStore = defineStore('timer', {
     remoteWorkSessionId: null as string | null,
     /** Heartbeat con jitter (~60s ±5s): usa `setTimeout` encadenado */
     remoteHeartbeatTimer: null as ReturnType<typeof setTimeout> | null,
+    /** Fallos transitorios de heartbeat consecutivos antes de desvincular */
+    remoteHeartbeatFailures: 0,
 
     /** Presets mostrados en TaskItem / ajustes; sincronizados con GET /users/preferences. */
     timerModes: [...DEFAULT_TIMER_PRESETS] as TimerMode[],
@@ -208,12 +211,14 @@ export const useTimerStore = defineStore('timer', {
     clearRemoteWorkSession() {
       this.clearRemoteHeartbeat()
       this.remoteWorkSessionId = null
+      this.remoteHeartbeatFailures = 0
       clearLastTrackedWorkSessionId()
     },
 
     bindRemoteWorkSession(sessionId: string) {
       this.clearRemoteHeartbeat()
       this.remoteWorkSessionId = sessionId
+      this.remoteHeartbeatFailures = 0
       setLastTrackedWorkSessionId(sessionId)
       void this.patchRemoteHeartbeat()
       const scheduleNext = () => {
@@ -316,8 +321,28 @@ export const useTimerStore = defineStore('timer', {
             pausedDurationSec: this.activeTask?.totalPausedTime ?? 0,
           },
         })
-      } catch {
-        /* red inestable: no bloquear UI */
+        this.remoteHeartbeatFailures = 0
+      } catch (e: unknown) {
+        const { status } = parseFetchError(e)
+        // Sesión inexistente / terminal / conflicto: dejar de hacer heartbeat
+        if (status === 404 || status === 410 || status === 409) {
+          this.clearRemoteWorkSession()
+          this.showNotification(
+            'Sesión remota finalizada',
+            'El bloque en el servidor ya no está activo. El timer local sigue.',
+            'warning',
+          )
+          return
+        }
+        this.remoteHeartbeatFailures += 1
+        if (this.remoteHeartbeatFailures >= 3) {
+          this.clearRemoteWorkSession()
+          this.showNotification(
+            'Sin conexión con el bloque',
+            'Se dejó de sincronizar el heartbeat tras varios fallos.',
+            'warning',
+          )
+        }
       }
     },
 
