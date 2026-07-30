@@ -76,6 +76,7 @@ export interface Task {
   tags?: string[]
   startTime?: Date
   endTime?: Date
+  dueDate?: Date
   type?: string
 }
 
@@ -171,15 +172,25 @@ export function frontendTaskToUiTask(t: FrontendTask): Task {
     apiPriority: apiPriorityMap[p] ?? 'MEDIUM',
     completed: t.isCompleted,
     isRunning: false,
-    timeRemaining: (t.estimatedDuration ?? t.duration ?? 25) * 60,
+    timeRemaining:
+      t.estimatedDuration != null || t.duration != null
+        ? (t.estimatedDuration ?? t.duration)! * 60
+        : undefined,
     totalTimeSpent: 0,
     notes: t.description ?? '',
     hasNotes: !!t.description,
-    duration: `${t.duration ?? t.estimatedDuration ?? 25}m`,
-    estimatedTime: String(t.estimatedDuration ?? t.duration ?? 25),
+    duration:
+      t.duration != null || t.estimatedDuration != null
+        ? `${t.duration ?? t.estimatedDuration}m`
+        : undefined,
+    estimatedTime:
+      t.estimatedDuration != null || t.duration != null
+        ? String(t.estimatedDuration ?? t.duration)
+        : undefined,
     tags: t.tags,
     startTime: t.startTime ? new Date(t.startTime) : undefined,
     endTime: t.endTime ? new Date(t.endTime) : undefined,
+    dueDate: t.dueDate ? new Date(t.dueDate) : undefined,
     createdAt: new Date(t.createdAt),
     updatedAt: new Date(t.updatedAt),
     type: t.type,
@@ -193,7 +204,7 @@ export function uiTaskToUpdatePayload(task: Task): UpdateTaskPayload {
     media: 'MEDIUM',
     alta: 'HIGH',
   }
-  let estimatedDuration = 25
+  let estimatedDuration: number | undefined
   if (task.estimatedTime) {
     const p = parseInt(task.estimatedTime, 10)
     if (!isNaN(p)) estimatedDuration = p
@@ -208,6 +219,9 @@ export function uiTaskToUpdatePayload(task: Task): UpdateTaskPayload {
     priority: task.apiPriority ?? visualToApi[task.priority ?? 'media'] ?? 'MEDIUM',
     tags: task.tags ?? [],
     isCompleted: task.completed ?? false,
-    estimatedDuration,
+    ...(estimatedDuration !== undefined ? { estimatedDuration } : {}),
+    ...(task.startTime ? { startTime: task.startTime } : {}),
+    ...(task.endTime !== undefined ? { endTime: task.endTime ?? null } : {}),
+    ...(task.dueDate !== undefined ? { dueDate: task.dueDate } : {}),
   }
 }

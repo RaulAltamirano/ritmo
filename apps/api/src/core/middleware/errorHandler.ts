@@ -94,7 +94,7 @@ export const errorHandler = (
 
   // Handle known API errors
   if (error instanceof ApiError) {
-    return ApiResponses.internalError(error.message)
+    return ApiResponses.error(error.message, error.code, error.details)
       .withRequestId(req.requestId ?? 'unknown')
       .withPath(req.path)
       .withMethod(req.method)

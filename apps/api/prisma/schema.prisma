@@ -578,6 +578,7 @@ model Category {
   tasks       Task[]
   
   // Indexes
+  @@unique([userId, name])
   @@index([userId, parentId])
   @@index([userId, isDeleted])
   @@map("categories")

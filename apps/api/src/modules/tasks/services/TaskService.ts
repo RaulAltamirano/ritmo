@@ -184,11 +184,39 @@ export class TaskService {
       select: { id: true },
     })
     if (existing) return existing.id
-    const created = await prisma.category.create({
-      data: { userId, name },
+
+    // Reusar categoría soft-deleted con el mismo nombre (@@unique userId+name)
+    const softDeleted = await prisma.category.findFirst({
+      where: { userId, isDeleted: true, name },
       select: { id: true },
     })
-    return created.id
+    if (softDeleted) {
+      await prisma.category.update({
+        where: { id: softDeleted.id },
+        data: { isDeleted: false, deletedAt: null },
+      })
+      return softDeleted.id
+    }
+
+    try {
+      const created = await prisma.category.create({
+        data: { userId, name },
+        select: { id: true },
+      })
+      return created.id
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const raced = await prisma.category.findFirst({
+          where: { userId, name },
+          select: { id: true },
+        })
+        if (raced) return raced.id
+      }
+      throw error
+    }
   }
 
   private toPriority(priority?: string): Priority {
@@ -234,7 +262,7 @@ export class TaskService {
       isCompleted: task.status === TaskStatus.completed,
       startTime: task.startTime,
       endTime: task.endTime ?? undefined,
-      duration: task.duration ?? task.estimatedDuration ?? 25,
+      duration: task.duration ?? task.estimatedDuration ?? undefined,
       estimatedDuration: task.estimatedDuration ?? undefined,
       dueDate: task.dueDate ?? undefined,
       completedAt: task.completedAt ?? undefined,
