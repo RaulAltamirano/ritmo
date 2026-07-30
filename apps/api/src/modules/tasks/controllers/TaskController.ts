@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express'
+import type { AuthenticatedRequest } from '../../../core/middleware/auth.js'
 import { ApiResponses } from '../../../core/utils/apiResponse.js'
 import type { CreateTaskInput, UpdateTaskInput } from '../services/TaskService.js'
 import { TaskService } from '../services/TaskService.js'
@@ -33,7 +34,8 @@ export class TaskController {
           .send(res, 401)
         return
       }
-      const tasks = await this.service.getTodayTasks(userId)
+      const tz = (req as AuthenticatedRequest).user?.timezone ?? 'UTC'
+      const tasks = await this.service.getTodayTasks(userId, tz)
       ApiResponses.ok(tasks, 'Today tasks retrieved successfully')
         .withRequestId((req as any).requestId)
         .send(res)

@@ -1,12 +1,16 @@
 import { Prisma, Priority, TaskStatus } from '@prisma/client'
+import { DateTime } from 'luxon'
 import prisma from '../../../core/database/prisma.js'
+import { ResourceNotFoundException } from '../../../shared/exceptions/app.exceptions.js'
+
+export type TaskPriorityInput = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' | 'CRITICAL'
 
 export interface CreateTaskInput {
   title: string
   description?: string
   startTime?: string | Date
   endTime?: string | Date
-  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+  priority?: TaskPriorityInput
   category?: string
   type?: string
   tags?: string[]
@@ -19,7 +23,7 @@ export interface UpdateTaskInput {
   description?: string
   startTime?: string | Date
   endTime?: string | Date | null
-  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+  priority?: TaskPriorityInput
   category?: string
   type?: string
   tags?: string[]
@@ -58,17 +62,17 @@ export class TaskService {
     return tasks.map(t => this.toFrontend(t))
   }
 
-  async getTodayTasks(userId: string): Promise<FrontendTask[]> {
-    const startOfDay = new Date()
-    startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date()
-    endOfDay.setHours(23, 59, 59, 999)
+  async getTodayTasks(userId: string, userTimezone: string): Promise<FrontendTask[]> {
+    const localToday = DateTime.now().setZone(userTimezone)
+    const safeLocalToday = localToday.isValid ? localToday : DateTime.utc()
+    const startOfDayUtc = safeLocalToday.startOf('day').toUTC().toJSDate()
+    const endOfDayUtc = safeLocalToday.endOf('day').toUTC().toJSDate()
 
     const tasks = await prisma.task.findMany({
       where: {
         userId,
         isDeleted: false,
-        startTime: { gte: startOfDay, lte: endOfDay },
+        startTime: { gte: startOfDayUtc, lte: endOfDayUtc },
       },
       orderBy: { startTime: 'asc' },
       include: { category: { select: { name: true } } },
@@ -107,7 +111,7 @@ export class TaskService {
     const existing = await prisma.task.findFirst({
       where: { id: taskId, userId, isDeleted: false },
     })
-    if (!existing) throw new Error('Task not found')
+    if (!existing) throw new ResourceNotFoundException('Task', taskId)
 
     const data: Prisma.TaskUpdateInput = {}
     if (payload.title !== undefined) data.title = payload.title.trim()
@@ -149,7 +153,7 @@ export class TaskService {
       where: { id: taskId, userId, isDeleted: false },
       data: { isDeleted: true, deletedAt: new Date() },
     })
-    if (count.count === 0) throw new Error('Task not found')
+    if (count.count === 0) throw new ResourceNotFoundException('Task', taskId)
   }
 
   private async resolveCategoryId(
@@ -178,6 +182,8 @@ export class TaskService {
         return Priority.high
       case 'URGENT':
         return Priority.urgent
+      case 'CRITICAL':
+        return Priority.critical
       case 'MEDIUM':
       default:
         return Priority.medium
