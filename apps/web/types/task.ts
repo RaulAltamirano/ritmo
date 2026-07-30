@@ -20,7 +20,7 @@ export interface FrontendTask {
 }
 
 // ── Payloads API ──────────────────────────────────────────────────────────
-export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' | 'CRITICAL'
 
 export interface CreateTaskPayload {
   title: string
@@ -149,6 +149,7 @@ export function frontendTaskToUiTask(t: FrontendTask): Task {
     medium: 'media',
     high: 'alta',
     urgent: 'alta',
+    critical: 'alta',
   }
   return {
     id: t.id,

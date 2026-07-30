@@ -321,14 +321,21 @@ export const useTimerStore = defineStore('timer', {
       }
     },
 
-    // Detener timer actual
-    stopTimer() {
-      if (this.activeTask) {
-        this.stopTimerInterval()
-        this.activeTask = null
-        this.isPaused = false
-        this.isRunning = false
-        this.clearRemoteWorkSession()
+    // Detener timer actual — abandona el WorkSession remoto si hay uno
+    async stopTimer() {
+      if (!this.activeTask) return
+      this.stopTimerInterval()
+      const sid = this.remoteWorkSessionId
+      this.activeTask = null
+      this.isPaused = false
+      this.isRunning = false
+      this.clearRemoteWorkSession()
+      if (sid) {
+        try {
+          await abandonWorkSession(sid)
+        } catch {
+          /* aún así limpiamos estado local */
+        }
       }
     },
 

@@ -1,10 +1,28 @@
 import { ref } from 'vue'
 import { useTasksStore } from '@/stores/tasks'
+import { useTimerStore } from '@/stores/timer'
+import { completeWorkSession } from '@/services/workSessionsApi'
+import { newIdempotencyKey } from '@/utils/idempotency'
 import { uiTaskToUpdatePayload } from '@/types/task'
 import type { Task, TaskCompletionFeedback } from '@/types/task'
 
+function mapFeedbackToWorkSession(feedback: TaskCompletionFeedback) {
+  return {
+    rpeCognitive: feedback.mentalDemand,
+    frictionScore: feedback.mentalDemand,
+    energyAfter: feedback.energyAfter,
+    perceivedFocus: feedback.focusScore,
+    perceivedProgress: feedback.progressScore,
+    timeFit: feedback.timeFit,
+    ...(feedback.mainBlocker !== 'none'
+      ? { frictionBlocker: feedback.mainBlocker }
+      : {}),
+  }
+}
+
 export const useTodayHandlers = () => {
   const store = useTasksStore()
+  const timerStore = useTimerStore()
 
   const isQuickTaskLoading = ref(false)
 
@@ -41,8 +59,9 @@ export const useTodayHandlers = () => {
   }
 
   const handleAddNote = async (taskId: string, note: string): Promise<void> => {
+    const trimmed = note.trim()
     const result = await store.update(taskId, {
-      description: note.trim() ?? undefined,
+      description: trimmed || undefined,
     })
     if (!result.success) {
       console.error('[today] add-note failed:', result.error)
@@ -60,15 +79,20 @@ export const useTodayHandlers = () => {
       if (!result.success)
         throw new Error(result.error ?? 'No se pudo completar la tarea')
 
-      const feedbackNote = JSON.stringify({
-        energyAfter: feedback.energyAfter,
-        focusScore: feedback.focusScore,
-        progressScore: feedback.progressScore,
-        mentalDemand: feedback.mentalDemand,
-        timeFit: feedback.timeFit,
-        mainBlocker: feedback.mainBlocker,
-      })
-      await store.update(task.id, { description: feedbackNote }).catch(() => {})
+      const remoteId = timerStore.remoteWorkSessionId
+      const isActiveTask = timerStore.activeTask?.id === task.id
+
+      if (remoteId && isActiveTask) {
+        await completeWorkSession(
+          remoteId,
+          { 'Idempotency-Key': newIdempotencyKey() },
+          mapFeedbackToWorkSession(feedback),
+        )
+        timerStore.closeTimer()
+      } else if (isActiveTask) {
+        await timerStore.stopTimer()
+      }
+
       resolve()
     } catch (err) {
       reject(err instanceof Error ? err : new Error('No se pudo completar la tarea'))

@@ -30,6 +30,20 @@ export function useTaskTimer() {
       return
     }
 
+    // No crear sesión remota nueva si hay otra tarea con bloque remoto activo
+    if (
+      timerStore.remoteWorkSessionId &&
+      timerStore.activeTask &&
+      timerStore.activeTask.id !== task.id
+    ) {
+      timerStore.showNotification(
+        'No se puede cambiar de tarea',
+        'Finaliza o abandona el bloque remoto actual antes de cambiar de tarea.',
+        'warning',
+      )
+      return
+    }
+
     const timerMode = {
       minutes: mode.minutes ?? Math.floor(mode.time / 60),
       name: mode.name,

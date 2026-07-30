@@ -61,42 +61,10 @@
     // Reorder is local-only until the API supports an order field
   }
 
-  // ── Init ──────────────────────────────────────────────────────────────────
-
-  const loadSampleTasks = async () => {
-    if (!import.meta.env.DEV) return
-    if (tasksStore.tasks.length > 0) return
-
-    const samples = [
-      { title: 'Study React Hooks and Context API', priority: 'HIGH' as const },
-      { title: 'Complete the Node.js API REST project', priority: 'HIGH' as const },
-      {
-        title: 'Review advanced TypeScript documentation',
-        priority: 'MEDIUM' as const,
-      },
-      {
-        title: 'Prepare for the final project presentation',
-        priority: 'HIGH' as const,
-      },
-      { title: 'Read chapter 3 of the productivity book', priority: 'LOW' as const },
-    ]
-
-    for (const sample of samples) {
-      await tasksStore.create({
-        title: sample.title,
-        startTime: new Date(),
-        priority: sample.priority,
-        category: 'WORK',
-        tags: ['sample'],
-      })
-    }
-  }
-
   onMounted(async () => {
     timerStore.loadPreferences()
     timerStore.loadDaySummary()
     await Promise.all([tasksStore.fetchToday(), summaryStore.refresh()])
-    await loadSampleTasks()
   })
 
   // Refresh summary whenever the active session ends (activeTask goes set → null)
