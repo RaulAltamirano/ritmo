@@ -2,15 +2,20 @@
 // This file exports all navigation-related organism components
 
 // Component exports
+export { default as BaseBottomNav } from './BaseBottomNav.vue'
+export { default as BaseBottomSheet } from './BaseBottomSheet.vue'
 export { default as BaseNavDropdown } from './BaseNavDropdown.vue'
 export { default as BaseNavItem } from './BaseNavItem.vue'
 export { default as BaseNavbar } from './BaseNavbar.vue'
 
 // Re-export types
 export type {
+  BaseBottomNavProps,
+  BaseBottomSheetProps,
   BaseNavDropdownProps,
   BaseNavItemProps,
   BaseNavbarProps,
+  BottomNavItem,
   NavItem,
 } from '../../../types/navigation'
 

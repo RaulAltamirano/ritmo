@@ -88,3 +88,6 @@ docs/superpowers/reports/
 
 # Graphify outputs
 graphify-out/
+
+# Git worktrees (local)
+.worktrees/

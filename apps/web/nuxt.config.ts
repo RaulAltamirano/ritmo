@@ -1,3 +1,8 @@
+import { fileURLToPath } from 'node:url'
+
+const webRoot = fileURLToPath(new URL('.', import.meta.url))
+const uiSrc = fileURLToPath(new URL('../../packages/ui/src', import.meta.url))
+
 export default defineNuxtConfig({
   devtools: { enabled: true },
 
@@ -36,9 +41,9 @@ export default defineNuxtConfig({
   vite: {
     resolve: {
       alias: {
-        '@ritmo/ui': '/home/pacman/Documents/WORKSPACE/ritmo/packages/ui/src',
-        '@': '/home/pacman/Documents/WORKSPACE/ritmo/apps/web',
-        '@components': '/home/pacman/Documents/WORKSPACE/ritmo/apps/web/components',
+        '@ritmo/ui': uiSrc,
+        '@': webRoot,
+        '@components': `${webRoot}/components`,
       },
     },
     optimizeDeps: {

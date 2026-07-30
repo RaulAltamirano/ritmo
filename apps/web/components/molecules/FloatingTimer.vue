@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div
       v-if="isTimerVisible"
-      class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50"
+      class="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] right-4 z-50 sm:right-6"
       role="status"
       aria-live="polite"
       :aria-label="ariaLabelMain"

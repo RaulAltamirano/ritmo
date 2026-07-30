@@ -29,9 +29,12 @@ export type { ButtonSize, ButtonVariant } from './types/button'
 export type { EmptyStateProps } from './types/empty-state'
 export type { InputProps } from './types/input'
 export type {
+  BaseBottomNavProps,
+  BaseBottomSheetProps,
   BaseNavDropdownProps,
   BaseNavItemProps,
   BaseNavbarProps,
+  BottomNavItem,
   NavItem,
 } from './types/navigation'
 export type { Breadcrumb, PageHeaderProps, PhaseData } from './types/page-header'

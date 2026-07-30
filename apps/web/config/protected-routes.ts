@@ -13,6 +13,7 @@ export const PROTECTED_ROUTES = [
   '/analytics',
   '/analiticas',
   '/schedule',
+  '/training',
   '/journal',
   '/sessions',
   '/profile',
