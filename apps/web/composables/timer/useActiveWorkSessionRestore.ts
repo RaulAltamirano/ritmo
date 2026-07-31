@@ -11,12 +11,13 @@ export interface ActiveWorkSessionApi {
   id: string
   state: 'running' | 'paused' | 'on_break' | 'pending_feedback'
   startTime: string
-  targetDurationSec: number | null
+  targetDurationSec: number
   pausedDurationSec: number
   breakDurationSec?: number | null
   breakStartedAt?: string | null
   breakPausedDurationSec?: number | null
   timerMode: string | null
+  presetKey?: string
   task: { id: string; title: string }
 }
 
@@ -48,12 +49,14 @@ export function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
   else if (rawStartTime instanceof Date) startTime = rawStartTime.toISOString()
   if (!startTime) return null
 
+  const targetDurationSec = o.targetDurationSec
   if (
-    typeof o.targetDurationSec !== 'number' ||
-    Number.isNaN(o.targetDurationSec) ||
-    o.targetDurationSec < 1
-  )
+    typeof targetDurationSec !== 'number' ||
+    !Number.isFinite(targetDurationSec) ||
+    targetDurationSec < 1
+  ) {
     return null
+  }
 
   const breakStartedAt =
     typeof o.breakStartedAt === 'string'
@@ -66,8 +69,7 @@ export function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
     id,
     state,
     startTime,
-    targetDurationSec:
-      typeof o.targetDurationSec === 'number' ? o.targetDurationSec : null,
+    targetDurationSec,
     pausedDurationSec:
       typeof o.pausedDurationSec === 'number' ? o.pausedDurationSec : 0,
     breakDurationSec:
@@ -78,6 +80,7 @@ export function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
         ? o.breakPausedDurationSec
         : 0,
     timerMode: typeof o.timerMode === 'string' ? o.timerMode : null,
+    presetKey: typeof o.presetKey === 'string' ? o.presetKey : undefined,
     task: { id: task.id, title: task.title },
   }
 }
@@ -158,6 +161,7 @@ async function doRestore(): Promise<void> {
         breakPausedDurationSec: row.breakPausedDurationSec,
         task: row.task,
         timerMode: row.timerMode,
+        presetKey: row.presetKey,
       })
 
       const gate = useSessionGateStore()

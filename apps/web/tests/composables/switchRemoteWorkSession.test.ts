@@ -83,6 +83,26 @@ describe('switchRemoteWorkSession', () => {
     expect(res.targetDurationSec).toBe(1500)
   })
 
+  it('full_preset policy uses mode minutes even when timeLeft >= 60', async () => {
+    const { switchRemoteWorkSession } = await import(
+      '@/composables/timer/switchRemoteWorkSession'
+    )
+    const res = await switchRemoteWorkSession({
+      fromSessionId: 'ws_old',
+      toTask: { id: 'task-b', name: 'B' },
+      timeLeftSec: 3000,
+      pausedDurationSec: 0,
+      isPaused: true,
+      mode: { minutes: 25, name: 'Pomodoro', presetKey: '25_5' },
+      durationPolicy: 'full_preset',
+    })
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({ targetDurationSec: 1500 }),
+    )
+    expect(res.usedFullPreset).toBe(true)
+    expect(res.targetDurationSec).toBe(1500)
+  })
+
   it('does not create when abandon fails', async () => {
     abandonMock.mockRejectedValue(new Error('network'))
     const { switchRemoteWorkSession } = await import(

@@ -5,6 +5,7 @@
 import { defineStore } from 'pinia'
 import {
   DEFAULT_TIMER_PRESETS,
+  mapPresetKeyToTimerMode,
   timerPresetsDtoToTimerModes,
 } from '@/composables/timer/timerPresets'
 import type { TimerMode } from '@/types/task'
@@ -23,6 +24,7 @@ import { needsWorkSessionFeedback } from '@/utils/workSessionFeedback'
 import { parseFetchError } from '@/utils/parseFetchError'
 import { secureSet, secureGet } from '@/utils/secureStorage'
 import { useNotify } from '@/composables/shared/useNotify'
+import { useSessionGateStore } from '@/stores/sessionGate'
 
 interface TimerTask {
   id: string
@@ -30,6 +32,7 @@ interface TimerTask {
   timeLeft: number
   totalTime: number
   type: string
+  presetKey?: string
   category?: string
   startedAt?: Date
   pausedAt?: Date
@@ -50,6 +53,22 @@ interface DaySummary {
     type: string
     category?: string
   }>
+}
+
+function resolveHydratedPresetKey(
+  presetKey: string | undefined,
+  timerMode: string | null,
+  targetDurationSec: number,
+  timerModes: TimerMode[],
+): string | undefined {
+  if (presetKey) return presetKey
+  const durationMatches = timerModes.filter(mode => mode.time === targetDurationSec)
+  if (durationMatches.length === 1) return durationMatches[0]?.presetKey
+  return durationMatches.find(
+    mode =>
+      mode.presetKey &&
+      mapPresetKeyToTimerMode(mode.presetKey) === (timerMode ?? 'custom'),
+  )?.presetKey
 }
 
 export const useTimerStore = defineStore('timer', {
@@ -161,7 +180,12 @@ export const useTimerStore = defineStore('timer', {
     // Iniciar una nueva tarea
     startTask(
       task: { id: string; name: string; category?: string },
-      mode: { minutes: number; name: string; breakSec?: number },
+      mode: {
+        minutes: number
+        name: string
+        breakSec?: number
+        presetKey?: string
+      },
     ) {
       // Si ya hay una tarea activa, solo cambiar la tarea sin reiniciar el timer.
       // El caller (useTaskTimer) ya cerró el bloque remoto previo antes de llegar
@@ -172,6 +196,7 @@ export const useTimerStore = defineStore('timer', {
         this.activeTask.name = task.name
         this.activeTask.category = task.category
         this.activeTask.type = mode.name
+        this.activeTask.presetKey = mode.presetKey
         return
       }
 
@@ -184,6 +209,7 @@ export const useTimerStore = defineStore('timer', {
           timeLeft: totalTime,
           totalTime,
           type: mode.name,
+          presetKey: mode.presetKey,
           category: task.category,
           startedAt: new Date(),
           totalPausedTime: 0,
@@ -217,6 +243,8 @@ export const useTimerStore = defineStore('timer', {
       this.remoteWorkSessionId = null
       this.remoteHeartbeatFailures = 0
       clearLastTrackedWorkSessionId()
+      const gate = useSessionGateStore()
+      if (gate.taskSwitchPrompt) gate.closeTaskSwitchPrompt()
     },
 
     bindRemoteWorkSession(sessionId: string) {
@@ -291,6 +319,7 @@ export const useTimerStore = defineStore('timer', {
       breakPausedDurationSec?: number | null
       task: { id: string; title: string }
       timerMode: string | null
+      presetKey?: string
     }) {
       if (this.activeTask) return
 
@@ -309,7 +338,7 @@ export const useTimerStore = defineStore('timer', {
         : null
 
       let timeLeft = 0
-      let pausedTotal = payload.pausedDurationSec ?? 0
+      const pausedTotal = payload.pausedDurationSec ?? 0
       if (isBreak && breakDuration != null && breakStartedAt) {
         timeLeft = breakRemainingSec({
           breakDurationSec: breakDuration,
@@ -325,6 +354,12 @@ export const useTimerStore = defineStore('timer', {
           nowMs,
         })
       }
+      const presetKey = resolveHydratedPresetKey(
+        payload.presetKey,
+        payload.timerMode,
+        target,
+        this.timerModes,
+      )
 
       const needsFeedback = needsWorkSessionFeedback({
         state: payload.state,
@@ -338,6 +373,7 @@ export const useTimerStore = defineStore('timer', {
           timeLeft: 0,
           totalTime: target,
           type: modeLabel,
+          presetKey,
           startedAt: new Date(payload.startTime),
           totalPausedTime: pausedTotal,
         }
@@ -359,6 +395,7 @@ export const useTimerStore = defineStore('timer', {
         timeLeft,
         totalTime: isBreak && breakDuration != null ? breakDuration : target,
         type: modeLabel,
+        presetKey,
         startedAt: new Date(payload.startTime),
         totalPausedTime: pausedTotal,
       }

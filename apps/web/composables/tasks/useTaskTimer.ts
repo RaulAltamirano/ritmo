@@ -1,5 +1,10 @@
+import { applyRemoteTaskSwitch } from '@/composables/timer/applyRemoteTaskSwitch'
+import {
+  areSameTimerPreset,
+  canContinueRemainingOnSwitch,
+} from '@/composables/timer/taskSwitchPreset'
+import { useSessionGateStore } from '@/stores/sessionGate'
 import { useTimerStore } from '@/stores/timer'
-import { useWorkSessionSummaryStore } from '@/stores/workSessionSummary'
 import type { Task, TimerMode } from '@/types/task'
 
 export function useTaskTimer() {
@@ -41,72 +46,37 @@ export function useTaskTimer() {
     const switching =
       !!timerStore.activeTask && timerStore.activeTask.id !== task.id
 
-    // Cambio de tarea con bloque remoto activo → split silencioso:
-    // heartbeat + abandonar el previo, crear uno nuevo con el tiempo restante.
     if (switching && timerStore.remoteWorkSessionId) {
-      const fromId = timerStore.remoteWorkSessionId
-      const timeLeftSec = timerStore.activeTask!.timeLeft
-      try {
-        const { switchRemoteWorkSession } = await import(
-          '@/composables/timer/switchRemoteWorkSession'
-        )
-        const result = await switchRemoteWorkSession({
-          fromSessionId: fromId,
-          toTask: { id: task.id, name: task.name, category: task.category },
-          timeLeftSec,
-          pausedDurationSec: timerStore.activeTask!.totalPausedTime ?? 0,
-          isPaused: timerStore.isPaused,
-          mode: timerMode,
-        })
-        timerStore.clearRemoteWorkSession()
-        if (result.usedFullPreset && timerStore.activeTask) {
-          const total = timerMode.minutes * 60
-          timerStore.activeTask.timeLeft = total
-          timerStore.activeTask.totalTime = total
-          timerStore.activeTask.totalPausedTime = 0
-          timerStore.activeTask.startedAt = new Date()
-        }
-        timerStore.startTask(task, timerMode)
-        timerStore.bindRemoteWorkSession(result.newSessionId)
-        void useWorkSessionSummaryStore().refresh()
-      } catch (e) {
-        const msg = (e as Error)?.message
-        if (msg === 'WORK_SESSION_ABANDON_FAILED') {
-          timerStore.showNotification(
-            'No se pudo cambiar de tarea',
-            'No se pudo cerrar el bloque remoto. Reintenta.',
-            'error',
-          )
-          return
-        }
-        if (msg === 'CHECKIN_REQUIRED') return
-        if (
-          msg === 'WORK_SESSION_CONFLICT' ||
-          msg === 'WORK_SESSION_CONFLICT_UNRESOLVED'
-        ) {
-          // El bloque previo ya fue abandonado: seguimos el cambio local.
-          timerStore.clearRemoteWorkSession()
-          timerStore.startTask(task, timerMode)
-          void useWorkSessionSummaryStore().refresh()
-          if (msg === 'WORK_SESSION_CONFLICT_UNRESOLVED') {
-            timerStore.showNotification(
-              'Sesión remota no iniciada',
-              'El temporizador local seguirá; el tiempo puede no contar en el resumen del día.',
-              'warning',
-            )
-          }
-          return
-        }
-        // create falló tras abandonar: cambio local + aviso.
-        timerStore.clearRemoteWorkSession()
-        timerStore.startTask(task, timerMode)
-        void useWorkSessionSummaryStore().refresh()
-        timerStore.showNotification(
-          'Sesión remota no iniciada',
-          'El temporizador local seguirá; el tiempo puede no contar en el resumen del día.',
-          'warning',
-        )
+      const active = timerStore.activeTask!
+      const fromPreset = {
+        minutes: Math.max(1, Math.round(active.totalTime / 60)),
+        presetKey: active.presetKey,
       }
+      const toPreset = {
+        minutes: timerMode.minutes,
+        presetKey: timerMode.presetKey,
+      }
+
+      if (!areSameTimerPreset(fromPreset, toPreset)) {
+        if (!timerStore.isPaused) timerStore.pauseTimer()
+        useSessionGateStore().openTaskSwitchPrompt({
+          toTask: { id: task.id, name: task.name, category: task.category },
+          mode: timerMode,
+          remainingSec: Math.floor(active.timeLeft),
+          canContinueRemaining: canContinueRemainingOnSwitch(
+            active.timeLeft,
+            timerMode.minutes,
+          ),
+          fromTaskName: active.name,
+        })
+        return
+      }
+
+      await applyRemoteTaskSwitch({
+        toTask: { id: task.id, name: task.name, category: task.category },
+        mode: timerMode,
+        durationPolicy: 'remaining',
+      })
       return
     }
 

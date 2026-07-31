@@ -99,6 +99,33 @@ describe('restoreActiveWorkSessionIfAny — idempotency', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 
+  it('passes the backend preset key into timer hydration', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      data: {
+        data: {
+          id: 'ws-90',
+          state: 'running',
+          startTime: '2026-07-31T10:00:00.000Z',
+          targetDurationSec: 90 * 60,
+          pausedDurationSec: 0,
+          timerMode: 'ultradian',
+          presetKey: '90_20',
+          task: { id: 'task-a', title: 'Deep work' },
+        },
+      },
+    })
+    ;(globalThis as any).$fetch = fetchMock
+
+    const { restoreActiveWorkSessionIfAny } = await import(
+      '@/composables/timer/useActiveWorkSessionRestore'
+    )
+    await restoreActiveWorkSessionIfAny()
+
+    expect(timerStore.hydrateFromActiveRemoteSession).toHaveBeenCalledWith(
+      expect.objectContaining({ presetKey: '90_20' }),
+    )
+  })
+
   it('hydrates an on_break session with break timing fields', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       data: {

@@ -13,6 +13,7 @@
     <FloatingTimer />
     <DailyCheckinModal />
     <WorkBlockFeedbackModal />
+    <TaskSwitchPresetModal />
 
     <BaseToast position="top-right" :max-toasts="5" />
   </div>
@@ -21,6 +22,7 @@
 <script setup lang="ts">
   import DailyCheckinModal from '@/components/molecules/DailyCheckinModal.vue'
   import FloatingTimer from '@/components/molecules/FloatingTimer.vue'
+  import TaskSwitchPresetModal from '@/components/molecules/TaskSwitchPresetModal.vue'
   import WorkBlockFeedbackModal from '@/components/molecules/WorkBlockFeedbackModal.vue'
   import MainBottomNav from '@/components/organisms/MainBottomNav.vue'
   import MainNavbar from '@/components/organisms/MainNavbar.vue'
