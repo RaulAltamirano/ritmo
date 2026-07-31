@@ -50,7 +50,7 @@ export function useTaskTimer() {
       presetKey: mode.presetKey,
     }
 
-    if (import.meta.client) {
+    if (import.meta.client || process.env.VITEST) {
       try {
         const { tryStartRemoteWorkSession } = await import(
           '@/composables/timer/useRemoteWorkSession'
@@ -68,7 +68,11 @@ export function useTaskTimer() {
         ) {
           return
         }
-        console.warn('Remote work session (continuando timer local):', e)
+        timerStore.showNotification(
+          'Sesión remota no iniciada',
+          'El temporizador local seguirá; el tiempo puede no contar en el resumen del día.',
+          'warning',
+        )
       }
     }
 
@@ -98,7 +102,6 @@ export function useTaskTimer() {
     return {
       ...task,
       title: task.name,
-      duration: '25m',
       priority: task.priority ?? 'media',
       completed: task.completed ?? false,
       isRunning: isActive,
