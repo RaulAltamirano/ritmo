@@ -224,6 +224,16 @@
     );
   }
 
+  /*
+   * While a BaseModal is open, hide grain/glow so backdrop-blur does not
+   * amplify a light rectangular fringe around the content column.
+   */
+  :global(body:has(.modal[aria-modal='true'])) .canvas::before,
+  :global(body:has(.modal[aria-modal='true'])) .canvas::after {
+    opacity: 0 !important;
+    animation: none;
+  }
+
   @keyframes breathe-glow {
     0%,
     100% {

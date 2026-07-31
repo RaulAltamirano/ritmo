@@ -357,7 +357,7 @@
     <div
       v-if="isOpen"
       ref="containerRef"
-      class="modal fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6"
+      class="modal fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 outline-none"
       role="dialog"
       tabindex="-1"
       :aria-modal="true"
@@ -426,25 +426,26 @@
 </template>
 
 <style scoped>
-  /* Transiciones del modal (~400ms, easing calmado) */
+  /*
+   * Root overlay: opacity only — never scale the backdrop.
+   * Scaling the full-screen layer (blur + scrim) creates a light rectangular
+   * fringe around page content. Panel scale lives on modalClasses instead.
+   */
   .modal-enter-active,
   .modal-leave-active {
-    transition-property: opacity, transform;
+    transition-property: opacity;
     transition-duration: 400ms;
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .modal-enter-from {
-    @apply opacity-0 scale-95;
-  }
-
+  .modal-enter-from,
   .modal-leave-to {
-    @apply opacity-0 scale-95;
+    opacity: 0;
   }
 
   .modal-enter-to,
   .modal-leave-from {
-    @apply opacity-100 scale-100;
+    opacity: 1;
   }
 
   /* Scrim: fundido suave de opacidad (la capa de blur nunca se anima) */
@@ -455,9 +456,11 @@
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* Focus styles */
+  /* Focus styles — keep outline off the full-viewport dialog shell */
+  .modal:focus,
+  .modal:focus-visible,
   .modal:focus-within {
-    @apply outline-none;
+    outline: none;
   }
 
   /* High contrast mode support */
@@ -473,12 +476,6 @@
     .modal-backdrop-scrim {
       @apply transition-none;
     }
-  }
-
-  /* Focus visible support for all browsers */
-  .modal:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 2px;
   }
 
   /* High DPI displays optimization */
