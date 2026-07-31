@@ -353,76 +353,78 @@
 </script>
 
 <template>
-  <Transition name="modal" appear @enter="handleEnter" @leave="handleLeave">
-    <div
-      v-if="isOpen"
-      ref="containerRef"
-      class="modal fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 outline-none"
-      role="dialog"
-      tabindex="-1"
-      :aria-modal="true"
-      :aria-labelledby="dialogLabelledby"
-      :aria-describedby="dialogDescribedby"
-      :aria-label="dialogAriaLabel"
-      :aria-live="ariaLiveValue"
-      :aria-atomic="true"
-      @click="handleBackdropClick"
-    >
-      <!-- Backdrop -->
-      <div class="absolute inset-0" :aria-hidden="true">
-        <div v-if="props.backdrop === 'blur'" :class="blurLayerClasses" />
-        <div :class="scrimClasses" />
-      </div>
-
-      <!-- Modal Container -->
+  <Teleport to="body">
+    <Transition name="modal" appear @enter="handleEnter" @leave="handleLeave">
       <div
-        ref="modalRef"
-        class="relative flex w-full flex-col"
-        :class="[modalClasses]"
-        @click.stop
+        v-if="isOpen"
+        ref="containerRef"
+        class="modal fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 outline-none"
+        role="dialog"
+        tabindex="-1"
+        :aria-modal="true"
+        :aria-labelledby="dialogLabelledby"
+        :aria-describedby="dialogDescribedby"
+        :aria-label="dialogAriaLabel"
+        :aria-live="ariaLiveValue"
+        :aria-atomic="true"
+        @click="handleBackdropClick"
       >
-        <!-- Header -->
-        <header
-          v-if="$slots.header || title"
-          class="flex shrink-0 items-center justify-between gap-3 p-4 sm:p-6"
-          :class="[headerClasses]"
-        >
-          <slot name="header" :title-id="titleId">
-            <h2 :id="titleId" :class="titleClasses">
-              {{ title }}
-            </h2>
-          </slot>
-
-          <button
-            v-if="showCloseButton"
-            type="button"
-            :aria-label="closeButtonLabel"
-            :class="closeButtonClasses"
-            @click="handleClose"
-          >
-            <X
-              class="h-5 w-5 text-gray-400 transition-colors duration-200 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-              aria-hidden="true"
-            />
-          </button>
-        </header>
-
-        <!-- Content -->
-        <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
-          <slot />
+        <!-- Backdrop -->
+        <div class="absolute inset-0" :aria-hidden="true">
+          <div v-if="props.backdrop === 'blur'" :class="blurLayerClasses" />
+          <div :class="scrimClasses" />
         </div>
 
-        <!-- Footer -->
-        <footer
-          v-if="$slots.footer"
-          class="flex shrink-0 flex-wrap items-center justify-end gap-3 p-4 sm:p-6"
-          :class="[footerClasses]"
+        <!-- Modal Container -->
+        <div
+          ref="modalRef"
+          class="relative flex w-full flex-col"
+          :class="[modalClasses]"
+          @click.stop
         >
-          <slot name="footer" />
-        </footer>
+          <!-- Header -->
+          <header
+            v-if="$slots.header || title"
+            class="flex shrink-0 items-center justify-between gap-3 p-4 sm:p-6"
+            :class="[headerClasses]"
+          >
+            <slot name="header" :title-id="titleId">
+              <h2 :id="titleId" :class="titleClasses">
+                {{ title }}
+              </h2>
+            </slot>
+
+            <button
+              v-if="showCloseButton"
+              type="button"
+              :aria-label="closeButtonLabel"
+              :class="closeButtonClasses"
+              @click="handleClose"
+            >
+              <X
+                class="h-5 w-5 text-gray-400 transition-colors duration-200 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                aria-hidden="true"
+              />
+            </button>
+          </header>
+
+          <!-- Content -->
+          <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+            <slot />
+          </div>
+
+          <!-- Footer -->
+          <footer
+            v-if="$slots.footer"
+            class="flex shrink-0 flex-wrap items-center justify-end gap-3 p-4 sm:p-6"
+            :class="[footerClasses]"
+          >
+            <slot name="footer" />
+          </footer>
+        </div>
       </div>
-    </div>
-  </Transition>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>

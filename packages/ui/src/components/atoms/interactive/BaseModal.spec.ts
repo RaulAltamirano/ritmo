@@ -1,7 +1,10 @@
-import { mount, flushPromises } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import BaseModal from './BaseModal.vue'
+
+const dialogEl = () =>
+  document.body.querySelector<HTMLElement>('[role="dialog"].modal')
 
 describe('BaseModal', () => {
   afterEach(() => {
@@ -14,7 +17,7 @@ describe('BaseModal', () => {
       props: { isOpen: false, title: 'Título' },
       attachTo: document.body,
     })
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    expect(dialogEl()).toBeNull()
     wrapper.unmount()
   })
 
@@ -26,14 +29,15 @@ describe('BaseModal', () => {
     await flushPromises()
     await nextTick()
 
-    const dialog = wrapper.get('[role="dialog"]')
-    expect(dialog.attributes('aria-modal')).toBe('true')
-    const labelledBy = dialog.attributes('aria-labelledby')
+    const dialog = dialogEl()
+    expect(dialog).toBeTruthy()
+    expect(dialog?.getAttribute('aria-modal')).toBe('true')
+    const labelledBy = dialog?.getAttribute('aria-labelledby')
     expect(labelledBy).toBeTruthy()
 
-    const heading = wrapper.get('h2')
-    expect(heading.text()).toContain('Mi modal')
-    expect(heading.attributes('id')).toBe(labelledBy)
+    const heading = dialog?.querySelector('h2')
+    expect(heading?.textContent).toContain('Mi modal')
+    expect(heading?.getAttribute('id')).toBe(labelledBy)
     wrapper.unmount()
   })
 
@@ -52,9 +56,7 @@ describe('BaseModal', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.get('[role="dialog"]').attributes('aria-describedby')).toBe(
-      'modal-help',
-    )
+    expect(dialogEl()?.getAttribute('aria-describedby')).toBe('modal-help')
     wrapper.unmount()
   })
 
@@ -72,9 +74,9 @@ describe('BaseModal', () => {
     await flushPromises()
     await nextTick()
 
-    const dialog = wrapper.get('[role="dialog"]')
-    expect(dialog.attributes('aria-label')).toBe('Confirmación')
-    expect(dialog.attributes('aria-labelledby')).toBeUndefined()
+    const dialog = dialogEl()
+    expect(dialog?.getAttribute('aria-label')).toBe('Confirmación')
+    expect(dialog?.getAttribute('aria-labelledby')).toBeNull()
     wrapper.unmount()
   })
 
@@ -82,7 +84,7 @@ describe('BaseModal', () => {
     const onUpdate = vi.fn()
     const onClose = vi.fn()
 
-    mount(BaseModal, {
+    const wrapper = mount(BaseModal, {
       props: {
         isOpen: true,
         title: 'T',
@@ -103,6 +105,7 @@ describe('BaseModal', () => {
 
     expect(onUpdate).toHaveBeenCalledWith(false)
     expect(onClose).toHaveBeenCalled()
+    wrapper.unmount()
   })
 
   it('cierra al hacer clic en el backdrop (fuera del panel)', async () => {
@@ -121,9 +124,9 @@ describe('BaseModal', () => {
     await flushPromises()
     await nextTick()
 
-    const backdrop = wrapper.find('[role="dialog"] > .absolute.inset-0')
-    expect(backdrop.exists()).toBe(true)
-    await backdrop.trigger('click')
+    const backdrop = dialogEl()?.querySelector<HTMLElement>(':scope > .absolute.inset-0')
+    expect(backdrop).toBeTruthy()
+    backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await nextTick()
 
     expect(onUpdate).toHaveBeenCalledWith(false)
@@ -140,13 +143,17 @@ describe('BaseModal', () => {
         closeOnBackdropClick: true,
         'onUpdate:isOpen': onUpdate,
       },
-      slots: { default: '<button type="button" class="inner-action">Dentro</button>' },
+      slots: {
+        default: '<button type="button" class="inner-action">Dentro</button>',
+      },
       attachTo: document.body,
     })
     await flushPromises()
     await nextTick()
 
-    await wrapper.get('.inner-action').trigger('click')
+    dialogEl()
+      ?.querySelector('.inner-action')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await nextTick()
 
     expect(onUpdate).not.toHaveBeenCalled()
@@ -176,6 +183,24 @@ describe('BaseModal', () => {
     wrapper.unmount()
   })
 
+  it('teleports the dialog to document.body', async () => {
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const wrapper = mount(BaseModal, {
+      props: { isOpen: true, title: 'T' },
+      attachTo: host,
+    })
+    await flushPromises()
+    await nextTick()
+
+    const dialog = dialogEl()
+    expect(dialog).toBeTruthy()
+    // Must leave the component host (Teleport); parent may be body or a VTU transition stub.
+    expect(host.contains(dialog)).toBe(false)
+    wrapper.unmount()
+    host.remove()
+  })
+
   it('blur backdrop renders separate blur and scrim layers', async () => {
     const wrapper = mount(BaseModal, {
       props: { isOpen: true, title: 'T', backdrop: 'blur' },
@@ -184,8 +209,9 @@ describe('BaseModal', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.find('.modal-backdrop-blur').exists()).toBe(true)
-    expect(wrapper.find('.modal-backdrop-scrim').exists()).toBe(true)
+    const dialog = dialogEl()
+    expect(dialog?.querySelector('.modal-backdrop-blur')).toBeTruthy()
+    expect(dialog?.querySelector('.modal-backdrop-scrim')).toBeTruthy()
     wrapper.unmount()
   })
 
@@ -197,8 +223,9 @@ describe('BaseModal', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.find('.modal-backdrop-blur').exists()).toBe(false)
-    expect(wrapper.find('.modal-backdrop-scrim').exists()).toBe(true)
+    const dialog = dialogEl()
+    expect(dialog?.querySelector('.modal-backdrop-blur')).toBeNull()
+    expect(dialog?.querySelector('.modal-backdrop-scrim')).toBeTruthy()
     wrapper.unmount()
   })
 
@@ -216,8 +243,10 @@ describe('BaseModal', () => {
     await flushPromises()
     await nextTick()
 
-    const closeBtn = wrapper.find('button[aria-label="Cerrar ventana"]')
-    expect(closeBtn.exists()).toBe(true)
+    const closeBtn = dialogEl()?.querySelector(
+      'button[aria-label="Cerrar ventana"]',
+    )
+    expect(closeBtn).toBeTruthy()
     wrapper.unmount()
   })
 })

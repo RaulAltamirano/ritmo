@@ -53,6 +53,7 @@
 </script>
 
 <style scoped>
+  /* Opacity only — avoid leaving `transform` (breaks position:fixed descendants). */
   .tc-tasks {
     animation: tc-in 0.28s ease both;
   }
@@ -64,11 +65,9 @@
   @keyframes tc-in {
     from {
       opacity: 0;
-      transform: translateY(6px);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
     }
   }
 </style>
