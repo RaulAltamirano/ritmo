@@ -110,6 +110,7 @@ describe('WorkSessionService.getTodaySummary', () => {
   it.each([
     WorkSessionState.running,
     WorkSessionState.paused,
+    WorkSessionState.on_break,
     WorkSessionState.pending_feedback,
   ])('excludes %s sessions (not yet terminal)', async state => {
     // Partial unique index `work_sessions_active_per_user` allows only one
@@ -253,6 +254,34 @@ describe('WorkSessionService.getTodaySummary', () => {
     expect(out.perTask[task.id]).toBe(25 * 60)
     expect(out.calendarDate).toBe(todayLocal.toISODate())
     expect(out.lastSessionEndedAt).toBe(inEnd.toISOString())
+  })
+
+  it('bills only focus when breakStartedAt is set (excludes break wall time)', async () => {
+    const user = await createUser('UTC')
+    const task = await createTaskFor(user.id)
+    const today = DateTime.utc().startOf('day')
+    const start = today.plus({ hours: 10 }).toJSDate()
+    const breakStarted = today.plus({ hours: 10, minutes: 25 }).toJSDate()
+    const end = today.plus({ hours: 10, minutes: 30 }).toJSDate() // +5m break
+    await workerPrisma.workSession.create({
+      data: {
+        userId: user.id,
+        taskId: task.id,
+        startTime: start,
+        breakStartedAt: breakStarted,
+        endTime: end,
+        state: WorkSessionState.completed,
+        timerMode: 'pomodoro',
+        targetDurationSec: 1500,
+        breakDurationSec: 300,
+        pausedDurationSec: 0,
+        breakPausedDurationSec: 0,
+      },
+    })
+
+    const out = await service.getTodaySummary(user.id, user.timezone)
+    expect(out.totalSeconds).toBe(25 * 60)
+    expect(out.perTask[task.id]).toBe(25 * 60)
   })
 
   it('ignores sessions belonging to other users', async () => {
