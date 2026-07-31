@@ -141,7 +141,7 @@
           Temporizador Pomodoro
         </h2>
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Foco entre 1 y 240 min (60–14400 s); pausa entre 0 y 60 min. Se sincroniza con
+          Foco entre 1 y 240 min (60–14400 s); descanso entre 0 y 60 min. Se sincroniza con
           tu cuenta.
         </p>
         <div class="space-y-4">
@@ -172,7 +172,7 @@
             </label>
             <label class="sm:col-span-3 block">
               <span class="text-xs font-medium text-gray-700 dark:text-gray-300"
-                >Pausa (min)</span
+                >Descanso (min)</span
               >
               <input
                 v-model.number="presetEditor[idx]!.breakMin"
@@ -485,7 +485,7 @@
       rowsFromTimerModes()
     } catch {
       timerSaveErr.value =
-        'No se pudieron guardar los presets. Comprueba foco (1–240 min) y pausa (0–60 min).'
+        'No se pudieron guardar los presets. Comprueba foco (1–240 min) y descanso (0–60 min).'
     } finally {
       timerSaving.value = false
     }

@@ -68,6 +68,16 @@
               <Play v-else :size="15" aria-hidden="true" />
             </button>
             <button
+              v-if="isBreak"
+              :class="ghostBtn"
+              title="Saltar descanso"
+              aria-label="Saltar descanso"
+              @click.stop="handleSkipBreak"
+            >
+              <span class="text-[11px] font-semibold">Saltar</span>
+            </button>
+            <button
+              v-if="canReset"
               :class="ghostBtn"
               title="Reiniciar timer"
               aria-label="Reiniciar timer"
@@ -220,6 +230,14 @@
               {{ isPaused ? 'Reanudar' : 'Pausar' }}
             </button>
             <button
+              v-if="isBreak"
+              class="px-4 h-11 rounded-[10px] text-sm font-medium border-0 cursor-pointer touch-manipulation bg-emerald-500 text-white transition-colors duration-150 hover:bg-emerald-600 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+              @click="handleSkipBreak"
+            >
+              Saltar descanso
+            </button>
+            <button
+              v-if="canReset"
               class="px-4 h-11 rounded-[10px] text-sm font-medium border-0 cursor-pointer touch-manipulation bg-surface-overlay text-gray-700 dark:text-gray-300 transition-colors duration-150 hover:bg-surface-raised dark:hover:bg-surface-overlay active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
               @click="handleReset"
             >
@@ -270,6 +288,9 @@
   const totalTime = computed(() => timerStore.activeTask?.totalTime ?? 0)
   const isPaused = computed(() => timerStore.isPaused)
   const isTimerVisible = computed(() => timerStore.isTimerVisible)
+  const isBreak = computed(() => timerStore.phase === 'break')
+  const isRemote = computed(() => Boolean(timerStore.remoteWorkSessionId))
+  const canReset = computed(() => !isRemote.value)
 
   // Modo canónico derivado del label libre guardado en `activeTask.type`.
   const sessionModeKind = computed<WorkSessionMode | null>(() => {
@@ -347,6 +368,8 @@
 
   /* State-driven Tailwind classes */
   const pillClasses = computed(() => {
+    if (isBreak.value)
+      return 'bg-emerald-50/95 dark:bg-emerald-950/20 border-emerald-300/40 dark:border-emerald-500/35'
     if (isCritical.value)
       return 'bg-error-50/95 dark:bg-error-950/20 border-error-300/40 dark:border-error-500/35 critical-pulse'
     if (isWarning.value)
@@ -355,30 +378,35 @@
   })
 
   const iconClasses = computed(() => {
+    if (isBreak.value) return 'text-emerald-500 dark:text-emerald-400'
     if (isCritical.value) return 'text-error-500 dark:text-error-400'
     if (isWarning.value) return 'text-warning-500 dark:text-warning-400'
     return 'text-primary-500 dark:text-primary-400'
   })
 
   const timeClasses = computed(() => {
+    if (isBreak.value) return 'text-emerald-700 dark:text-emerald-400'
     if (isCritical.value) return 'text-error-700 dark:text-error-400'
     if (isWarning.value) return 'text-warning-700 dark:text-warning-400'
     return 'text-gray-900 dark:text-gray-100'
   })
 
   const fillColor = computed(() => {
+    if (isBreak.value) return '#10b981' // emerald-500
     if (isCritical.value) return '#ef4444' // error-500
     if (isWarning.value) return '#f97316' // warning-500
     return '#0ea5e9' // primary-500
   })
 
   const dotClasses = computed(() => {
+    if (isBreak.value) return 'bg-emerald-500'
     if (isCritical.value) return 'bg-error-500'
     if (isWarning.value) return 'bg-warning-500'
     return 'bg-primary-500'
   })
 
   const pauseBtnClasses = computed(() => {
+    if (isBreak.value) return 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
     if (isCritical.value) return 'text-error-500 hover:bg-error-500/10'
     if (isWarning.value) return 'text-warning-500 hover:bg-warning-500/10'
     return 'text-primary-600 dark:text-primary-400 hover:bg-primary-500/10'
@@ -419,6 +447,9 @@
   }
   const handleReset = () => {
     timerStore.resetTimer()
+  }
+  const handleSkipBreak = () => {
+    void timerStore.skipBreak()
   }
   const handleClose = async () => {
     // After natural finish, reflection owns the remote session — do not abandon.
