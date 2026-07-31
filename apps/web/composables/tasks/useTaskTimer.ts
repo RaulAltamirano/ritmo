@@ -1,4 +1,5 @@
 import { useTimerStore } from '@/stores/timer'
+import { useWorkSessionSummaryStore } from '@/stores/workSessionSummary'
 import type { Task, TimerMode } from '@/types/task'
 
 export function useTaskTimer() {
@@ -30,27 +31,94 @@ export function useTaskTimer() {
       return
     }
 
-    // No crear sesión remota nueva si hay otra tarea con bloque remoto activo
-    if (
-      timerStore.remoteWorkSessionId &&
-      timerStore.activeTask &&
-      timerStore.activeTask.id !== task.id
-    ) {
-      timerStore.showNotification(
-        'No se puede cambiar de tarea',
-        'Finaliza o abandona el bloque remoto actual antes de cambiar de tarea.',
-        'warning',
-      )
-      return
-    }
-
     const timerMode = {
       minutes: mode.minutes ?? Math.floor(mode.time / 60),
       name: mode.name,
       presetKey: mode.presetKey,
     }
 
-    if (import.meta.client || process.env.VITEST) {
+    const switching =
+      !!timerStore.activeTask && timerStore.activeTask.id !== task.id
+
+    // Cambio de tarea con bloque remoto activo → split silencioso:
+    // heartbeat + abandonar el previo, crear uno nuevo con el tiempo restante.
+    if (switching && timerStore.remoteWorkSessionId) {
+      const fromId = timerStore.remoteWorkSessionId
+      const timeLeftSec = timerStore.activeTask!.timeLeft
+      try {
+        const { switchRemoteWorkSession } = await import(
+          '@/composables/timer/switchRemoteWorkSession'
+        )
+        const result = await switchRemoteWorkSession({
+          fromSessionId: fromId,
+          toTask: { id: task.id, name: task.name, category: task.category },
+          timeLeftSec,
+          pausedDurationSec: timerStore.activeTask!.totalPausedTime ?? 0,
+          isPaused: timerStore.isPaused,
+          mode: timerMode,
+        })
+        timerStore.clearRemoteWorkSession()
+        if (result.usedFullPreset && timerStore.activeTask) {
+          const total = timerMode.minutes * 60
+          timerStore.activeTask.timeLeft = total
+          timerStore.activeTask.totalTime = total
+          timerStore.activeTask.totalPausedTime = 0
+          timerStore.activeTask.startedAt = new Date()
+        }
+        timerStore.startTask(task, timerMode)
+        timerStore.bindRemoteWorkSession(result.newSessionId)
+        void useWorkSessionSummaryStore().refresh()
+        if (result.usedFullPreset) {
+          timerStore.showNotification(
+            'Nuevo bloque iniciado',
+            'Quedaba menos de un minuto; se abrió un bloque completo en la nueva tarea.',
+            'info',
+          )
+        }
+      } catch (e) {
+        const msg = (e as Error)?.message
+        if (msg === 'WORK_SESSION_ABANDON_FAILED') {
+          timerStore.showNotification(
+            'No se pudo cambiar de tarea',
+            'No se pudo cerrar el bloque remoto. Reintenta.',
+            'error',
+          )
+          return
+        }
+        if (msg === 'CHECKIN_REQUIRED') return
+        if (
+          msg === 'WORK_SESSION_CONFLICT' ||
+          msg === 'WORK_SESSION_CONFLICT_UNRESOLVED'
+        ) {
+          // El bloque previo ya fue abandonado: seguimos el cambio local.
+          timerStore.clearRemoteWorkSession()
+          timerStore.startTask(task, timerMode)
+          void useWorkSessionSummaryStore().refresh()
+          if (msg === 'WORK_SESSION_CONFLICT_UNRESOLVED') {
+            timerStore.showNotification(
+              'Sesión remota no iniciada',
+              'El temporizador local seguirá; el tiempo puede no contar en el resumen del día.',
+              'warning',
+            )
+          }
+          return
+        }
+        // create falló tras abandonar: cambio local + aviso.
+        timerStore.clearRemoteWorkSession()
+        timerStore.startTask(task, timerMode)
+        void useWorkSessionSummaryStore().refresh()
+        timerStore.showNotification(
+          'Sesión remota no iniciada',
+          'El temporizador local seguirá; el tiempo puede no contar en el resumen del día.',
+          'warning',
+        )
+      }
+      return
+    }
+
+    // Cambio local sin bloque remoto: solo actualizar metadata (el store
+    // conserva `timeLeft`); no creamos una sesión remota nueva.
+    if (!switching && (import.meta.client || process.env.VITEST)) {
       try {
         const { tryStartRemoteWorkSession } = await import(
           '@/composables/timer/useRemoteWorkSession'
@@ -62,10 +130,13 @@ export function useTaskTimer() {
       } catch (e) {
         const msg = (e as Error)?.message
         if (msg === 'CHECKIN_REQUIRED') return
-        if (
-          msg === 'WORK_SESSION_CONFLICT' ||
-          msg === 'WORK_SESSION_CONFLICT_UNRESOLVED'
-        ) {
+        if (msg === 'WORK_SESSION_CONFLICT') return
+        if (msg === 'WORK_SESSION_CONFLICT_UNRESOLVED') {
+          timerStore.showNotification(
+            'No se puede iniciar la tarea',
+            'Hay un bloque remoto activo. Finalízalo o abandónalo antes de empezar otro.',
+            'warning',
+          )
           return
         }
         timerStore.showNotification(

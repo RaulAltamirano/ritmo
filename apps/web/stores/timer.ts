@@ -17,6 +17,7 @@ import {
 import { needsWorkSessionFeedback } from '@/utils/workSessionFeedback'
 import { parseFetchError } from '@/utils/parseFetchError'
 import { secureSet, secureGet } from '@/utils/secureStorage'
+import { useNotify } from '@/composables/shared/useNotify'
 
 interface TimerTask {
   id: string
@@ -147,16 +148,10 @@ export const useTimerStore = defineStore('timer', {
       task: { id: string; name: string; category?: string },
       mode: { minutes: number; name: string },
     ) {
-      // Si ya hay una tarea activa, solo cambiar la tarea sin reiniciar el timer
+      // Si ya hay una tarea activa, solo cambiar la tarea sin reiniciar el timer.
+      // El caller (useTaskTimer) ya cerró el bloque remoto previo antes de llegar
+      // aquí, así que no bloqueamos por `remoteWorkSessionId`.
       if (this.activeTask && this.activeTask.id !== task.id) {
-        if (this.remoteWorkSessionId) {
-          this.showNotification(
-            'No se puede cambiar de tarea',
-            'Finaliza o abandona el bloque remoto actual antes de cambiar de tarea.',
-            'warning',
-          )
-          return
-        }
         // Cambiar solo la información de la tarea, mantener el tiempo restante
         this.activeTask.id = task.id
         this.activeTask.name = task.name
@@ -346,7 +341,9 @@ export const useTimerStore = defineStore('timer', {
       }
     },
 
-    // Detener timer actual — abandona el WorkSession remoto si hay uno
+    // Detener timer actual — abandona el WorkSession remoto si hay uno.
+    // Local UI always stops; on abandon failure we keep remoteWorkSessionId
+    // so conflict/retry flows can still resolve the server block.
     async stopTimer() {
       if (!this.activeTask) return
       this.stopTimerInterval()
@@ -354,13 +351,25 @@ export const useTimerStore = defineStore('timer', {
       this.activeTask = null
       this.isPaused = false
       this.isRunning = false
-      this.clearRemoteWorkSession()
-      if (sid) {
-        try {
-          await abandonWorkSession(sid)
-        } catch {
-          /* aún así limpiamos estado local */
-        }
+      this.clearRemoteHeartbeat()
+
+      if (!sid) {
+        this.clearRemoteWorkSession()
+        return
+      }
+
+      try {
+        await abandonWorkSession(sid)
+        this.clearRemoteWorkSession()
+      } catch {
+        this.remoteWorkSessionId = sid
+        setLastTrackedWorkSessionId(sid)
+        this.showNotification(
+          'No se pudo abandonar el bloque',
+          'El timer se detuvo aquí, pero el bloque remoto sigue activo. Reintenta o resuélvelo al iniciar otra tarea.',
+          'error',
+        )
+        throw new Error('WORK_SESSION_ABANDON_FAILED')
       }
     },
 
@@ -560,13 +569,10 @@ export const useTimerStore = defineStore('timer', {
       message: string,
       type: 'success' | 'info' | 'warning' | 'error' = 'info',
     ) {
-      if (process.client) {
-        // Emitir evento para mostrar notificación
-        window.dispatchEvent(
-          new CustomEvent('show-notification', {
-            detail: { title, message, type },
-          }),
-        )
+      if (process.client || process.env.VITEST) {
+        // useNotify is module-scoped (safe from Pinia actions). The old
+        // CustomEvent had no listener, so blocks/warnings were silent.
+        useNotify().notify(title, { message, type })
       }
     },
 
