@@ -245,6 +245,7 @@
     X,
   } from 'lucide-vue-next'
   import { useTimerStore } from '@/stores/timer'
+  import { useSessionGateStore } from '@/stores/sessionGate'
   import {
     getModeDisplay,
     mapModeLabelToTimerMode,
@@ -259,6 +260,7 @@
   }
 
   const timerStore = useTimerStore()
+  const sessionGate = useSessionGateStore()
 
   const showDetails = ref(false)
   const isHovered = ref(false)
@@ -418,8 +420,25 @@
   const handleReset = () => {
     timerStore.resetTimer()
   }
-  const handleClose = () => {
-    timerStore.closeTimer()
+  const handleClose = async () => {
+    // After natural finish, reflection owns the remote session — do not abandon.
+    const awaitingFeedback =
+      sessionGate.showFeedback ||
+      Boolean(sessionGate.feedbackWorkSessionId) ||
+      (Boolean(timerStore.remoteWorkSessionId) &&
+        !timerStore.isRunning &&
+        (timerStore.activeTask?.timeLeft ?? -1) === 0)
+
+    if (awaitingFeedback) {
+      timerStore.closeTimer()
+      return
+    }
+
+    try {
+      await timerStore.stopTimer()
+    } catch {
+      // stopTimer already notified on abandon failure
+    }
   }
 </script>
 

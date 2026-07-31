@@ -213,6 +213,22 @@ describe('useTodayHandlers', () => {
         createdAt: new Date(),
       }),
     ).rejects.toThrow(/nope|completar/i)
+    expect(notifyErrorMock).toHaveBeenCalled()
+  })
+
+  it('creates quick tasks with canonical Pomodoro estimate', async () => {
+    vi.resetModules()
+    createMock.mockResolvedValue({ success: true })
+    const { useTodayHandlers } = await import('@/composables/tasks/useTodayHandlers')
+    const { handleQuickTask } = useTodayHandlers()
+    await handleQuickTask('Nueva')
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Nueva',
+        priority: 'MEDIUM',
+        estimatedDuration: 25,
+      }),
+    )
   })
 
   it('notifies when quick create fails', async () => {
@@ -254,5 +270,51 @@ describe('useTodayHandlers', () => {
     const { handleDeleteTask } = useTodayHandlers()
     await handleDeleteTask('task-1')
     expect(notifyErrorMock).toHaveBeenCalled()
+  })
+
+  it('delete active task: stopTimer before remove', async () => {
+    vi.resetModules()
+    timerState.activeTask = { id: 'task-1', name: 'Task One' }
+    timerState.remoteWorkSessionId = 'ws-1'
+    removeMock.mockResolvedValue({ success: true })
+    const order: string[] = []
+    stopTimerMock.mockImplementation(async () => {
+      order.push('stopTimer')
+      timerState.activeTask = null
+      timerState.remoteWorkSessionId = null
+    })
+    removeMock.mockImplementation(async () => {
+      order.push('remove')
+      return { success: true }
+    })
+    const { useTodayHandlers } = await import('@/composables/tasks/useTodayHandlers')
+    const { handleDeleteTask } = useTodayHandlers()
+    await handleDeleteTask('task-1')
+    expect(order).toEqual(['stopTimer', 'remove'])
+  })
+
+  it('delete active task: still removes when stopTimer abandon fails', async () => {
+    vi.resetModules()
+    timerState.activeTask = { id: 'task-1', name: 'Task One' }
+    timerState.remoteWorkSessionId = 'ws-1'
+    stopTimerMock.mockRejectedValue(new Error('WORK_SESSION_ABANDON_FAILED'))
+    removeMock.mockResolvedValue({ success: true })
+    const { useTodayHandlers } = await import('@/composables/tasks/useTodayHandlers')
+    const { handleDeleteTask } = useTodayHandlers()
+    await handleDeleteTask('task-1')
+    expect(stopTimerMock).toHaveBeenCalled()
+    expect(removeMock).toHaveBeenCalledWith('task-1')
+  })
+
+  it('delete other task: does not stopTimer', async () => {
+    vi.resetModules()
+    timerState.activeTask = { id: 'task-other', name: 'Other' }
+    timerState.remoteWorkSessionId = 'ws-1'
+    removeMock.mockResolvedValue({ success: true })
+    const { useTodayHandlers } = await import('@/composables/tasks/useTodayHandlers')
+    const { handleDeleteTask } = useTodayHandlers()
+    await handleDeleteTask('task-1')
+    expect(stopTimerMock).not.toHaveBeenCalled()
+    expect(removeMock).toHaveBeenCalledWith('task-1')
   })
 })

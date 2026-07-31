@@ -3,6 +3,7 @@ import { useTasksStore } from '@/stores/tasks'
 import { useTimerStore } from '@/stores/timer'
 import { completeWorkSession } from '@/services/workSessionsApi'
 import { newIdempotencyKey } from '@/utils/idempotency'
+import { getDefaultEstimateMinutes } from '@/composables/timer/timerPresets'
 import { uiTaskToUpdatePayload } from '@/types/task'
 import { useNotify } from '@/composables/shared/useNotify'
 import type { Task, TaskCompletionFeedback } from '@/types/task'
@@ -38,6 +39,7 @@ export const useTodayHandlers = () => {
         priority: 'MEDIUM',
         category: 'WORK',
         tags: ['quick-task'],
+        estimatedDuration: getDefaultEstimateMinutes(),
       })
       if (!result.success) {
         notifyError('No se pudo crear la tarea', result.error)
@@ -48,6 +50,15 @@ export const useTodayHandlers = () => {
   }
 
   const handleDeleteTask = async (taskId: string): Promise<void> => {
+    // Discarding the active task must stop local timer + abandon remote block,
+    // otherwise the session stays open and blocks starting other tasks.
+    if (timerStore.activeTask?.id === taskId) {
+      try {
+        await timerStore.stopTimer()
+      } catch {
+        // stopTimer already notified; still remove the task from the list.
+      }
+    }
     const result = await store.remove(taskId)
     if (!result.success) {
       notifyError('No se pudo eliminar la tarea', result.error)
@@ -78,10 +89,16 @@ export const useTodayHandlers = () => {
 
   const handleCompleteTask = async (task: Task): Promise<void> => {
     if (timerStore.activeTask?.id === task.id) {
-      await timerStore.stopTimer()
+      try {
+        await timerStore.stopTimer()
+      } catch {
+        // stopTimer already notified; continue so markCompleted can still run
+        // when there was no remote block (or local stop succeeded first).
+      }
     }
     const result = await store.markCompleted(task.id, true)
     if (!result.success) {
+      notifyError('No se pudo completar la tarea', result.error)
       throw new Error(result.error ?? 'No se pudo completar la tarea')
     }
   }
