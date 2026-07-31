@@ -37,6 +37,7 @@
 <script setup lang="ts">
   import AbandonedWorkSessionBanner from '@/components/molecules/AbandonedWorkSessionBanner.vue'
   import { ref } from 'vue'
+  import { useTimerStore } from '@/stores/timer'
   import type { Task, TaskCompletionFeedback } from '../../../types/task'
   import TodayContent from './TodayContent.vue'
   import TodayTaskFeedbackModal from './TodayTaskFeedbackModal.vue'
@@ -57,6 +58,7 @@
     (e: 'toggle-filters'): void
     (e: 'create-task', taskName: string): void
     (e: 'request-complete', task: Task): void
+    (e: 'complete-task', task: Task): void
     (
       e: 'complete-task-with-feedback',
       task: Task,
@@ -82,8 +84,18 @@
     feedbackError.value = null
   }
 
+  const timerStore = useTimerStore()
+
+  const hasActiveRemoteSession = (task: Task) =>
+    Boolean(timerStore.remoteWorkSessionId) &&
+    timerStore.activeTask?.id === task.id
+
   const handleRequestComplete = (task: Task) => {
     emit('request-complete', task)
+    if (!hasActiveRemoteSession(task)) {
+      emit('complete-task', task)
+      return
+    }
     selectedTaskForCompletion.value = task
     feedbackError.value = null
     isFeedbackModalOpen.value = true
