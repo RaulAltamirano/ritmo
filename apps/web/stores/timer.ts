@@ -11,6 +11,11 @@ import type { TimerMode } from '@/types/task'
 import { loadConfig } from '@/config/environment'
 import { abandonWorkSession, patchWorkSession } from '@/services/workSessionsApi'
 import {
+  breakRemainingSec,
+  effectivePausedSec,
+  focusRemainingSec,
+} from '@/composables/timer/timerClock'
+import {
   clearLastTrackedWorkSessionId,
   setLastTrackedWorkSessionId,
 } from '@/utils/lastTrackedWorkSession'
@@ -75,6 +80,15 @@ export const useTimerStore = defineStore('timer', {
     /** Fallos transitorios de heartbeat consecutivos antes de desvincular */
     remoteHeartbeatFailures: 0,
 
+    /** Fase actual del ciclo foco → descanso → reflexión. */
+    phase: 'focus' as 'focus' | 'break',
+    /** Segundos configurados para el descanso del preset; `null` si no aplica. */
+    breakDurationSec: null as number | null,
+    /** Instante en que la sesión entró en descanso (local o remoto). */
+    breakStartedAt: null as Date | null,
+    /** Pausas acumuladas durante el descanso (segundos). */
+    breakPausedDurationSec: 0,
+
     /** Presets mostrados en TaskItem / ajustes; sincronizados con GET /users/preferences. */
     timerModes: [...DEFAULT_TIMER_PRESETS] as TimerMode[],
   }),
@@ -124,6 +138,7 @@ export const useTimerStore = defineStore('timer', {
     workBlockStatusLabel: state => {
       if (!state.activeTask) return ''
       if (state.isPaused) return 'Pausado'
+      if (state.phase === 'break') return 'Descanso'
       if (state.isRunning) return 'En marcha'
       return 'Detenido'
     },
@@ -146,7 +161,7 @@ export const useTimerStore = defineStore('timer', {
     // Iniciar una nueva tarea
     startTask(
       task: { id: string; name: string; category?: string },
-      mode: { minutes: number; name: string },
+      mode: { minutes: number; name: string; breakSec?: number },
     ) {
       // Si ya hay una tarea activa, solo cambiar la tarea sin reiniciar el timer.
       // El caller (useTaskTimer) ya cerró el bloque remoto previo antes de llegar
@@ -157,13 +172,6 @@ export const useTimerStore = defineStore('timer', {
         this.activeTask.name = task.name
         this.activeTask.category = task.category
         this.activeTask.type = mode.name
-
-        // Mostrar notificación de cambio de tarea
-        this.showNotification(
-          'Tarea cambiada',
-          `Ahora trabajando en: ${task.name}`,
-          'info',
-        )
         return
       }
 
@@ -182,6 +190,10 @@ export const useTimerStore = defineStore('timer', {
         }
 
         this.activeTask = newTask
+        this.phase = 'focus'
+        this.breakDurationSec = mode.breakSec ?? null
+        this.breakStartedAt = null
+        this.breakPausedDurationSec = 0
         this.isPaused = false
         this.isRunning = true
         this.startTimerInterval()
@@ -190,9 +202,6 @@ export const useTimerStore = defineStore('timer', {
         if (!this.currentDaySummary) {
           void this.loadDaySummary()
         }
-
-        // Mostrar notificación
-        this.showNotification('Tarea iniciada', `Comenzando: ${task.name}`, 'info')
       }
     },
 
@@ -228,16 +237,58 @@ export const useTimerStore = defineStore('timer', {
       scheduleNext()
     },
 
+    computeFocusRemaining(nowMs: number): number {
+      if (!this.activeTask) return 0
+      return focusRemainingSec({
+        targetDurationSec: this.activeTask.totalTime,
+        startMs: this.activeTask.startedAt?.getTime() ?? nowMs,
+        pausedAccumulatedSec: this.activeTask.totalPausedTime,
+        pausedAt: this.activeTask.pausedAt,
+        nowMs,
+      })
+    },
+
+    computeBreakRemaining(nowMs: number): number {
+      if (!this.activeTask || this.breakDurationSec == null || !this.breakStartedAt)
+        return 0
+      return breakRemainingSec({
+        breakDurationSec: this.breakDurationSec,
+        breakStartedMs: this.breakStartedAt.getTime(),
+        breakPausedAccumulatedSec: this.breakPausedDurationSec,
+        pausedAt: this.activeTask.pausedAt,
+        nowMs,
+      })
+    },
+
+    effectiveFocusPausedSec(nowMs: number): number {
+      return effectivePausedSec(
+        this.activeTask?.totalPausedTime ?? 0,
+        this.activeTask?.pausedAt,
+        nowMs,
+      )
+    },
+
+    effectiveBreakPausedSec(nowMs: number): number {
+      return effectivePausedSec(
+        this.breakPausedDurationSec,
+        this.activeTask?.pausedAt,
+        nowMs,
+      )
+    },
+
     /**
      * Restaura el timer flotante desde `GET /work-sessions/active`.
      * No abre modales; el caller debe abrir reflexión si `state === pending_feedback`.
      */
     hydrateFromActiveRemoteSession(payload: {
       id: string
-      state: 'running' | 'paused' | 'pending_feedback'
+      state: 'running' | 'paused' | 'on_break' | 'pending_feedback'
       startTime: string
       targetDurationSec: number
       pausedDurationSec: number
+      breakDurationSec?: number | null
+      breakStartedAt?: string | null
+      breakPausedDurationSec?: number | null
       task: { id: string; title: string }
       timerMode: string | null
     }) {
@@ -250,11 +301,30 @@ export const useTimerStore = defineStore('timer', {
       if (payload.timerMode === 'pomodoro') modeLabel = 'Pomodoro'
       else if (payload.timerMode === 'ultradian') modeLabel = 'Ultradiano'
 
-      const startMs = new Date(payload.startTime).getTime()
-      const wallSec = Math.floor((Date.now() - startMs) / 1000)
-      const pausedTotal = payload.pausedDurationSec ?? 0
-      const worked = Math.max(0, wallSec - pausedTotal)
-      const timeLeft = Math.max(0, target - worked)
+      const nowMs = Date.now()
+      const isBreak = payload.state === 'on_break'
+      const breakDuration = payload.breakDurationSec ?? null
+      const breakStartedAt = payload.breakStartedAt
+        ? new Date(payload.breakStartedAt)
+        : null
+
+      let timeLeft = 0
+      let pausedTotal = payload.pausedDurationSec ?? 0
+      if (isBreak && breakDuration != null && breakStartedAt) {
+        timeLeft = breakRemainingSec({
+          breakDurationSec: breakDuration,
+          breakStartedMs: breakStartedAt.getTime(),
+          breakPausedAccumulatedSec: payload.breakPausedDurationSec ?? 0,
+          nowMs,
+        })
+      } else {
+        timeLeft = focusRemainingSec({
+          targetDurationSec: target,
+          startMs: new Date(payload.startTime).getTime(),
+          pausedAccumulatedSec: pausedTotal,
+          nowMs,
+        })
+      }
 
       const needsFeedback = needsWorkSessionFeedback({
         state: payload.state,
@@ -271,6 +341,10 @@ export const useTimerStore = defineStore('timer', {
           startedAt: new Date(payload.startTime),
           totalPausedTime: pausedTotal,
         }
+        this.phase = isBreak ? 'break' : 'focus'
+        this.breakDurationSec = breakDuration
+        this.breakStartedAt = breakStartedAt
+        this.breakPausedDurationSec = payload.breakPausedDurationSec ?? 0
         this.isPaused = false
         this.isRunning = false
         this.remoteWorkSessionId = payload.id
@@ -283,13 +357,17 @@ export const useTimerStore = defineStore('timer', {
         id: payload.task.id,
         name: payload.task.title,
         timeLeft,
-        totalTime: target,
+        totalTime: isBreak && breakDuration != null ? breakDuration : target,
         type: modeLabel,
         startedAt: new Date(payload.startTime),
         totalPausedTime: pausedTotal,
       }
+      this.phase = isBreak ? 'break' : 'focus'
+      this.breakDurationSec = breakDuration
+      this.breakStartedAt = breakStartedAt
+      this.breakPausedDurationSec = payload.breakPausedDurationSec ?? 0
       this.isPaused = payload.state === 'paused'
-      this.isRunning = payload.state === 'running'
+      this.isRunning = payload.state === 'running' || isBreak
 
       if (!this.currentDaySummary) {
         void this.loadDaySummary()
@@ -304,18 +382,23 @@ export const useTimerStore = defineStore('timer', {
 
     async patchRemoteHeartbeat() {
       if (!this.remoteWorkSessionId) return
-      const { loadConfig } = await import('@/config/environment')
-      const cfg = loadConfig()
+      const nowMs = Date.now()
+      const isBreak = this.phase === 'break'
+      const body: {
+        lastClientSeenAt: string
+        state: 'running' | 'paused' | 'on_break' | 'pending_feedback'
+        pausedDurationSec: number
+        breakPausedDurationSec?: number
+      } = {
+        lastClientSeenAt: new Date().toISOString(),
+        state: isBreak ? 'on_break' : this.isPaused ? 'paused' : 'running',
+        pausedDurationSec: this.effectiveFocusPausedSec(nowMs),
+      }
+      if (isBreak) {
+        body.breakPausedDurationSec = this.effectiveBreakPausedSec(nowMs)
+      }
       try {
-        await $fetch(`${cfg.api.baseUrl}/work-sessions/${this.remoteWorkSessionId}`, {
-          method: 'PATCH',
-          credentials: 'include',
-          body: {
-            lastClientSeenAt: new Date().toISOString(),
-            state: this.isPaused ? 'paused' : 'running',
-            pausedDurationSec: this.activeTask?.totalPausedTime ?? 0,
-          },
-        })
+        await patchWorkSession(this.remoteWorkSessionId, body)
         this.remoteHeartbeatFailures = 0
       } catch (e: unknown) {
         const { status } = parseFetchError(e)
@@ -355,12 +438,14 @@ export const useTimerStore = defineStore('timer', {
 
       if (!sid) {
         this.clearRemoteWorkSession()
+        this.resetBreakState()
         return
       }
 
       try {
         await abandonWorkSession(sid)
         this.clearRemoteWorkSession()
+        this.resetBreakState()
       } catch {
         this.remoteWorkSessionId = sid
         setLastTrackedWorkSessionId(sid)
@@ -373,6 +458,13 @@ export const useTimerStore = defineStore('timer', {
       }
     },
 
+    resetBreakState() {
+      this.phase = 'focus'
+      this.breakDurationSec = null
+      this.breakStartedAt = null
+      this.breakPausedDurationSec = 0
+    },
+
     // Pausar timer
     pauseTimer() {
       if (this.activeTask && this.isRunning) {
@@ -380,13 +472,6 @@ export const useTimerStore = defineStore('timer', {
         this.isRunning = false
         this.activeTask.pausedAt = new Date()
         this.stopTimerInterval()
-
-        // Mostrar notificación
-        this.showNotification(
-          'Timer pausado',
-          `${this.activeTask.name} está en pausa`,
-          'warning',
-        )
       }
     },
 
@@ -401,18 +486,15 @@ export const useTimerStore = defineStore('timer', {
           const pausedDuration = Math.floor(
             (Date.now() - this.activeTask.pausedAt.getTime()) / 1000,
           )
-          this.activeTask.totalPausedTime += pausedDuration
+          if (this.phase === 'break') {
+            this.breakPausedDurationSec += pausedDuration
+          } else {
+            this.activeTask.totalPausedTime += pausedDuration
+          }
           this.activeTask.pausedAt = undefined
         }
 
         this.startTimerInterval()
-
-        // Mostrar notificación
-        this.showNotification(
-          'Timer reanudado',
-          `Continuando: ${this.activeTask.name}`,
-          'info',
-        )
       }
     },
 
@@ -430,13 +512,6 @@ export const useTimerStore = defineStore('timer', {
           this.stopTimerInterval()
         }
         this.startTimerInterval()
-
-        // Mostrar notificación
-        this.showNotification(
-          'Timer reiniciado',
-          `${this.activeTask.name} se ha reiniciado`,
-          'info',
-        )
       }
     },
 
@@ -444,33 +519,140 @@ export const useTimerStore = defineStore('timer', {
     closeTimer() {
       this.stopTimerInterval()
       this.activeTask = null
+      this.phase = 'focus'
+      this.breakDurationSec = null
+      this.breakStartedAt = null
+      this.breakPausedDurationSec = 0
       this.isPaused = false
       this.isRunning = false
       this.clearRemoteWorkSession()
     },
 
-    /** Fin de cuenta atrás: reflexión remota o cierre local. */
+    /** Entra en la fase de descanso sincronizada con el servidor. */
+    enterBreakPhase(breakDurationSec: number) {
+      if (!this.activeTask) return
+      this.phase = 'break'
+      this.breakDurationSec = breakDurationSec
+      this.breakStartedAt = new Date()
+      this.breakPausedDurationSec = 0
+      this.activeTask.pausedAt = undefined
+      this.activeTask.totalTime = breakDurationSec
+      this.activeTask.timeLeft = breakDurationSec
+      this.isPaused = false
+      this.isRunning = true
+      const minutes = Math.round(breakDurationSec / 60)
+      this.showNotification('Descanso', `${minutes} min de descanso`, 'info')
+      this.startTimerInterval()
+    },
+
+    /** Salta el descanso y pasa directamente a la reflexión. */
+    async skipBreak() {
+      await this.finishBreak()
+    },
+
+    /**
+     * Finaliza el descanso (natural o por skip) y abre reflexión si hay
+     * sesión remota; en local cierra el bloque como completado.
+     */
+    async finishBreak() {
+      this.stopTimerInterval()
+      this.isRunning = false
+      if (this.remoteWorkSessionId) {
+        const sid = this.remoteWorkSessionId
+        try {
+          await patchWorkSession(sid, {
+            lastClientSeenAt: new Date().toISOString(),
+            state: 'pending_feedback',
+            pausedDurationSec: this.activeTask?.totalPausedTime ?? 0,
+          })
+        } catch (e: unknown) {
+          const { status } = parseFetchError(e)
+          if (status === 404 || status === 410 || status === 409) {
+            this.clearRemoteWorkSession()
+          }
+          this.showNotification(
+            'No se pudo finalizar el descanso',
+            'Reintenta o cierra el timer.',
+            'error',
+          )
+          throw new Error('WORK_SESSION_FINISH_BREAK_FAILED')
+        }
+        if (process.client) {
+          const cfg = loadConfig()
+          if (cfg.timer?.reflectionModalRequired === false) {
+            try {
+              await abandonWorkSession(sid)
+            } catch {
+              /* sin bloqueo UI */
+            }
+            this.closeTimer()
+            return
+          }
+          const { useSessionGateStore } = await import('@/stores/sessionGate')
+          useSessionGateStore().openFeedback(sid)
+        }
+        return
+      }
+      this.completeTask()
+    },
+
+    /** Fin de cuenta atrás del foco: descanso o reflexión/cierre. */
     onTimerNaturalFinished() {
       this.stopTimerInterval()
       this.isRunning = false
       // Cancel pending heartbeat synchronously to avoid a race where the
-      // scheduled tick fires during the pending_feedback PATCH window
+      // scheduled tick fires during the transition PATCH window
       // and overwrites the state back to running/paused on the server.
       this.clearRemoteHeartbeat()
+
+      const hasBreak = (this.breakDurationSec ?? 0) > 0
+
       if (this.remoteWorkSessionId) {
+        const sid = this.remoteWorkSessionId
+        if (hasBreak) {
+          void (async () => {
+            try {
+              await patchWorkSession(sid, {
+                lastClientSeenAt: new Date().toISOString(),
+                state: 'on_break',
+                pausedDurationSec: this.activeTask?.totalPausedTime ?? 0,
+              })
+              this.enterBreakPhase(this.breakDurationSec!)
+              this.bindRemoteWorkSession(sid)
+            } catch (e: unknown) {
+              const { status } = parseFetchError(e)
+              if (status === 404 || status === 410 || status === 409) {
+                this.clearRemoteWorkSession()
+              }
+              this.showNotification(
+                'No se pudo iniciar el descanso',
+                'El bloque remoto no cambió de fase; no abras la reflexión todavía.',
+                'error',
+              )
+            }
+          })()
+          return
+        }
         void (async () => {
-          const cfg = loadConfig()
-          const sid = this.remoteWorkSessionId
           try {
-            await patchWorkSession(sid!, {
+            await patchWorkSession(sid, {
               lastClientSeenAt: new Date().toISOString(),
               state: 'pending_feedback',
               pausedDurationSec: this.activeTask?.totalPausedTime ?? 0,
             })
-          } catch {
-            /* continuar para mostrar modal */
+          } catch (e: unknown) {
+            const { status } = parseFetchError(e)
+            if (status === 404 || status === 410 || status === 409) {
+              this.clearRemoteWorkSession()
+            }
+            this.showNotification(
+              'No se pudo abrir la reflexión',
+              'El bloque remoto puede estar desfasado; reintenta o ciérralo.',
+              'warning',
+            )
           }
           if (process.client && sid) {
+            const cfg = loadConfig()
             if (cfg.timer?.reflectionModalRequired === false) {
               try {
                 await abandonWorkSession(sid)
@@ -484,6 +666,11 @@ export const useTimerStore = defineStore('timer', {
             useSessionGateStore().openFeedback(sid)
           }
         })()
+        return
+      }
+
+      if (hasBreak) {
+        this.enterBreakPhase(this.breakDurationSec!)
         return
       }
       this.completeTask()
@@ -503,12 +690,6 @@ export const useTimerStore = defineStore('timer', {
           category: this.activeTask.category,
         })
 
-        this.showNotification(
-          '¡Tarea completada!',
-          `${this.activeTask.name} ha sido completada exitosamente`,
-          'success',
-        )
-
         this.closeTimer()
       }
     },
@@ -521,27 +702,16 @@ export const useTimerStore = defineStore('timer', {
 
       this.lastUpdateTime = Date.now()
       this.timerInterval = setInterval(() => {
-        if (this.activeTask && this.isRunning && !this.isPaused) {
-          if (this.activeTask.timeLeft > 0) {
-            this.activeTask.timeLeft--
-
-            // Notificaciones de tiempo crítico
-            if (this.activeTask.timeLeft === 300) {
-              // 5 minutos
-              this.showNotification(
-                'Tiempo crítico',
-                `Quedan 5 minutos para completar: ${this.activeTask.name}`,
-                'warning',
-              )
-            } else if (this.activeTask.timeLeft === 60) {
-              // 1 minuto
-              this.showNotification(
-                '¡Último minuto!',
-                `Queda 1 minuto para completar: ${this.activeTask.name}`,
-                'error',
-              )
-            }
-          } else {
+        if (!this.activeTask || !this.isRunning || this.isPaused) return
+        const now = Date.now()
+        if (this.phase === 'break') {
+          this.activeTask.timeLeft = this.computeBreakRemaining(now)
+          if (this.activeTask.timeLeft <= 0) {
+            void this.finishBreak()
+          }
+        } else {
+          this.activeTask.timeLeft = this.computeFocusRemaining(now)
+          if (this.activeTask.timeLeft <= 0) {
             this.onTimerNaturalFinished()
           }
         }
