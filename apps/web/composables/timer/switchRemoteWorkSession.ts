@@ -9,6 +9,8 @@ import {
 } from '@/services/workSessionsApi'
 import { parseFetchError } from '@/utils/parseFetchError'
 
+export type SwitchDurationPolicy = 'remaining' | 'full_preset'
+
 export type SwitchRemoteInput = {
   fromSessionId: string
   toTask: { id: string; name: string; category?: string }
@@ -16,6 +18,8 @@ export type SwitchRemoteInput = {
   pausedDurationSec: number
   isPaused: boolean
   mode: { minutes: number; name: string; presetKey?: string }
+  /** default 'remaining' — preserves <60s upgrade behavior */
+  durationPolicy?: SwitchDurationPolicy
 }
 
 export type SwitchRemoteResult = {
@@ -33,7 +37,9 @@ export type SwitchRemoteResult = {
 export async function switchRemoteWorkSession(
   input: SwitchRemoteInput,
 ): Promise<SwitchRemoteResult> {
-  const usedFullPreset = input.timeLeftSec < 60
+  const policy = input.durationPolicy ?? 'remaining'
+  const usedFullPreset =
+    policy === 'full_preset' || input.timeLeftSec < 60
   const targetDurationSec = usedFullPreset
     ? Math.max(60, input.mode.minutes * 60)
     : Math.floor(input.timeLeftSec)
