@@ -12,6 +12,7 @@ export async function createWorkSession(body: {
   taskId: string
   targetDurationSec: number
   timerMode: string
+  breakDurationSec?: number
   presetKey?: string
 }) {
   return $fetch(base(), {
@@ -25,8 +26,9 @@ export async function patchWorkSession(
   sessionId: string,
   body: {
     lastClientSeenAt: string
-    state: 'running' | 'paused' | 'pending_feedback'
+    state: 'running' | 'paused' | 'on_break' | 'pending_feedback'
     pausedDurationSec: number
+    breakPausedDurationSec?: number
   },
 ) {
   return $fetch(`${base()}/${sessionId}`, {

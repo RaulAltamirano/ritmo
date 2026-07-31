@@ -63,6 +63,7 @@ export async function switchRemoteWorkSession(
       taskId: input.toTask.id,
       targetDurationSec,
       timerMode,
+      breakDurationSec: 0,
       ...(input.mode.presetKey ? { presetKey: input.mode.presetKey } : {}),
     })) as { data?: { id?: string } }
     const id = res?.data?.id

@@ -21,7 +21,7 @@ function userCivilDateYmd(): string {
  */
 export async function tryStartRemoteWorkSession(
   task: { id: string; name: string; category?: string },
-  mode: { minutes: number; name: string; presetKey?: string },
+  mode: { minutes: number; name: string; breakSec?: number; presetKey?: string },
 ): Promise<void> {
   const timerStore = useTimerStore()
   const gate = useSessionGateStore()
@@ -47,6 +47,7 @@ export async function tryStartRemoteWorkSession(
       taskId: task.id,
       targetDurationSec: mode.minutes * 60,
       timerMode,
+      breakDurationSec: mode.breakSec ?? 0,
       ...(mode.presetKey ? { presetKey: mode.presetKey } : {}),
     })) as { data?: { id?: string } }
     const id = res?.data?.id

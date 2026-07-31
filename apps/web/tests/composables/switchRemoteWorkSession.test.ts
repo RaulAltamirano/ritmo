@@ -54,6 +54,7 @@ describe('switchRemoteWorkSession', () => {
         taskId: 'task-b',
         targetDurationSec: 597,
         presetKey: '25_5',
+        breakDurationSec: 0,
       }),
     )
     expect(res).toEqual({

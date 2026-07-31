@@ -35,6 +35,7 @@ export function useTaskTimer() {
       minutes: mode.minutes ?? Math.floor(mode.time / 60),
       name: mode.name,
       presetKey: mode.presetKey,
+      breakSec: mode.breakSec,
     }
 
     const switching =
@@ -68,13 +69,6 @@ export function useTaskTimer() {
         timerStore.startTask(task, timerMode)
         timerStore.bindRemoteWorkSession(result.newSessionId)
         void useWorkSessionSummaryStore().refresh()
-        if (result.usedFullPreset) {
-          timerStore.showNotification(
-            'Nuevo bloque iniciado',
-            'Quedaba menos de un minuto; se abrió un bloque completo en la nueva tarea.',
-            'info',
-          )
-        }
       } catch (e) {
         const msg = (e as Error)?.message
         if (msg === 'WORK_SESSION_ABANDON_FAILED') {
