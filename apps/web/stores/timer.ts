@@ -25,6 +25,7 @@ interface TimerTask {
   timeLeft: number
   totalTime: number
   type: string
+  presetKey?: string
   category?: string
   startedAt?: Date
   pausedAt?: Date
@@ -146,7 +147,7 @@ export const useTimerStore = defineStore('timer', {
     // Iniciar una nueva tarea
     startTask(
       task: { id: string; name: string; category?: string },
-      mode: { minutes: number; name: string },
+      mode: { minutes: number; name: string; presetKey?: string },
     ) {
       // Si ya hay una tarea activa, solo cambiar la tarea sin reiniciar el timer.
       // El caller (useTaskTimer) ya cerró el bloque remoto previo antes de llegar
@@ -157,6 +158,7 @@ export const useTimerStore = defineStore('timer', {
         this.activeTask.name = task.name
         this.activeTask.category = task.category
         this.activeTask.type = mode.name
+        this.activeTask.presetKey = mode.presetKey
 
         // Mostrar notificación de cambio de tarea
         this.showNotification(
@@ -176,6 +178,7 @@ export const useTimerStore = defineStore('timer', {
           timeLeft: totalTime,
           totalTime,
           type: mode.name,
+          presetKey: mode.presetKey,
           category: task.category,
           startedAt: new Date(),
           totalPausedTime: 0,

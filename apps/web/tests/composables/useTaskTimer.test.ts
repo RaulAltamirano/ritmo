@@ -4,7 +4,9 @@ import { createPinia, setActivePinia } from 'pinia'
 const startTaskMock = vi.fn()
 const showNotificationMock = vi.fn()
 const tryStartRemoteMock = vi.fn()
-const switchRemoteMock = vi.fn()
+const applyRemoteMock = vi.fn()
+const openPromptMock = vi.fn()
+const closePromptMock = vi.fn()
 const clearRemoteMock = vi.fn()
 const bindRemoteMock = vi.fn()
 const refreshSummaryMock = vi.fn()
@@ -17,6 +19,7 @@ const timerState = {
     totalTime?: number
     totalPausedTime?: number
     startedAt?: Date
+    presetKey?: string
   } | null,
   isPaused: false,
   remoteWorkSessionId: null as string | null,
@@ -38,8 +41,15 @@ vi.mock('@/composables/timer/useRemoteWorkSession', () => ({
   tryStartRemoteWorkSession: (...args: unknown[]) => tryStartRemoteMock(...args),
 }))
 
-vi.mock('@/composables/timer/switchRemoteWorkSession', () => ({
-  switchRemoteWorkSession: (...a: unknown[]) => switchRemoteMock(...a),
+vi.mock('@/composables/timer/applyRemoteTaskSwitch', () => ({
+  applyRemoteTaskSwitch: (...a: unknown[]) => applyRemoteMock(...a),
+}))
+
+vi.mock('@/stores/sessionGate', () => ({
+  useSessionGateStore: () => ({
+    openTaskSwitchPrompt: openPromptMock,
+    closeTaskSwitchPrompt: closePromptMock,
+  }),
 }))
 
 vi.mock('@/stores/workSessionSummary', () => ({
@@ -66,7 +76,10 @@ describe('useTaskTimer', () => {
     timerState.remoteWorkSessionId = null
     timerState.isPaused = false
     tryStartRemoteMock.mockResolvedValue(undefined)
-    switchRemoteMock.mockReset()
+    applyRemoteMock.mockReset()
+    applyRemoteMock.mockResolvedValue(undefined)
+    openPromptMock.mockReset()
+    closePromptMock.mockReset()
     clearRemoteMock.mockReset()
     bindRemoteMock.mockReset()
     refreshSummaryMock.mockReset()
@@ -136,7 +149,7 @@ describe('useTaskTimer', () => {
     expect(startTaskMock).not.toHaveBeenCalled()
   })
 
-  it('switches remote: abandon helper then local startTask with same timeLeft path', async () => {
+  it('switches remote with remaining time when presets match', async () => {
     vi.resetModules()
     timerState.activeTask = {
       id: 'task-a',
@@ -144,53 +157,68 @@ describe('useTaskTimer', () => {
       timeLeft: 597,
       totalTime: 1500,
       totalPausedTime: 5,
+      presetKey: '25_5',
     }
     timerState.remoteWorkSessionId = 'ws_old'
     timerState.isPaused = false
-    switchRemoteMock.mockResolvedValue({
-      newSessionId: 'ws_new',
-      targetDurationSec: 597,
-      usedFullPreset: false,
-    })
     const { useTaskTimer } = await import('@/composables/tasks/useTaskTimer')
     const { startTask } = useTaskTimer()
     await startTask({ id: 'task-b', name: 'B', createdAt: new Date() }, mode)
 
-    expect(switchRemoteMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        fromSessionId: 'ws_old',
-        toTask: expect.objectContaining({ id: 'task-b' }),
-        timeLeftSec: 597,
-      }),
-    )
-    expect(clearRemoteMock).toHaveBeenCalled()
-    expect(bindRemoteMock).toHaveBeenCalledWith('ws_new')
-    expect(startTaskMock).toHaveBeenCalled()
-    expect(showNotificationMock).not.toHaveBeenCalledWith(
-      expect.stringMatching(/No se puede cambiar/i),
-      expect.anything(),
-      expect.anything(),
-    )
-    expect(refreshSummaryMock).toHaveBeenCalled()
+    expect(applyRemoteMock).toHaveBeenCalledWith({
+      toTask: { id: 'task-b', name: 'B', category: undefined },
+      mode: expect.objectContaining({ minutes: 25, presetKey: '25_5' }),
+      durationPolicy: 'remaining',
+    })
+    expect(openPromptMock).not.toHaveBeenCalled()
   })
 
-  it('does not switch local when abandon fails', async () => {
+  it('pauses and prompts when presets differ and remaining time is too long', async () => {
     vi.resetModules()
     timerState.activeTask = {
       id: 'task-a',
       name: 'A',
-      timeLeft: 100,
-      totalTime: 1500,
+      timeLeft: 3000,
+      totalTime: 5400,
       totalPausedTime: 0,
     }
     timerState.remoteWorkSessionId = 'ws_old'
-    switchRemoteMock.mockRejectedValue(new Error('WORK_SESSION_ABANDON_FAILED'))
+    timerState.isPaused = false
     const { useTaskTimer } = await import('@/composables/tasks/useTaskTimer')
     const { startTask } = useTaskTimer()
     await startTask({ id: 'task-b', name: 'B', createdAt: new Date() }, mode)
 
-    expect(startTaskMock).not.toHaveBeenCalled()
-    expect(bindRemoteMock).not.toHaveBeenCalled()
-    expect(showNotificationMock).toHaveBeenCalled()
+    expect(timerState.pauseTimer).toHaveBeenCalled()
+    expect(openPromptMock).toHaveBeenCalledWith({
+      toTask: { id: 'task-b', name: 'B', category: undefined },
+      mode: expect.objectContaining({ minutes: 25, presetKey: '25_5' }),
+      remainingSec: 3000,
+      canContinueRemaining: false,
+      fromTaskName: 'A',
+    })
+    expect(applyRemoteMock).not.toHaveBeenCalled()
+  })
+
+  it('allows continuing remaining time when it fits the new preset', async () => {
+    vi.resetModules()
+    timerState.activeTask = {
+      id: 'task-a',
+      name: 'A',
+      timeLeft: 600,
+      totalTime: 5400,
+      totalPausedTime: 0,
+    }
+    timerState.remoteWorkSessionId = 'ws_old'
+    const { useTaskTimer } = await import('@/composables/tasks/useTaskTimer')
+    const { startTask } = useTaskTimer()
+    await startTask({ id: 'task-b', name: 'B', createdAt: new Date() }, mode)
+
+    expect(openPromptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        remainingSec: 600,
+        canContinueRemaining: true,
+      }),
+    )
+    expect(applyRemoteMock).not.toHaveBeenCalled()
   })
 })

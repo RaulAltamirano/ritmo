@@ -17,6 +17,13 @@ export const useSessionGateStore = defineStore('sessionGate', {
       task: { id: string; name: string; category?: string }
       mode: { minutes: number; name: string }
     },
+    taskSwitchPrompt: null as null | {
+      toTask: { id: string; name: string; category?: string }
+      mode: { minutes: number; name: string; presetKey?: string }
+      remainingSec: number
+      canContinueRemaining: boolean
+      fromTaskName: string
+    },
   }),
   actions: {
     requestDailyCheckinForPendingStart() {
@@ -47,6 +54,12 @@ export const useSessionGateStore = defineStore('sessionGate', {
     },
     closeConflict() {
       this.conflict = null
+    },
+    openTaskSwitchPrompt(payload: NonNullable<typeof this.taskSwitchPrompt>) {
+      this.taskSwitchPrompt = payload
+    },
+    closeTaskSwitchPrompt() {
+      this.taskSwitchPrompt = null
     },
   },
 })
