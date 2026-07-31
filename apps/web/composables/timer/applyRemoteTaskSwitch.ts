@@ -4,7 +4,12 @@ import { useWorkSessionSummaryStore } from '@/stores/workSessionSummary'
 
 export interface ApplyRemoteTaskSwitchInput {
   toTask: { id: string; name: string; category?: string }
-  mode: { minutes: number; name: string; presetKey?: string }
+  mode: {
+    minutes: number
+    name: string
+    presetKey?: string
+    breakSec?: number
+  }
   durationPolicy: 'remaining' | 'full_preset'
 }
 

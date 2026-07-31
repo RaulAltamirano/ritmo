@@ -19,7 +19,7 @@ export const useSessionGateStore = defineStore('sessionGate', {
     },
     taskSwitchPrompt: null as null | {
       toTask: { id: string; name: string; category?: string }
-      mode: { minutes: number; name: string; presetKey?: string }
+      mode: { minutes: number; name: string; presetKey?: string; breakSec?: number }
       remainingSec: number
       canContinueRemaining: boolean
       fromTaskName: string

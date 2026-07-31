@@ -259,6 +259,84 @@ describe('WorkSession API', () => {
       expect(resumed.status).toBe(200)
       expect(resumed.body.data.state).toBe('running')
     })
+
+    it('PATCH to on_break sets breakStartedAt; then pending_feedback', async () => {
+      const { userId, accessToken } = await createAuthedUser()
+      const task = await createTaskForUser(userId)
+      await seedCheckinForToday(userId)
+      const created = await authedReq(accessToken).post('/api/work-sessions').send({
+        taskId: task.id,
+        targetDurationSec: 1500,
+        timerMode: 'pomodoro',
+        breakDurationSec: 300,
+      })
+      const { id } = created.body.data
+
+      const patchBreak = await authedReq(accessToken)
+        .patch(`/api/work-sessions/${id}`)
+        .send({
+          state: 'on_break',
+          pausedDurationSec: 0,
+          lastClientSeenAt: new Date().toISOString(),
+        })
+      expect(patchBreak.status).toBe(200)
+      expect(patchBreak.body.data.state).toBe('on_break')
+      expect(patchBreak.body.data.breakStartedAt).toBeTruthy()
+
+      const patchFb = await authedReq(accessToken)
+        .patch(`/api/work-sessions/${id}`)
+        .send({
+          state: 'pending_feedback',
+          lastClientSeenAt: new Date().toISOString(),
+        })
+      expect(patchFb.status).toBe(200)
+      expect(patchFb.body.data.state).toBe('pending_feedback')
+    })
+
+    it('rejects on_break when breakDurationSec is 0', async () => {
+      const { userId, accessToken } = await createAuthedUser()
+      const task = await createTaskForUser(userId)
+      await seedCheckinForToday(userId)
+      const created = await authedReq(accessToken).post('/api/work-sessions').send({
+        taskId: task.id,
+        targetDurationSec: 1500,
+        timerMode: 'pomodoro',
+        breakDurationSec: 0,
+      })
+      const { id } = created.body.data
+
+      const res = await authedReq(accessToken)
+        .patch(`/api/work-sessions/${id}`)
+        .send({
+          state: 'on_break',
+          pausedDurationSec: 0,
+          lastClientSeenAt: new Date().toISOString(),
+        })
+      expect(res.status).toBe(400)
+      expect(res.body.error.code).toBe('INVALID_STATE')
+    })
+
+    it('rejects pending_feedback from running when breakDurationSec > 0', async () => {
+      const { userId, accessToken } = await createAuthedUser()
+      const task = await createTaskForUser(userId)
+      await seedCheckinForToday(userId)
+      const created = await authedReq(accessToken).post('/api/work-sessions').send({
+        taskId: task.id,
+        targetDurationSec: 1500,
+        timerMode: 'pomodoro',
+        breakDurationSec: 300,
+      })
+      const { id } = created.body.data
+
+      const res = await authedReq(accessToken)
+        .patch(`/api/work-sessions/${id}`)
+        .send({
+          state: 'pending_feedback',
+          lastClientSeenAt: new Date().toISOString(),
+        })
+      expect(res.status).toBe(400)
+      expect(res.body.error.code).toBe('INVALID_STATE')
+    })
   })
 
   describe('POST /api/work-sessions/:id/complete', () => {

@@ -9,10 +9,13 @@ import { needsWorkSessionFeedback } from '@/utils/workSessionFeedback'
 
 export interface ActiveWorkSessionApi {
   id: string
-  state: 'running' | 'paused' | 'pending_feedback'
+  state: 'running' | 'paused' | 'on_break' | 'pending_feedback'
   startTime: string
   targetDurationSec: number
   pausedDurationSec: number
+  breakDurationSec?: number | null
+  breakStartedAt?: string | null
+  breakPausedDurationSec?: number | null
   timerMode: string | null
   presetKey?: string
   task: { id: string; title: string }
@@ -32,7 +35,12 @@ export function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
   const state = o.state as ActiveWorkSessionApi['state']
   const task = o.task as { id?: string; title?: string } | undefined
   if (!id || !task?.id || typeof task.title !== 'string') return null
-  if (state !== 'running' && state !== 'paused' && state !== 'pending_feedback')
+  if (
+    state !== 'running' &&
+    state !== 'paused' &&
+    state !== 'on_break' &&
+    state !== 'pending_feedback'
+  )
     return null
 
   let startTime: string | null = null
@@ -50,6 +58,13 @@ export function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
     return null
   }
 
+  const breakStartedAt =
+    typeof o.breakStartedAt === 'string'
+      ? o.breakStartedAt
+      : o.breakStartedAt instanceof Date
+        ? o.breakStartedAt.toISOString()
+        : null
+
   return {
     id,
     state,
@@ -57,6 +72,13 @@ export function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
     targetDurationSec,
     pausedDurationSec:
       typeof o.pausedDurationSec === 'number' ? o.pausedDurationSec : 0,
+    breakDurationSec:
+      typeof o.breakDurationSec === 'number' ? o.breakDurationSec : null,
+    breakStartedAt,
+    breakPausedDurationSec:
+      typeof o.breakPausedDurationSec === 'number'
+        ? o.breakPausedDurationSec
+        : 0,
     timerMode: typeof o.timerMode === 'string' ? o.timerMode : null,
     presetKey: typeof o.presetKey === 'string' ? o.presetKey : undefined,
     task: { id: task.id, title: task.title },
@@ -134,6 +156,9 @@ async function doRestore(): Promise<void> {
         startTime: row.startTime,
         targetDurationSec: row.targetDurationSec,
         pausedDurationSec: row.pausedDurationSec,
+        breakDurationSec: row.breakDurationSec,
+        breakStartedAt: row.breakStartedAt,
+        breakPausedDurationSec: row.breakPausedDurationSec,
         task: row.task,
         timerMode: row.timerMode,
         presetKey: row.presetKey,

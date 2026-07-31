@@ -18,6 +18,7 @@ export const patchWorkSessionBodySchema = z
   .object({
     lastClientSeenAt: z.string().datetime().optional(),
     pausedDurationSec: z.number().int().min(0).optional(),
+    breakPausedDurationSec: z.number().int().min(0).optional(),
     state: z.nativeEnum(WorkSessionState).optional(),
   })
   .strict()

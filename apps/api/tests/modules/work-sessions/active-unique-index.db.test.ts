@@ -46,7 +46,7 @@ describe('work_sessions_active_per_user partial unique index (B1)', () => {
     })
   })
 
-  it.each<WorkSessionState>(['paused', 'pending_feedback'])(
+  it.each<WorkSessionState>(['paused', 'on_break', 'pending_feedback'])(
     'also rejects when existing row is %s',
     async state => {
       const { user, task } = await seedUserAndTask(`state-${state}`)

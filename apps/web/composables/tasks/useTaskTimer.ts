@@ -40,6 +40,7 @@ export function useTaskTimer() {
       minutes: mode.minutes ?? Math.floor(mode.time / 60),
       name: mode.name,
       presetKey: mode.presetKey,
+      breakSec: mode.breakSec,
     }
 
     const switching =

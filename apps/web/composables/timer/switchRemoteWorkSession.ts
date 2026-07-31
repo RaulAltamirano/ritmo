@@ -17,7 +17,12 @@ export type SwitchRemoteInput = {
   timeLeftSec: number
   pausedDurationSec: number
   isPaused: boolean
-  mode: { minutes: number; name: string; presetKey?: string }
+  mode: {
+    minutes: number
+    name: string
+    presetKey?: string
+    breakSec?: number
+  }
   /** default 'remaining' — preserves <60s upgrade behavior */
   durationPolicy?: SwitchDurationPolicy
 }
@@ -69,6 +74,7 @@ export async function switchRemoteWorkSession(
       taskId: input.toTask.id,
       targetDurationSec,
       timerMode,
+      breakDurationSec: input.mode.breakSec ?? 0,
       ...(input.mode.presetKey ? { presetKey: input.mode.presetKey } : {}),
     })) as { data?: { id?: string } }
     const id = res?.data?.id

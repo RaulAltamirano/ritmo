@@ -158,6 +158,7 @@ enum CircadianPhaseStatus {
 enum WorkSessionState {
   running
   paused
+  on_break
   pending_feedback
   completed
   abandoned

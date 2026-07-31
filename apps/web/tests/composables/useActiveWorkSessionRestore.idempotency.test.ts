@@ -125,4 +125,39 @@ describe('restoreActiveWorkSessionIfAny — idempotency', () => {
       expect.objectContaining({ presetKey: '90_20' }),
     )
   })
+
+  it('hydrates an on_break session with break timing fields', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      data: {
+        data: {
+          id: 'ws_break',
+          state: 'on_break',
+          startTime: '2026-04-22T10:00:00Z',
+          targetDurationSec: 1500,
+          pausedDurationSec: 0,
+          breakDurationSec: 300,
+          breakStartedAt: '2026-04-22T10:25:00Z',
+          breakPausedDurationSec: 0,
+          timerMode: 'pomodoro',
+          task: { id: 'task-1', title: 'T' },
+        },
+      },
+    })
+    ;(globalThis as any).$fetch = fetchMock
+
+    const { restoreActiveWorkSessionIfAny } = await import(
+      '@/composables/timer/useActiveWorkSessionRestore'
+    )
+
+    await restoreActiveWorkSessionIfAny()
+
+    expect(timerStore.hydrateFromActiveRemoteSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'ws_break',
+        state: 'on_break',
+        breakDurationSec: 300,
+        breakStartedAt: '2026-04-22T10:25:00Z',
+      }),
+    )
+  })
 })

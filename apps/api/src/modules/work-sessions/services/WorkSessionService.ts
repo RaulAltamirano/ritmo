@@ -15,12 +15,79 @@ export type {
   PatchWorkSessionBody,
 } from '../dto/workSession.schemas.js'
 
-/** running | paused | pending_feedback — actives y completables (mismo conjunto) */
+/** running | paused | on_break | pending_feedback — actives y completables (mismo conjunto) */
 const NON_TERMINAL_STATES: WorkSessionState[] = [
   WorkSessionState.running,
   WorkSessionState.paused,
+  WorkSessionState.on_break,
   WorkSessionState.pending_feedback,
 ]
+
+/**
+ * Facturable de foco para una sesión. Si la sesión entró en descanso
+ * (`breakStartedAt` presente) el reloj de foco se congela en ese instante, de
+ * modo que el tiempo de descanso nunca infla el total del día.
+ */
+function focusBillableSec(s: {
+  startTime: Date
+  endTime: Date | null
+  pausedDurationSec: number | null
+  breakStartedAt: Date | null
+}): number {
+  if (!s.endTime) return 0
+  const endMs = s.breakStartedAt ? s.breakStartedAt.getTime() : s.endTime.getTime()
+  const wall = Math.floor((endMs - s.startTime.getTime()) / 1000)
+  return Math.max(0, wall - (s.pausedDurationSec ?? 0))
+}
+
+/**
+ * Valida y describe la transición de estado de un PATCH sobre una sesión activa.
+ * Lanza `WorkSessionHttpError` (400) si la transición no está permitida.
+ */
+function assertStateTransition(
+  from: WorkSessionState,
+  to: WorkSessionState,
+  breakDurationSec: number | null,
+): void {
+  const { running, paused, on_break, pending_feedback } = WorkSessionState
+  const hasBreak = (breakDurationSec ?? 0) > 0
+  const invalid = () =>
+    new WorkSessionHttpError('Invalid target state', 400, 'INVALID_STATE')
+
+  if (from === running || from === paused) {
+    if (to === running || to === paused) return
+    if (to === on_break) {
+      if (!hasBreak) {
+        throw new WorkSessionHttpError(
+          'breakDurationSec must be > 0 to enter on_break',
+          400,
+          'INVALID_STATE',
+        )
+      }
+      return
+    }
+    if (to === pending_feedback) {
+      if (hasBreak) {
+        throw new WorkSessionHttpError(
+          'Must enter on_break before feedback when a break is configured',
+          400,
+          'INVALID_STATE',
+        )
+      }
+      return
+    }
+    throw invalid()
+  }
+
+  if (from === on_break) {
+    if (to === on_break || to === pending_feedback) return
+    throw invalid()
+  }
+
+  // from === pending_feedback
+  if (to === pending_feedback) return
+  throw invalid()
+}
 
 const taskSelect = { task: { select: { id: true, title: true } } } as const
 
@@ -149,9 +216,10 @@ export class WorkSessionService {
    * the user's civil day. The window is bounded by the user's timezone, not UTC,
    * so late-night blocks are credited to the local day the user lived through.
    *
-   * Per-session seconds = `max(0, floor((endTime - startTime)/1000) - pausedDurationSec)`.
-   * Uses wall-clock minus paused rather than the legacy `duration` column, which
-   * is nullable on abandoned sessions and rounds to minutes.
+   * Per-session seconds via `focusBillableSec`: wall-clock minus paused, but the
+   * focus clock stops at `breakStartedAt` when the session reached a break so the
+   * break wall time never inflates study totals. Uses this rather than the legacy
+   * `duration` column, which is nullable on abandoned sessions and rounds to minutes.
    */
   async getTodaySummary(
     userId: string,
@@ -183,6 +251,7 @@ export class WorkSessionService {
         startTime: true,
         endTime: true,
         pausedDurationSec: true,
+        breakStartedAt: true,
       },
       orderBy: { endTime: 'asc' },
     })
@@ -193,10 +262,7 @@ export class WorkSessionService {
 
     for (const s of sessions) {
       if (!s.endTime) continue
-      const wallSeconds = Math.floor(
-        (s.endTime.getTime() - s.startTime.getTime()) / 1000,
-      )
-      const billable = Math.max(0, wallSeconds - (s.pausedDurationSec ?? 0))
+      const billable = focusBillableSec(s)
       perTask[s.taskId] = (perTask[s.taskId] ?? 0) + billable
       totalSeconds += billable
       lastSessionEndedAt = s.endTime.toISOString()
@@ -288,16 +354,16 @@ export class WorkSessionService {
     if (body.pausedDurationSec !== undefined) {
       data.pausedDurationSec = body.pausedDurationSec
     }
+    if (body.breakPausedDurationSec !== undefined) {
+      data.breakPausedDurationSec = body.breakPausedDurationSec
+    }
     if (body.state !== undefined) {
-      const allowedTargets = new Set<WorkSessionState>([
-        WorkSessionState.running,
-        WorkSessionState.paused,
-        WorkSessionState.pending_feedback,
-      ])
-      if (!allowedTargets.has(body.state)) {
-        throw new WorkSessionHttpError('Invalid target state', 400, 'INVALID_STATE')
-      }
+      assertStateTransition(session.state, body.state, session.breakDurationSec)
       data.state = body.state
+      // El servidor marca el inicio del descanso; no se pisa en heartbeats.
+      if (body.state === WorkSessionState.on_break && session.breakStartedAt === null) {
+        data.breakStartedAt = new Date()
+      }
     }
 
     return prisma.workSession.update({

@@ -2,6 +2,8 @@ import { useTimerStore } from '@/stores/timer'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const patchWorkSessionMock = vi.fn()
+
 vi.mock('@/utils/secureStorage', () => ({
   secureSet: vi.fn(),
   secureGet: vi.fn().mockResolvedValue(null),
@@ -11,6 +13,17 @@ vi.mock('@/config/environment', () => ({
   loadConfig: () => ({
     api: { baseUrl: 'http://localhost:3001/api' },
     timer: { reflectionModalRequired: true },
+  }),
+}))
+
+vi.mock('@/services/workSessionsApi', () => ({
+  patchWorkSession: (...args: unknown[]) => patchWorkSessionMock(...args),
+  abandonWorkSession: vi.fn(),
+}))
+
+vi.mock('@/stores/sessionGate', () => ({
+  useSessionGateStore: () => ({
+    openFeedback: vi.fn(),
   }),
 }))
 
@@ -54,8 +67,10 @@ describe('timer store — onTimerNaturalFinished heartbeat race', () => {
   })
 
   it('sends exactly one PATCH with state=pending_feedback (no heartbeat race)', async () => {
+    patchWorkSessionMock.mockResolvedValue({ data: {} })
     const store = useTimerStore()
     store.remoteWorkSessionId = 'ws_456'
+    store.breakDurationSec = 0
     store.activeTask = {
       id: 'task-B',
       name: 'Task B',
@@ -70,16 +85,14 @@ describe('timer store — onTimerNaturalFinished heartbeat race', () => {
     >
 
     store.onTimerNaturalFinished()
-    // Flush the IIFE (dynamic imports + awaited $fetch)
+    // Flush the IIFE (dynamic imports + awaited patchWorkSession)
     await new Promise(resolve => setTimeout(resolve, 0))
     await new Promise(resolve => setTimeout(resolve, 0))
 
-    // @ts-expect-error accessing the mock
-    const { calls } = (globalThis.$fetch as ReturnType<typeof vi.fn>).mock
-    const patchBodies = calls
-      .filter(([_, opts]) => opts?.method === 'PATCH')
-      .map(([, opts]) => opts.body)
-    expect(patchBodies.length).toBe(1)
-    expect(patchBodies[0].state).toBe('pending_feedback')
+    expect(patchWorkSessionMock).toHaveBeenCalledTimes(1)
+    expect(patchWorkSessionMock).toHaveBeenCalledWith(
+      'ws_456',
+      expect.objectContaining({ state: 'pending_feedback' }),
+    )
   })
 })
