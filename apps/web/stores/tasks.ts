@@ -16,23 +16,9 @@ export const useTasksStore = defineStore('tasks', () => {
   const lastFetched = ref<Date | null>(null)
 
   // ── Getters ──────────────────────────────────────────
-  const todayTasks = computed(() => {
-    const now = new Date()
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const endOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      23,
-      59,
-      59,
-      999,
-    )
-    return tasks.value.filter(t => {
-      const d = new Date(t.startTime)
-      return d >= startOfDay && d <= endOfDay
-    })
-  })
+  // Trust the API `/tasks/today` payload (filtered by User.timezone civil day).
+  // No browser-local midnight re-filter, which would drop timezone-edge tasks.
+  const todayTasks = computed(() => tasks.value)
 
   const pendingTasks = computed(() => tasks.value.filter(t => !t.isCompleted))
   const completedTasks = computed(() => tasks.value.filter(t => t.isCompleted))
