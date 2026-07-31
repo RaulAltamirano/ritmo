@@ -36,4 +36,24 @@ describe('parseActivePayload — targetDurationSec guards', () => {
     expect(parseActivePayload({ ...base, targetDurationSec: '1500' })).toBeNull()
     expect(parseActivePayload({ ...base, targetDurationSec: Number.NaN })).toBeNull()
   })
+
+  it('accepts on_break state and break timing fields', () => {
+    const row = parseActivePayload({
+      ...base,
+      state: 'on_break',
+      targetDurationSec: 1500,
+      breakDurationSec: 300,
+      breakStartedAt: '2026-04-22T10:25:00Z',
+      breakPausedDurationSec: 10,
+    })
+    expect(row).not.toBeNull()
+    expect(row!.state).toBe('on_break')
+    expect(row!.breakDurationSec).toBe(300)
+    expect(row!.breakStartedAt).toBe('2026-04-22T10:25:00Z')
+    expect(row!.breakPausedDurationSec).toBe(10)
+  })
+
+  it('rejects unknown states', () => {
+    expect(parseActivePayload({ ...base, state: 'completed' })).toBeNull()
+  })
 })

@@ -9,10 +9,13 @@ import { needsWorkSessionFeedback } from '@/utils/workSessionFeedback'
 
 export interface ActiveWorkSessionApi {
   id: string
-  state: 'running' | 'paused' | 'pending_feedback'
+  state: 'running' | 'paused' | 'on_break' | 'pending_feedback'
   startTime: string
   targetDurationSec: number | null
   pausedDurationSec: number
+  breakDurationSec?: number | null
+  breakStartedAt?: string | null
+  breakPausedDurationSec?: number | null
   timerMode: string | null
   task: { id: string; title: string }
 }
@@ -24,14 +27,19 @@ export function __resetRestoreActiveWorkSessionCache(): void {
 
 let restoreInFlight: Promise<void> | null = null
 
-function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
+export function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
   if (!raw || typeof raw !== 'object') return null
   const o = raw as Record<string, unknown>
   const id = typeof o.id === 'string' ? o.id : null
   const state = o.state as ActiveWorkSessionApi['state']
   const task = o.task as { id?: string; title?: string } | undefined
   if (!id || !task?.id || typeof task.title !== 'string') return null
-  if (state !== 'running' && state !== 'paused' && state !== 'pending_feedback')
+  if (
+    state !== 'running' &&
+    state !== 'paused' &&
+    state !== 'on_break' &&
+    state !== 'pending_feedback'
+  )
     return null
 
   let startTime: string | null = null
@@ -39,6 +47,20 @@ function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
   if (typeof rawStartTime === 'string') startTime = rawStartTime
   else if (rawStartTime instanceof Date) startTime = rawStartTime.toISOString()
   if (!startTime) return null
+
+  if (
+    typeof o.targetDurationSec !== 'number' ||
+    Number.isNaN(o.targetDurationSec) ||
+    o.targetDurationSec < 1
+  )
+    return null
+
+  const breakStartedAt =
+    typeof o.breakStartedAt === 'string'
+      ? o.breakStartedAt
+      : o.breakStartedAt instanceof Date
+        ? o.breakStartedAt.toISOString()
+        : null
 
   return {
     id,
@@ -48,6 +70,13 @@ function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
       typeof o.targetDurationSec === 'number' ? o.targetDurationSec : null,
     pausedDurationSec:
       typeof o.pausedDurationSec === 'number' ? o.pausedDurationSec : 0,
+    breakDurationSec:
+      typeof o.breakDurationSec === 'number' ? o.breakDurationSec : null,
+    breakStartedAt,
+    breakPausedDurationSec:
+      typeof o.breakPausedDurationSec === 'number'
+        ? o.breakPausedDurationSec
+        : 0,
     timerMode: typeof o.timerMode === 'string' ? o.timerMode : null,
     task: { id: task.id, title: task.title },
   }
@@ -124,6 +153,9 @@ async function doRestore(): Promise<void> {
         startTime: row.startTime,
         targetDurationSec: row.targetDurationSec,
         pausedDurationSec: row.pausedDurationSec,
+        breakDurationSec: row.breakDurationSec,
+        breakStartedAt: row.breakStartedAt,
+        breakPausedDurationSec: row.breakPausedDurationSec,
         task: row.task,
         timerMode: row.timerMode,
       })
