@@ -11,9 +11,10 @@ export interface ActiveWorkSessionApi {
   id: string
   state: 'running' | 'paused' | 'pending_feedback'
   startTime: string
-  targetDurationSec: number | null
+  targetDurationSec: number
   pausedDurationSec: number
   timerMode: string | null
+  presetKey?: string
   task: { id: string; title: string }
 }
 
@@ -24,7 +25,7 @@ export function __resetRestoreActiveWorkSessionCache(): void {
 
 let restoreInFlight: Promise<void> | null = null
 
-function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
+export function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
   if (!raw || typeof raw !== 'object') return null
   const o = raw as Record<string, unknown>
   const id = typeof o.id === 'string' ? o.id : null
@@ -40,15 +41,24 @@ function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
   else if (rawStartTime instanceof Date) startTime = rawStartTime.toISOString()
   if (!startTime) return null
 
+  const targetDurationSec = o.targetDurationSec
+  if (
+    typeof targetDurationSec !== 'number' ||
+    !Number.isFinite(targetDurationSec) ||
+    targetDurationSec < 1
+  ) {
+    return null
+  }
+
   return {
     id,
     state,
     startTime,
-    targetDurationSec:
-      typeof o.targetDurationSec === 'number' ? o.targetDurationSec : null,
+    targetDurationSec,
     pausedDurationSec:
       typeof o.pausedDurationSec === 'number' ? o.pausedDurationSec : 0,
     timerMode: typeof o.timerMode === 'string' ? o.timerMode : null,
+    presetKey: typeof o.presetKey === 'string' ? o.presetKey : undefined,
     task: { id: task.id, title: task.title },
   }
 }
@@ -126,6 +136,7 @@ async function doRestore(): Promise<void> {
         pausedDurationSec: row.pausedDurationSec,
         task: row.task,
         timerMode: row.timerMode,
+        presetKey: row.presetKey,
       })
 
       const gate = useSessionGateStore()

@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useTimerStore } from '@/stores/timer'
 
 vi.mock('@/utils/secureStorage', () => ({
@@ -11,6 +11,10 @@ describe('timer store preset key', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('stores the preset key when starting a task', () => {
@@ -38,6 +42,59 @@ describe('timer store preset key', () => {
     )
 
     expect(store.activeTask?.presetKey).toBe('52_17')
+    store.cleanup()
+  })
+
+  it('preserves a 90-minute preset when hydrating a continued remote block', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(
+      new Date('2026-07-31T10:40:00.000Z').getTime(),
+    )
+    // @ts-expect-error test $fetch
+    globalThis.$fetch = vi.fn().mockResolvedValue({})
+    const store = useTimerStore()
+
+    store.hydrateFromActiveRemoteSession({
+      id: 'ws-90',
+      state: 'running',
+      startTime: '2026-07-31T10:00:00.000Z',
+      targetDurationSec: 90 * 60,
+      pausedDurationSec: 0,
+      timerMode: 'ultradian',
+      presetKey: '90_20',
+      task: { id: 'task-a', title: 'Deep work' },
+    })
+
+    expect(store.activeTask).toEqual(
+      expect.objectContaining({
+        totalTime: 90 * 60,
+        timeLeft: 50 * 60,
+        presetKey: '90_20',
+      }),
+    )
+    store.clearRemoteWorkSession()
+    store.cleanup()
+  })
+
+  it('infers a known preset from mode and target duration for legacy payloads', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(
+      new Date('2026-07-31T10:40:00.000Z').getTime(),
+    )
+    // @ts-expect-error test $fetch
+    globalThis.$fetch = vi.fn().mockResolvedValue({})
+    const store = useTimerStore()
+
+    store.hydrateFromActiveRemoteSession({
+      id: 'ws-legacy-90',
+      state: 'running',
+      startTime: '2026-07-31T10:00:00.000Z',
+      targetDurationSec: 90 * 60,
+      pausedDurationSec: 0,
+      timerMode: 'ultradian',
+      task: { id: 'task-a', title: 'Deep work' },
+    })
+
+    expect(store.activeTask?.presetKey).toBe('90_20')
+    store.clearRemoteWorkSession()
     store.cleanup()
   })
 })

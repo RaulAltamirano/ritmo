@@ -5,6 +5,7 @@
 import { defineStore } from 'pinia'
 import {
   DEFAULT_TIMER_PRESETS,
+  mapPresetKeyToTimerMode,
   timerPresetsDtoToTimerModes,
 } from '@/composables/timer/timerPresets'
 import type { TimerMode } from '@/types/task'
@@ -18,6 +19,7 @@ import { needsWorkSessionFeedback } from '@/utils/workSessionFeedback'
 import { parseFetchError } from '@/utils/parseFetchError'
 import { secureSet, secureGet } from '@/utils/secureStorage'
 import { useNotify } from '@/composables/shared/useNotify'
+import { useSessionGateStore } from '@/stores/sessionGate'
 
 interface TimerTask {
   id: string
@@ -46,6 +48,22 @@ interface DaySummary {
     type: string
     category?: string
   }>
+}
+
+function resolveHydratedPresetKey(
+  presetKey: string | undefined,
+  timerMode: string | null,
+  targetDurationSec: number,
+  timerModes: TimerMode[],
+): string | undefined {
+  if (presetKey) return presetKey
+  const durationMatches = timerModes.filter(mode => mode.time === targetDurationSec)
+  if (durationMatches.length === 1) return durationMatches[0]?.presetKey
+  return durationMatches.find(
+    mode =>
+      mode.presetKey &&
+      mapPresetKeyToTimerMode(mode.presetKey) === (timerMode ?? 'custom'),
+  )?.presetKey
 }
 
 export const useTimerStore = defineStore('timer', {
@@ -211,6 +229,8 @@ export const useTimerStore = defineStore('timer', {
       this.remoteWorkSessionId = null
       this.remoteHeartbeatFailures = 0
       clearLastTrackedWorkSessionId()
+      const gate = useSessionGateStore()
+      if (gate.taskSwitchPrompt) gate.closeTaskSwitchPrompt()
     },
 
     bindRemoteWorkSession(sessionId: string) {
@@ -243,6 +263,7 @@ export const useTimerStore = defineStore('timer', {
       pausedDurationSec: number
       task: { id: string; title: string }
       timerMode: string | null
+      presetKey?: string
     }) {
       if (this.activeTask) return
 
@@ -258,6 +279,12 @@ export const useTimerStore = defineStore('timer', {
       const pausedTotal = payload.pausedDurationSec ?? 0
       const worked = Math.max(0, wallSec - pausedTotal)
       const timeLeft = Math.max(0, target - worked)
+      const presetKey = resolveHydratedPresetKey(
+        payload.presetKey,
+        payload.timerMode,
+        target,
+        this.timerModes,
+      )
 
       const needsFeedback = needsWorkSessionFeedback({
         state: payload.state,
@@ -271,6 +298,7 @@ export const useTimerStore = defineStore('timer', {
           timeLeft: 0,
           totalTime: target,
           type: modeLabel,
+          presetKey,
           startedAt: new Date(payload.startTime),
           totalPausedTime: pausedTotal,
         }
@@ -288,6 +316,7 @@ export const useTimerStore = defineStore('timer', {
         timeLeft,
         totalTime: target,
         type: modeLabel,
+        presetKey,
         startedAt: new Date(payload.startTime),
         totalPausedTime: pausedTotal,
       }

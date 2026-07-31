@@ -26,7 +26,9 @@ describe('timer store — remote heartbeat terminal errors', () => {
 
   it('clears the remote session after a 404 heartbeat', async () => {
     const { useTimerStore } = await import('@/stores/timer')
+    const { useSessionGateStore } = await import('@/stores/sessionGate')
     const store = useTimerStore()
+    const gate = useSessionGateStore()
     store.remoteWorkSessionId = 'ws_dead'
     store.activeTask = {
       id: 't1',
@@ -37,6 +39,13 @@ describe('timer store — remote heartbeat terminal errors', () => {
       startedAt: new Date(),
       totalPausedTime: 0,
     }
+    gate.openTaskSwitchPrompt({
+      toTask: { id: 't2', name: 'Next task' },
+      mode: { minutes: 90, name: '90/20', presetKey: '90_20' },
+      remainingSec: 100,
+      canContinueRemaining: true,
+      fromTaskName: 'T',
+    })
 
     // @ts-expect-error test $fetch
     globalThis.$fetch = vi.fn().mockRejectedValue({ status: 404, data: {} })
@@ -44,6 +53,7 @@ describe('timer store — remote heartbeat terminal errors', () => {
     await store.patchRemoteHeartbeat()
 
     expect(store.remoteWorkSessionId).toBeNull()
+    expect(gate.taskSwitchPrompt).toBeNull()
   })
 
   it('clears the remote session after consecutive transient heartbeat failures', async () => {

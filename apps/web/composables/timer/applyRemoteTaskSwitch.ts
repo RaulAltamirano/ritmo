@@ -2,7 +2,7 @@ import { switchRemoteWorkSession } from '@/composables/timer/switchRemoteWorkSes
 import { useTimerStore } from '@/stores/timer'
 import { useWorkSessionSummaryStore } from '@/stores/workSessionSummary'
 
-export type ApplyRemoteTaskSwitchInput = {
+export interface ApplyRemoteTaskSwitchInput {
   toTask: { id: string; name: string; category?: string }
   mode: { minutes: number; name: string; presetKey?: string }
   durationPolicy: 'remaining' | 'full_preset'
@@ -17,7 +17,10 @@ export async function applyRemoteTaskSwitch(
   if (!active || !fromSessionId) return
 
   const timeLeftSec = active.timeLeft
-  const pausedDurationSec = active.totalPausedTime ?? 0
+  const currentPauseSec = active.pausedAt
+    ? Math.max(0, Math.floor((Date.now() - active.pausedAt.getTime()) / 1000))
+    : 0
+  const pausedDurationSec = (active.totalPausedTime ?? 0) + currentPauseSec
   const isPaused = timerStore.isPaused
 
   const startLocalTask = () => {
@@ -53,7 +56,7 @@ export async function applyRemoteTaskSwitch(
     if (timerStore.activeTask) timerStore.activeTask.pausedAt = undefined
     void useWorkSessionSummaryStore().refresh()
     if (timerStore.isPaused) timerStore.resumeTimer()
-    if (result.usedFullPreset) {
+    if (input.durationPolicy === 'remaining' && result.usedFullPreset) {
       timerStore.showNotification(
         'Nuevo bloque iniciado',
         'Quedaba menos de un minuto; se abrió un bloque completo en la nueva tarea.',

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const switchRemoteMock = vi.fn()
 const refreshSummaryMock = vi.fn()
@@ -68,6 +68,10 @@ describe('applyRemoteTaskSwitch', () => {
     timerState.isPaused = true
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('applies the remote switch and resumes the new task', async () => {
     switchRemoteMock.mockResolvedValue({
       newSessionId: 'ws_new',
@@ -99,6 +103,9 @@ describe('applyRemoteTaskSwitch', () => {
   it('does not attribute the switch prompt pause to the new task', async () => {
     const promptOpenedAt = new Date('2026-01-01T00:10:00Z')
     timerState.activeTask!.pausedAt = promptOpenedAt
+    vi.spyOn(Date, 'now').mockReturnValue(
+      new Date('2026-01-01T00:12:00Z').getTime(),
+    )
     resumeTimerMock.mockImplementation(() => {
       const activeTask = timerState.activeTask
       if (!activeTask?.pausedAt) return
@@ -116,6 +123,9 @@ describe('applyRemoteTaskSwitch', () => {
 
     await applyRemoteTaskSwitch(input)
 
+    expect(switchRemoteMock).toHaveBeenCalledWith(
+      expect.objectContaining({ pausedDurationSec: 125 }),
+    )
     expect(timerState.activeTask?.pausedAt).toBeUndefined()
     expect(timerState.activeTask?.totalPausedTime).toBe(5)
   })
@@ -141,6 +151,11 @@ describe('applyRemoteTaskSwitch', () => {
     )
     expect(timerState.activeTask?.startedAt.getTime()).toBeGreaterThan(
       new Date('2026-01-01T00:00:00Z').getTime(),
+    )
+    expect(showNotificationMock).not.toHaveBeenCalledWith(
+      'Nuevo bloque iniciado',
+      expect.stringContaining('menos de un minuto'),
+      'info',
     )
   })
 
