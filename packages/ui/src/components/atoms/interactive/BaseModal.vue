@@ -108,21 +108,14 @@
     return props.ariaLabel?.trim() || undefined
   })
 
-  // Estado interno
-  const isVisible = ref(false)
-  const isAnimating = ref(false)
-
-  // Motion compartido para panel y scrim (~400ms, easing calmado)
-  const MOTION = 'duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]'
-
   // Computed para clases del modal
   const modalClasses = computed(() => {
     const baseClasses = [
       'relative z-[1] w-full bg-surface rounded-2xl',
-      'border border-black/[0.06] dark:border-white/10',
-      'shadow-[0_4px_16px_-4px_rgba(0,0,0,0.12),0_24px_64px_-12px_rgba(0,0,0,0.35)]',
-      'dark:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.4),0_28px_72px_-12px_rgba(0,0,0,0.65)]',
-      `transform transition-all ${MOTION}`,
+      'border border-black/10 dark:border-white/15',
+      'ring-1 ring-black/5 dark:ring-white/10',
+      'shadow-[0_8px_24px_-6px_rgba(0,0,0,0.25),0_32px_80px_-12px_rgba(0,0,0,0.55)]',
+      'dark:shadow-[0_8px_28px_-6px_rgba(0,0,0,0.55),0_36px_90px_-10px_rgba(0,0,0,0.85)]',
       'max-h-[90vh] overflow-hidden',
     ]
 
@@ -145,71 +138,33 @@
       right: 'ml-auto mx-4 my-auto sm:mr-8',
     }
 
-    // Lift suave al abrir (scale + translateY); el overlay raíz no se escala
-    const dynamicClasses = [
-      isVisible.value
-        ? 'opacity-100 scale-100 translate-y-0'
-        : 'opacity-0 scale-[0.98] translate-y-3',
-      prefersReducedMotion.value
-        ? 'transition-none'
-        : `transition-all ${MOTION}`,
-    ]
-
     return [
       ...baseClasses,
       sizeClasses[props.size] || sizeClasses.md,
       positionClasses[props.position] || positionClasses.center,
-      ...dynamicClasses,
     ]
       .filter(Boolean)
       .join(' ')
   })
 
-  const panelShellClasses = computed(() => {
-    const motion = prefersReducedMotion.value
-      ? 'transition-none'
-      : `transition-opacity ${MOTION}`
-    const opacity = isVisible.value ? 'opacity-100' : 'opacity-0'
-    // Shrink-wrap the panel so side clicks still hit the backdrop
-    return ['relative', motion, opacity].join(' ')
-  })
+  // Shrink-wrap: clics laterales siguen yendo al backdrop
+  const panelShellClasses = 'relative modal-panel-shell'
 
-  // Tono del scrim según el modo de backdrop
-  const scrimToneClasses = computed(() => {
+  // Backdrop instantáneo (sin fade de opacity): animar opacity+blur a la vez
+  // hace que el blur “rellene” y el tinte oscurezca en dos tiempos.
+  const backdropClasses = computed(() => {
     const tones = {
-      blur: 'bg-black/30 dark:bg-black/55',
-      dark: 'bg-black/55 dark:bg-black/75',
-      light: 'bg-white/55 dark:bg-gray-900/55',
+      blur: 'bg-black/45 backdrop-blur-md dark:bg-black/65',
+      dark: 'bg-black/60 dark:bg-black/80',
+      light: 'bg-white/60 dark:bg-gray-900/60',
       none: 'bg-transparent',
     }
-    return tones[props.backdrop] || tones.blur
-  })
-
-  // Scrim: única capa cuya opacidad se anima
-  const scrimClasses = computed(() => {
-    const motion = prefersReducedMotion.value
-      ? 'transition-none'
-      : `transition-opacity ${MOTION}`
-    const opacity = isVisible.value ? 'opacity-100' : 'opacity-0'
     return [
       'absolute inset-0',
-      'modal-backdrop-scrim',
-      scrimToneClasses.value,
-      motion,
-      opacity,
-    ]
-      .filter(Boolean)
-      .join(' ')
+      'modal-backdrop',
+      tones[props.backdrop] || tones.blur,
+    ].join(' ')
   })
-
-  // Capa de desenfoque: presente solo en modo blur, sin animación de opacidad
-  const blurLayerClasses = computed(() =>
-    [
-      'absolute inset-0',
-      'modal-backdrop-blur',
-      'backdrop-blur-[6px]',
-    ].join(' '),
-  )
 
   // Clases del header
   const headerClasses = computed(() => ['border-b border-outline'].join(' '))
@@ -252,28 +207,6 @@
     if (props.title) return 'polite'
     return 'assertive'
   })
-
-  // Event handlers optimizados con VueUse
-  const handleEnter = () => {
-    isAnimating.value = true
-    if (prefersReducedMotion.value) {
-      isVisible.value = true
-      isAnimating.value = false
-    } else {
-      setTimeout(() => {
-        isVisible.value = true
-        isAnimating.value = false
-      }, 10)
-    }
-  }
-
-  const handleLeave = () => {
-    isAnimating.value = true
-    isVisible.value = false
-    setTimeout(() => {
-      isAnimating.value = false
-    }, 400)
-  }
 
   const handleBackdropClick = (event: MouseEvent) => {
     if (!props.closeOnBackdropClick) return
@@ -369,7 +302,11 @@
 
 <template>
   <Teleport to="body">
-    <Transition name="modal" appear @enter="handleEnter" @leave="handleLeave">
+    <Transition
+      name="modal"
+      appear
+      :duration="{ enter: 360, leave: 240 }"
+    >
       <div
         v-if="isOpen"
         ref="containerRef"
@@ -384,13 +321,15 @@
         :aria-atomic="true"
         @click="handleBackdropClick"
       >
-        <!-- Backdrop -->
-        <div class="absolute inset-0" :aria-hidden="true">
-          <div v-if="props.backdrop === 'blur'" :class="blurLayerClasses" />
-          <div :class="scrimClasses" />
-        </div>
+        <!--
+          Backdrop: paint full strength on mount. NEVER opacity-animate this node
+          (or any node with backdrop-filter) — browsers composite blur abruptly and
+          it reads as “fill then darken”. Leave: backdrop holds until Transition
+          leave duration ends, then cuts with unmount.
+        -->
+        <div :class="backdropClasses" :aria-hidden="true" />
 
-        <!-- Modal panel + ambient glow (separación del fondo) -->
+        <!-- Solo el panel anima (glow incluido en el shell) -->
         <div :class="panelShellClasses" @click.stop>
           <div class="modal-ambient-glow" aria-hidden="true" />
           <div
@@ -446,66 +385,69 @@
 
 <style scoped>
   /*
-   * Root overlay: opacity only — never scale the backdrop.
-   * Scaling the full-screen layer (blur + scrim) creates a light rectangular
-   * fringe around page content. Panel scale lives on modalClasses instead.
+   * Spec: docs/superpowers/specs/2026-07-31-basemodal-panel-transition-design.md
+   * Only .modal-panel-shell animates. Backdrop is instant (no opacity here).
    */
-  .modal-enter-active,
-  .modal-leave-active {
-    transition-property: opacity;
-    transition-duration: 400ms;
+  .modal-enter-active .modal-panel-shell {
+    transition-property: opacity, transform;
+    transition-duration: 360ms;
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .modal-enter-from,
-  .modal-leave-to {
+  .modal-leave-active .modal-panel-shell {
+    transition-property: opacity, transform;
+    transition-duration: 240ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+  }
+
+  .modal-enter-from .modal-panel-shell,
+  .modal-leave-to .modal-panel-shell {
     opacity: 0;
+    transform: translateY(0.75rem);
   }
 
-  .modal-enter-to,
-  .modal-leave-from {
+  .modal-enter-to .modal-panel-shell,
+  .modal-leave-from .modal-panel-shell {
     opacity: 1;
-  }
-
-  /* Scrim: fundido suave de opacidad (la capa de blur nunca se anima) */
-  .modal-enter-active .modal-backdrop-scrim,
-  .modal-leave-active .modal-backdrop-scrim {
-    transition-property: opacity;
-    transition-duration: 400ms;
-    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translateY(0);
   }
 
   /* Ambient glow detrás del panel — elevación suave sin borde duro */
   .modal-ambient-glow {
     pointer-events: none;
     position: absolute;
-    inset: -2.5rem;
+    inset: -3rem;
     z-index: 0;
-    border-radius: 2rem;
+    border-radius: 2.5rem;
     background: radial-gradient(
-      ellipse 65% 55% at 50% 40%,
-      rgba(255, 255, 255, 0.22) 0%,
-      rgba(255, 255, 255, 0.06) 42%,
-      transparent 72%
+      ellipse 70% 60% at 50% 42%,
+      rgba(255, 255, 255, 0.35) 0%,
+      rgba(255, 255, 255, 0.1) 38%,
+      transparent 70%
     );
-    filter: blur(28px);
-    opacity: 0.85;
+    filter: blur(32px);
+    opacity: 1;
   }
 
   :global(.dark) .modal-ambient-glow {
     background: radial-gradient(
-      ellipse 65% 55% at 50% 40%,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0.03) 45%,
-      transparent 72%
+      ellipse 70% 60% at 50% 42%,
+      rgba(148, 163, 184, 0.28) 0%,
+      rgba(255, 255, 255, 0.08) 40%,
+      transparent 70%
     );
-    opacity: 0.9;
+    opacity: 1;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .modal-ambient-glow {
       filter: none;
       opacity: 0.35;
+    }
+
+    .modal-enter-active .modal-panel-shell,
+    .modal-leave-active .modal-panel-shell {
+      transition: none;
     }
   }
 
@@ -520,14 +462,6 @@
   @media (prefers-contrast: high) {
     .modal {
       @apply border-2;
-    }
-  }
-
-  /* Reduced motion support */
-  @media (prefers-reduced-motion: reduce) {
-    .modal,
-    .modal-backdrop-scrim {
-      @apply transition-none;
     }
   }
 
