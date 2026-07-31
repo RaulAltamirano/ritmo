@@ -10,6 +10,7 @@
     @create-task="handleQuickTask"
     @delete-task="handleDeleteTask"
     @reorder-tasks="handleReorderTasks"
+    @complete-task="handleCompleteTask"
     @complete-task-with-feedback="handleCompleteTaskWithFeedback"
     @update-task="handleUpdateTask"
     @add-note="handleAddNote"
@@ -51,6 +52,7 @@
     handleDeleteTask,
     handleUpdateTask,
     handleAddNote,
+    handleCompleteTask,
     handleCompleteTaskWithFeedback,
   } = useTodayHandlers()
 
