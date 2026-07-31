@@ -176,6 +176,32 @@ describe('BaseModal', () => {
     wrapper.unmount()
   })
 
+  it('blur backdrop renders separate blur and scrim layers', async () => {
+    const wrapper = mount(BaseModal, {
+      props: { isOpen: true, title: 'T', backdrop: 'blur' },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.find('.modal-backdrop-blur').exists()).toBe(true)
+    expect(wrapper.find('.modal-backdrop-scrim').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('dark backdrop has scrim only (no blur layer)', async () => {
+    const wrapper = mount(BaseModal, {
+      props: { isOpen: true, title: 'T', backdrop: 'dark' },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.find('.modal-backdrop-blur').exists()).toBe(false)
+    expect(wrapper.find('.modal-backdrop-scrim').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
   it('expone aria-label accesible en el botón cerrar', async () => {
     const wrapper = mount(BaseModal, {
       props: {

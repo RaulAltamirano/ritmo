@@ -112,11 +112,14 @@
   const isVisible = ref(false)
   const isAnimating = ref(false)
 
+  // Motion compartido para panel y scrim (~400ms, easing calmado)
+  const MOTION = 'duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]'
+
   // Computed para clases del modal
   const modalClasses = computed(() => {
     const baseClasses = [
       'relative bg-surface rounded-xl shadow-2xl',
-      'transform transition-all duration-300 ease-out',
+      `transform transition-all ${MOTION}`,
       'max-h-[90vh] overflow-hidden',
     ]
 
@@ -147,7 +150,7 @@
       // Animaciones respetando preferencias
       prefersReducedMotion.value
         ? 'transition-none'
-        : 'transition-all duration-300 ease-out',
+        : `transition-all ${MOTION}`,
     ]
 
     return [
@@ -160,32 +163,38 @@
       .join(' ')
   })
 
-  // Clases del backdrop
-  const backdropClasses = computed(() => {
-    const baseClasses = ['absolute inset-0', 'transition-opacity duration-300']
-
-    const backdropStyles = {
-      blur: 'backdrop-blur-sm bg-black/20 dark:bg-black/40',
+  // Tono del scrim según el modo de backdrop
+  const scrimToneClasses = computed(() => {
+    const tones = {
+      blur: 'bg-black/20 dark:bg-black/40',
       dark: 'bg-black/50 dark:bg-black/70',
       light: 'bg-white/50 dark:bg-gray-900/50',
       none: 'bg-transparent',
     }
+    return tones[props.backdrop] || tones.blur
+  })
 
-    const dynamicClasses = [
-      isVisible.value ? 'opacity-100' : 'opacity-0',
-      prefersReducedMotion.value
-        ? 'transition-none'
-        : 'transition-opacity duration-300',
-    ]
-
+  // Scrim: única capa cuya opacidad se anima
+  const scrimClasses = computed(() => {
+    const motion = prefersReducedMotion.value
+      ? 'transition-none'
+      : `transition-opacity ${MOTION}`
+    const opacity = isVisible.value ? 'opacity-100' : 'opacity-0'
     return [
-      ...baseClasses,
-      backdropStyles[props.backdrop] || backdropStyles.blur,
-      ...dynamicClasses,
+      'absolute inset-0',
+      'modal-backdrop-scrim',
+      scrimToneClasses.value,
+      motion,
+      opacity,
     ]
       .filter(Boolean)
       .join(' ')
   })
+
+  // Capa de desenfoque: presente solo en modo blur, sin animación de opacidad
+  const blurLayerClasses = computed(() =>
+    ['absolute inset-0', 'modal-backdrop-blur', 'backdrop-blur-sm'].join(' '),
+  )
 
   // Clases del header
   const headerClasses = computed(() => ['border-b border-outline'].join(' '))
@@ -248,7 +257,7 @@
     isVisible.value = false
     setTimeout(() => {
       isAnimating.value = false
-    }, 300)
+    }, 400)
   }
 
   const handleBackdropClick = (event: MouseEvent) => {
@@ -360,14 +369,10 @@
       @click="handleBackdropClick"
     >
       <!-- Backdrop -->
-      <div
-        class="absolute inset-0 transition-opacity"
-        :class="[
-          backdropClasses,
-          { 'opacity-100': isVisible, 'opacity-0': !isVisible },
-        ]"
-        :aria-hidden="true"
-      />
+      <div class="absolute inset-0" :aria-hidden="true">
+        <div v-if="props.backdrop === 'blur'" :class="blurLayerClasses" />
+        <div :class="scrimClasses" />
+      </div>
 
       <!-- Modal Container -->
       <div
@@ -421,10 +426,12 @@
 </template>
 
 <style scoped>
-  /* Transiciones del modal */
+  /* Transiciones del modal (~400ms, easing calmado) */
   .modal-enter-active,
   .modal-leave-active {
-    @apply transition-all duration-300 ease-out;
+    transition-property: opacity, transform;
+    transition-duration: 400ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .modal-enter-from {
@@ -440,20 +447,12 @@
     @apply opacity-100 scale-100;
   }
 
-  /* Backdrop transitions */
-  .modal-enter-active .backdrop,
-  .modal-leave-active .backdrop {
-    @apply transition-opacity duration-300 ease-out;
-  }
-
-  .modal-enter-from .backdrop,
-  .modal-leave-to .backdrop {
-    @apply opacity-0;
-  }
-
-  .modal-enter-to .backdrop,
-  .modal-leave-from .backdrop {
-    @apply opacity-100;
+  /* Scrim: fundido suave de opacidad (la capa de blur nunca se anima) */
+  .modal-enter-active .modal-backdrop-scrim,
+  .modal-leave-active .modal-backdrop-scrim {
+    transition-property: opacity;
+    transition-duration: 400ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   /* Focus styles */
@@ -471,7 +470,7 @@
   /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
     .modal,
-    .backdrop {
+    .modal-backdrop-scrim {
       @apply transition-none;
     }
   }
