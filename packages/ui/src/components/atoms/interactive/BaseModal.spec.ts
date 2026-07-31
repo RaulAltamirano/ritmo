@@ -124,7 +124,7 @@ describe('BaseModal', () => {
     await flushPromises()
     await nextTick()
 
-    const backdrop = dialogEl()?.querySelector<HTMLElement>(':scope > .absolute.inset-0')
+    const backdrop = dialogEl()?.querySelector<HTMLElement>('.modal-backdrop')
     expect(backdrop).toBeTruthy()
     backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await nextTick()
@@ -201,7 +201,7 @@ describe('BaseModal', () => {
     host.remove()
   })
 
-  it('blur backdrop renders separate blur and scrim layers', async () => {
+  it('blur backdrop is a single opaque layer (no dual blur/scrim)', async () => {
     const wrapper = mount(BaseModal, {
       props: { isOpen: true, title: 'T', backdrop: 'blur' },
       attachTo: document.body,
@@ -210,13 +210,31 @@ describe('BaseModal', () => {
     await nextTick()
 
     const dialog = dialogEl()
-    expect(dialog?.querySelector('.modal-backdrop-blur')).toBeTruthy()
-    expect(dialog?.querySelector('.modal-backdrop-scrim')).toBeTruthy()
-    expect(dialog?.querySelector('.modal-ambient-glow')).toBeTruthy()
+    expect(dialog?.querySelectorAll('.modal-backdrop')).toHaveLength(1)
+    expect(dialog?.querySelector('.modal-backdrop-blur')).toBeNull()
+    expect(dialog?.querySelector('.modal-backdrop-scrim')).toBeNull()
+    const backdrop = dialog?.querySelector('.modal-backdrop')
+    expect(backdrop?.className).toMatch(/backdrop-blur/)
     wrapper.unmount()
   })
 
-  it('dark backdrop has scrim only (no blur layer)', async () => {
+  it('panel shell wraps ambient glow and dialog surface', async () => {
+    const wrapper = mount(BaseModal, {
+      props: { isOpen: true, title: 'T', backdrop: 'blur' },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    await nextTick()
+
+    const dialog = dialogEl()
+    const shell = dialog?.querySelector('.modal-panel-shell')
+    expect(shell).toBeTruthy()
+    expect(shell?.querySelector('.modal-ambient-glow')).toBeTruthy()
+    expect(shell?.querySelector('[class*="bg-surface"]')).toBeTruthy()
+    wrapper.unmount()
+  })
+
+  it('dark backdrop has single non-blur backdrop layer', async () => {
     const wrapper = mount(BaseModal, {
       props: { isOpen: true, title: 'T', backdrop: 'dark' },
       attachTo: document.body,
@@ -225,8 +243,10 @@ describe('BaseModal', () => {
     await nextTick()
 
     const dialog = dialogEl()
-    expect(dialog?.querySelector('.modal-backdrop-blur')).toBeNull()
-    expect(dialog?.querySelector('.modal-backdrop-scrim')).toBeTruthy()
+    expect(dialog?.querySelectorAll('.modal-backdrop')).toHaveLength(1)
+    expect(dialog?.querySelector('.modal-backdrop')?.className).not.toMatch(
+      /backdrop-blur/,
+    )
     wrapper.unmount()
   })
 
