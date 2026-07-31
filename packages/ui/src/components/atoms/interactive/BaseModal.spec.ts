@@ -212,6 +212,7 @@ describe('BaseModal', () => {
     const dialog = dialogEl()
     expect(dialog?.querySelector('.modal-backdrop-blur')).toBeTruthy()
     expect(dialog?.querySelector('.modal-backdrop-scrim')).toBeTruthy()
+    expect(dialog?.querySelector('.modal-ambient-glow')).toBeTruthy()
     wrapper.unmount()
   })
 

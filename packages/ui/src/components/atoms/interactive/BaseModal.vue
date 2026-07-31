@@ -118,7 +118,10 @@
   // Computed para clases del modal
   const modalClasses = computed(() => {
     const baseClasses = [
-      'relative bg-surface rounded-xl shadow-2xl',
+      'relative z-[1] w-full bg-surface rounded-2xl',
+      'border border-black/[0.06] dark:border-white/10',
+      'shadow-[0_4px_16px_-4px_rgba(0,0,0,0.12),0_24px_64px_-12px_rgba(0,0,0,0.35)]',
+      'dark:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.4),0_28px_72px_-12px_rgba(0,0,0,0.65)]',
       `transform transition-all ${MOTION}`,
       'max-h-[90vh] overflow-hidden',
     ]
@@ -142,12 +145,11 @@
       right: 'ml-auto mx-4 my-auto sm:mr-8',
     }
 
-    // Clases dinámicas basadas en estado VueUse
+    // Lift suave al abrir (scale + translateY); el overlay raíz no se escala
     const dynamicClasses = [
-      // Visibilidad
-      isVisible.value ? 'opacity-100 scale-100' : 'opacity-0 scale-95',
-
-      // Animaciones respetando preferencias
+      isVisible.value
+        ? 'opacity-100 scale-100 translate-y-0'
+        : 'opacity-0 scale-[0.98] translate-y-3',
       prefersReducedMotion.value
         ? 'transition-none'
         : `transition-all ${MOTION}`,
@@ -163,12 +165,21 @@
       .join(' ')
   })
 
+  const panelShellClasses = computed(() => {
+    const motion = prefersReducedMotion.value
+      ? 'transition-none'
+      : `transition-opacity ${MOTION}`
+    const opacity = isVisible.value ? 'opacity-100' : 'opacity-0'
+    // Shrink-wrap the panel so side clicks still hit the backdrop
+    return ['relative', motion, opacity].join(' ')
+  })
+
   // Tono del scrim según el modo de backdrop
   const scrimToneClasses = computed(() => {
     const tones = {
-      blur: 'bg-black/20 dark:bg-black/40',
-      dark: 'bg-black/50 dark:bg-black/70',
-      light: 'bg-white/50 dark:bg-gray-900/50',
+      blur: 'bg-black/30 dark:bg-black/55',
+      dark: 'bg-black/55 dark:bg-black/75',
+      light: 'bg-white/55 dark:bg-gray-900/55',
       none: 'bg-transparent',
     }
     return tones[props.backdrop] || tones.blur
@@ -193,7 +204,11 @@
 
   // Capa de desenfoque: presente solo en modo blur, sin animación de opacidad
   const blurLayerClasses = computed(() =>
-    ['absolute inset-0', 'modal-backdrop-blur', 'backdrop-blur-sm'].join(' '),
+    [
+      'absolute inset-0',
+      'modal-backdrop-blur',
+      'backdrop-blur-[6px]',
+    ].join(' '),
   )
 
   // Clases del header
@@ -375,13 +390,14 @@
           <div :class="scrimClasses" />
         </div>
 
-        <!-- Modal Container -->
-        <div
-          ref="modalRef"
-          class="relative flex w-full flex-col"
-          :class="[modalClasses]"
-          @click.stop
-        >
+        <!-- Modal panel + ambient glow (separación del fondo) -->
+        <div :class="panelShellClasses" @click.stop>
+          <div class="modal-ambient-glow" aria-hidden="true" />
+          <div
+            ref="modalRef"
+            class="relative flex w-full flex-col"
+            :class="[modalClasses]"
+          >
           <!-- Header -->
           <header
             v-if="$slots.header || title"
@@ -422,6 +438,7 @@
             <slot name="footer" />
           </footer>
         </div>
+        </div>
       </div>
     </Transition>
   </Teleport>
@@ -456,6 +473,40 @@
     transition-property: opacity;
     transition-duration: 400ms;
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Ambient glow detrás del panel — elevación suave sin borde duro */
+  .modal-ambient-glow {
+    pointer-events: none;
+    position: absolute;
+    inset: -2.5rem;
+    z-index: 0;
+    border-radius: 2rem;
+    background: radial-gradient(
+      ellipse 65% 55% at 50% 40%,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.06) 42%,
+      transparent 72%
+    );
+    filter: blur(28px);
+    opacity: 0.85;
+  }
+
+  :global(.dark) .modal-ambient-glow {
+    background: radial-gradient(
+      ellipse 65% 55% at 50% 40%,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 45%,
+      transparent 72%
+    );
+    opacity: 0.9;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .modal-ambient-glow {
+      filter: none;
+      opacity: 0.35;
+    }
   }
 
   /* Focus styles — keep outline off the full-viewport dialog shell */
