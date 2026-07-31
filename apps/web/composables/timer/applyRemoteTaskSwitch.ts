@@ -22,6 +22,7 @@ export async function applyRemoteTaskSwitch(
 
   const startLocalTask = () => {
     timerStore.startTask(input.toTask, input.mode)
+    if (timerStore.activeTask) timerStore.activeTask.pausedAt = undefined
     void useWorkSessionSummaryStore().refresh()
     if (timerStore.isPaused) timerStore.resumeTimer()
   }
@@ -49,6 +50,7 @@ export async function applyRemoteTaskSwitch(
     }
     timerStore.startTask(input.toTask, input.mode)
     timerStore.bindRemoteWorkSession(result.newSessionId)
+    if (timerStore.activeTask) timerStore.activeTask.pausedAt = undefined
     void useWorkSessionSummaryStore().refresh()
     if (timerStore.isPaused) timerStore.resumeTimer()
     if (result.usedFullPreset) {

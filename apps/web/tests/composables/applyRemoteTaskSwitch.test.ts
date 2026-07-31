@@ -16,6 +16,7 @@ const timerState = {
     totalTime: 1500,
     totalPausedTime: 5,
     startedAt: new Date('2026-01-01T00:00:00Z'),
+    pausedAt: undefined,
   } as {
     id: string
     name: string
@@ -23,6 +24,7 @@ const timerState = {
     totalTime: number
     totalPausedTime: number
     startedAt: Date
+    pausedAt?: Date
   } | null,
   remoteWorkSessionId: 'ws_old' as string | null,
   isPaused: true,
@@ -92,6 +94,30 @@ describe('applyRemoteTaskSwitch', () => {
     expect(bindRemoteMock).toHaveBeenCalledWith('ws_new')
     expect(refreshSummaryMock).toHaveBeenCalled()
     expect(resumeTimerMock).toHaveBeenCalled()
+  })
+
+  it('does not attribute the switch prompt pause to the new task', async () => {
+    const promptOpenedAt = new Date('2026-01-01T00:10:00Z')
+    timerState.activeTask!.pausedAt = promptOpenedAt
+    resumeTimerMock.mockImplementation(() => {
+      const activeTask = timerState.activeTask
+      if (!activeTask?.pausedAt) return
+      activeTask.totalPausedTime += 120
+      activeTask.pausedAt = undefined
+    })
+    switchRemoteMock.mockResolvedValue({
+      newSessionId: 'ws_new',
+      targetDurationSec: 600,
+      usedFullPreset: false,
+    })
+    const { applyRemoteTaskSwitch } = await import(
+      '@/composables/timer/applyRemoteTaskSwitch'
+    )
+
+    await applyRemoteTaskSwitch(input)
+
+    expect(timerState.activeTask?.pausedAt).toBeUndefined()
+    expect(timerState.activeTask?.totalPausedTime).toBe(5)
   })
 
   it('resets the local clock when a full preset is selected', async () => {
