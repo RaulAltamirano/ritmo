@@ -24,19 +24,25 @@ describe('WorkBlockFeedbackModal', () => {
     gate.openFeedback('ws-123')
   })
 
-  it('renders MVP fields only (no perceived / timeFit)', () => {
+  it('renders check-in style scales and optional notes (no task-only fields)', () => {
     const wrapper = mount(WorkBlockFeedbackModal, {
       global: {
         stubs: {
           BaseModal: { template: '<div><slot /></div>', props: ['isOpen'] },
           BaseButton: true,
-          ScaleInput: true,
         },
       },
     })
     const html = wrapper.html()
     expect(html).not.toMatch(/Foco percibido|Progreso percibido|Encaje temporal/i)
+    expect(html).toMatch(/RPE cognitivo/i)
+    expect(html).toMatch(/Fricción/i)
+    expect(html).toMatch(/Energía al terminar/i)
     expect(html).toMatch(/Nota libre/i)
+    expect(html).toMatch(/Bloqueador/i)
+    // No native range sliders / selects
+    expect(wrapper.find('input[type="range"]').exists()).toBe(false)
+    expect(wrapper.find('select').exists()).toBe(false)
   })
 
   it('submits reflection with notes trimmed', async () => {
@@ -47,7 +53,6 @@ describe('WorkBlockFeedbackModal', () => {
           BaseButton: {
             template: '<button @click="$emit(\'click\')"><slot /></button>',
           },
-          ScaleInput: true,
         },
       },
     })
@@ -78,7 +83,6 @@ describe('WorkBlockFeedbackModal', () => {
           BaseButton: {
             template: '<button @click="$emit(\'click\')"><slot /></button>',
           },
-          ScaleInput: true,
         },
       },
     })
@@ -111,7 +115,6 @@ describe('WorkBlockFeedbackModal', () => {
         stubs: {
           BaseModal: { template: '<div><slot /><slot name="footer" /></div>' },
           BaseButton: true,
-          ScaleInput: true,
         },
       },
     })
@@ -130,7 +133,6 @@ describe('WorkBlockFeedbackModal', () => {
             props: ['isOpen', 'closeOnBackdropClick'],
           },
           BaseButton: true,
-          ScaleInput: true,
         },
       },
     })

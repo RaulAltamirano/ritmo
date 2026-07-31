@@ -5,45 +5,113 @@
     aria-label="Reflexión del bloque"
     :close-on-backdrop-click="false"
     :close-on-escape="!submitBusy && !abandonBusy"
-    size="sm"
+    size="md"
     @update:is-open="handleIsOpenUpdate"
   >
-    <div class="space-y-3 text-sm">
-      <p class="text-content-secondary">
+    <div class="space-y-5">
+      <p class="text-sm text-content-secondary">
         Valora el bloque en curso (1 = bajo, 5 = alto).
       </p>
-      <ScaleInput v-model="form.rpeCognitive" label="RPE cognitivo" id="rpe" />
-      <ScaleInput v-model="form.frictionScore" label="Fricción" id="friction" />
-      <ScaleInput v-model="form.energyAfter" label="Energía al terminar" id="energy" />
-      <label class="block">
-        <span class="font-medium text-content">Bloqueador (opcional)</span>
-        <select
-          v-model="form.mainBlocker"
-          class="mt-1 w-full rounded border border-outline bg-canvas px-2 py-1.5"
-        >
-          <option value="none">Ninguno</option>
-          <option value="fatigue">Fatiga</option>
-          <option value="distractions">Distracciones</option>
-          <option value="clarity">Claridad</option>
-          <option value="difficulty">Dificultad</option>
-          <option value="motivation">Motivación</option>
-          <option value="environment">Entorno</option>
-        </select>
-      </label>
-      <label class="block">
-        <span class="font-medium text-content">Nota libre (opcional)</span>
+
+      <div class="space-y-3">
+        <p class="text-sm font-medium text-content">RPE cognitivo</p>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-2">
+          <button
+            v-for="option in intensityOptions"
+            :key="`rpe-${option.value}`"
+            type="button"
+            :aria-label="`RPE cognitivo ${option.value} de 5, ${option.label}`"
+            :class="optionButtonClasses(form.rpeCognitive === option.value)"
+            @click="form.rpeCognitive = option.value"
+          >
+            <component
+              :is="resolveOptionIcon(option.iconKey)"
+              class="h-4 w-4 shrink-0"
+              aria-hidden="true"
+            />
+            <span class="text-[11px] font-medium leading-tight text-current">
+              {{ option.label }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-sm font-medium text-content">Fricción</p>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-2">
+          <button
+            v-for="option in intensityOptions"
+            :key="`friction-${option.value}`"
+            type="button"
+            :aria-label="`Fricción ${option.value} de 5, ${option.label}`"
+            :class="optionButtonClasses(form.frictionScore === option.value)"
+            @click="form.frictionScore = option.value"
+          >
+            <component
+              :is="resolveOptionIcon(option.iconKey)"
+              class="h-4 w-4 shrink-0"
+              aria-hidden="true"
+            />
+            <span class="text-[11px] font-medium leading-tight text-current">
+              {{ option.label }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-sm font-medium text-content">Energía al terminar</p>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-2">
+          <button
+            v-for="option in energyOptions"
+            :key="`energy-${option.value}`"
+            type="button"
+            :aria-label="`Energía ${option.value} de 5, ${option.label}`"
+            :class="optionButtonClasses(form.energyAfter === option.value)"
+            @click="form.energyAfter = option.value"
+          >
+            <component
+              :is="resolveOptionIcon(option.iconKey)"
+              class="h-4 w-4 shrink-0"
+              aria-hidden="true"
+            />
+            <span class="text-[11px] font-medium leading-tight text-current">
+              {{ option.label }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-sm font-medium text-content">Bloqueador (opcional)</p>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="option in blockerOptions"
+            :key="`blocker-${option.value}`"
+            type="button"
+            :aria-pressed="form.mainBlocker === option.value"
+            :class="chipClasses(form.mainBlocker === option.value)"
+            @click="form.mainBlocker = option.value"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+
+      <label class="block space-y-1">
+        <span class="text-sm font-medium text-content">Nota libre (opcional)</span>
         <textarea
           id="reflection-notes"
           v-model="form.notes"
           maxlength="500"
           rows="3"
-          class="mt-1 w-full rounded border border-outline bg-canvas px-2 py-1.5"
+          class="mt-1 w-full rounded-lg border border-outline bg-canvas px-3 py-2 text-sm"
           placeholder="Breve reflexión sobre el bloque…"
           aria-describedby="reflection-notes-count"
         />
         <span
           id="reflection-notes-count"
-          class="mt-0.5 block text-xs text-content-secondary"
+          class="block text-xs text-content-secondary"
         >
           {{ form.notes.length }}/500
         </span>
@@ -90,15 +158,27 @@
 </template>
 
 <script setup lang="ts">
-  import ScaleInput from '@/components/atoms/ScaleInput.vue'
   import { useAsyncAction } from '@/composables/useAsyncAction'
   import { abandonWorkSession, completeWorkSession } from '@/services/workSessionsApi'
   import { useSessionGateStore } from '@/stores/sessionGate'
   import { useTimerStore } from '@/stores/timer'
+  import { getInteractiveOptionClasses } from '@/utils/designSystem'
   import { newIdempotencyKey } from '@/utils/idempotency'
   import { fetchErrorUserMessage } from '@/utils/parseFetchError'
   import BaseButton from '@ritmo/ui/components/atoms/interactive/BaseButton.vue'
   import BaseModal from '@ritmo/ui/components/atoms/interactive/BaseModal.vue'
+  import {
+    Angry,
+    BatteryLow,
+    Frown,
+    Flame,
+    Gauge,
+    Laugh,
+    Meh,
+    Smile,
+    Wind,
+    Zap,
+  } from 'lucide-vue-next'
   import { reactive, watch } from 'vue'
 
   const gate = useSessionGateStore()
@@ -113,6 +193,66 @@
     mainBlocker: 'none',
     notes: '',
   })
+
+  /** Alineado con `DailyCheckinModal.energyOptions` (energía al terminar) */
+  const energyOptions = [
+    { value: 1, iconKey: 'battery-low', label: 'Muy baja' },
+    { value: 2, iconKey: 'wind', label: 'Baja' },
+    { value: 3, iconKey: 'gauge', label: 'Media' },
+    { value: 4, iconKey: 'zap', label: 'Alta' },
+    { value: 5, iconKey: 'flame', label: 'Muy alta' },
+  ] as const
+
+  /** Escala 1 = muy bajo → 5 = muy alto, con “caras” (iconos) para RPE y Fricción */
+  const intensityOptions = [
+    { value: 1, iconKey: 'smile', label: 'Muy bajo' },
+    { value: 2, iconKey: 'laugh', label: 'Bajo' },
+    { value: 3, iconKey: 'meh', label: 'Medio' },
+    { value: 4, iconKey: 'frown', label: 'Alto' },
+    { value: 5, iconKey: 'angry', label: 'Muy alto' },
+  ] as const
+
+  /** Valores de enum sin cambios respecto al `<select>` original */
+  const blockerOptions = [
+    { value: 'none', label: 'Ninguno' },
+    { value: 'fatigue', label: 'Fatiga' },
+    { value: 'distractions', label: 'Distracciones' },
+    { value: 'clarity', label: 'Claridad' },
+    { value: 'difficulty', label: 'Dificultad' },
+    { value: 'motivation', label: 'Motivación' },
+    { value: 'environment', label: 'Entorno' },
+  ] as const
+
+  const iconMap = {
+    'battery-low': BatteryLow,
+    wind: Wind,
+    gauge: Gauge,
+    zap: Zap,
+    flame: Flame,
+    smile: Smile,
+    laugh: Laugh,
+    meh: Meh,
+    frown: Frown,
+    angry: Angry,
+  } as const
+
+  const resolveOptionIcon = (iconKey: string) => {
+    return iconMap[iconKey as keyof typeof iconMap] || Gauge
+  }
+
+  /** Rejilla 1–5: layout + tokens `interactiveOption` del design system */
+  const optionButtonClasses = (isSelected: boolean) =>
+    [
+      'flex h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-center text-sm duration-200',
+      getInteractiveOptionClasses(isSelected),
+    ].join(' ')
+
+  /** Chip compacto para el bloqueador opcional */
+  const chipClasses = (isSelected: boolean) =>
+    [
+      'rounded-xl px-3 py-2 text-xs font-medium duration-200',
+      getInteractiveOptionClasses(isSelected),
+    ].join(' ')
 
   function resetForm() {
     form.rpeCognitive = 3
