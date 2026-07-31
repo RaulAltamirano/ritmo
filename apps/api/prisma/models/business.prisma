@@ -114,6 +114,10 @@ model WorkSession {
   targetDurationSec Int?
   /// Descanso configurado para el preset (segundos); opcional
   breakDurationSec  Int?
+  /// Instante en que la sesión entró en descanso (estado on_break); lo fija el servidor
+  breakStartedAt         DateTime?
+  /// Pausas acumuladas durante el descanso (segundos)
+  breakPausedDurationSec Int       @default(0)
   pausedDurationSec Int       @default(0)
   lastClientSeenAt  DateTime?
   dailyCheckinId    String?
