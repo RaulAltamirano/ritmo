@@ -8,6 +8,17 @@ const markCompletedMock = vi.fn()
 const stopTimerMock = vi.fn()
 const closeTimerMock = vi.fn()
 const completeWorkSessionMock = vi.fn()
+const notifyErrorMock = vi.fn()
+
+vi.mock('@/composables/shared/useNotify', () => ({
+  useNotify: () => ({
+    notifyError: notifyErrorMock,
+    notify: vi.fn(),
+    notifySuccess: vi.fn(),
+    notifyWarning: vi.fn(),
+    notifyInfo: vi.fn(),
+  }),
+}))
 
 const timerState = {
   activeTask: { id: 'task-1', name: 'Task One' } as { id: string; name: string } | null,
@@ -202,5 +213,46 @@ describe('useTodayHandlers', () => {
         createdAt: new Date(),
       }),
     ).rejects.toThrow(/nope|completar/i)
+  })
+
+  it('notifies when quick create fails', async () => {
+    vi.resetModules()
+    createMock.mockResolvedValue({ success: false, error: 'boom' })
+    const { useTodayHandlers } = await import('@/composables/tasks/useTodayHandlers')
+    const { handleQuickTask } = useTodayHandlers()
+    await handleQuickTask('Nueva')
+    expect(notifyErrorMock).toHaveBeenCalled()
+    expect(String(notifyErrorMock.mock.calls[0]![0])).toMatch(/crear/i)
+  })
+
+  it('notifies when update fails', async () => {
+    vi.resetModules()
+    updateMock.mockResolvedValue({ success: false, error: 'nope' })
+    const { useTodayHandlers } = await import('@/composables/tasks/useTodayHandlers')
+    const { handleUpdateTask } = useTodayHandlers()
+    await handleUpdateTask({
+      id: 'task-1',
+      name: 'Task One',
+      createdAt: new Date(),
+    })
+    expect(notifyErrorMock).toHaveBeenCalled()
+  })
+
+  it('notifies when add-note fails', async () => {
+    vi.resetModules()
+    updateMock.mockResolvedValue({ success: false, error: 'nope' })
+    const { useTodayHandlers } = await import('@/composables/tasks/useTodayHandlers')
+    const { handleAddNote } = useTodayHandlers()
+    await handleAddNote('task-1', 'hola')
+    expect(notifyErrorMock).toHaveBeenCalled()
+  })
+
+  it('notifies when delete fails', async () => {
+    vi.resetModules()
+    removeMock.mockResolvedValue({ success: false, error: 'nope' })
+    const { useTodayHandlers } = await import('@/composables/tasks/useTodayHandlers')
+    const { handleDeleteTask } = useTodayHandlers()
+    await handleDeleteTask('task-1')
+    expect(notifyErrorMock).toHaveBeenCalled()
   })
 })

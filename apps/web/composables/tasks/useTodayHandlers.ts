@@ -4,6 +4,7 @@ import { useTimerStore } from '@/stores/timer'
 import { completeWorkSession } from '@/services/workSessionsApi'
 import { newIdempotencyKey } from '@/utils/idempotency'
 import { uiTaskToUpdatePayload } from '@/types/task'
+import { useNotify } from '@/composables/shared/useNotify'
 import type { Task, TaskCompletionFeedback } from '@/types/task'
 
 function mapFeedbackToWorkSession(feedback: TaskCompletionFeedback) {
@@ -23,6 +24,7 @@ function mapFeedbackToWorkSession(feedback: TaskCompletionFeedback) {
 export const useTodayHandlers = () => {
   const store = useTasksStore()
   const timerStore = useTimerStore()
+  const { notifyError } = useNotify()
 
   const isQuickTaskLoading = ref(false)
 
@@ -30,20 +32,26 @@ export const useTodayHandlers = () => {
     if (!taskName.trim()) return
     isQuickTaskLoading.value = true
     try {
-      await store.create({
+      const result = await store.create({
         title: taskName.trim(),
         startTime: new Date(),
         priority: 'MEDIUM',
         category: 'WORK',
         tags: ['quick-task'],
       })
+      if (!result.success) {
+        notifyError('No se pudo crear la tarea', result.error)
+      }
     } finally {
       isQuickTaskLoading.value = false
     }
   }
 
   const handleDeleteTask = async (taskId: string): Promise<void> => {
-    await store.remove(taskId)
+    const result = await store.remove(taskId)
+    if (!result.success) {
+      notifyError('No se pudo eliminar la tarea', result.error)
+    }
   }
 
   const handleUpdateTask = async (task: Task): Promise<void> => {
@@ -54,7 +62,7 @@ export const useTodayHandlers = () => {
       title: payload.title?.trim() ? payload.title.trim() : titleFallback,
     })
     if (!result.success) {
-      console.error('[today] update failed:', result.error)
+      notifyError('No se pudo actualizar la tarea', result.error)
     }
   }
 
@@ -64,7 +72,7 @@ export const useTodayHandlers = () => {
       description: trimmed || undefined,
     })
     if (!result.success) {
-      console.error('[today] add-note failed:', result.error)
+      notifyError('No se pudo guardar la nota', result.error)
     }
   }
 
