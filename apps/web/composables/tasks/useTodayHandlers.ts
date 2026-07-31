@@ -68,6 +68,16 @@ export const useTodayHandlers = () => {
     }
   }
 
+  const handleCompleteTask = async (task: Task): Promise<void> => {
+    if (timerStore.activeTask?.id === task.id) {
+      await timerStore.stopTimer()
+    }
+    const result = await store.markCompleted(task.id, true)
+    if (!result.success) {
+      throw new Error(result.error ?? 'No se pudo completar la tarea')
+    }
+  }
+
   const handleCompleteTaskWithFeedback = async (
     task: Task,
     feedback: TaskCompletionFeedback,
@@ -75,22 +85,22 @@ export const useTodayHandlers = () => {
     reject: (error?: Error) => void,
   ): Promise<void> => {
     try {
-      const result = await store.markCompleted(task.id, true)
-      if (!result.success)
-        throw new Error(result.error ?? 'No se pudo completar la tarea')
-
       const remoteId = timerStore.remoteWorkSessionId
       const isActiveTask = timerStore.activeTask?.id === task.id
+      if (!remoteId || !isActiveTask) {
+        throw new Error('No hay una sesión remota activa para esta tarea')
+      }
 
-      if (remoteId && isActiveTask) {
-        await completeWorkSession(
-          remoteId,
-          { 'Idempotency-Key': newIdempotencyKey() },
-          mapFeedbackToWorkSession(feedback),
-        )
-        timerStore.closeTimer()
-      } else if (isActiveTask) {
-        await timerStore.stopTimer()
+      await completeWorkSession(
+        remoteId,
+        { 'Idempotency-Key': newIdempotencyKey() },
+        mapFeedbackToWorkSession(feedback),
+      )
+      timerStore.closeTimer()
+
+      const result = await store.markCompleted(task.id, true)
+      if (!result.success) {
+        throw new Error(result.error ?? 'No se pudo completar la tarea')
       }
 
       resolve()
@@ -105,6 +115,7 @@ export const useTodayHandlers = () => {
     handleDeleteTask,
     handleUpdateTask,
     handleAddNote,
+    handleCompleteTask,
     handleCompleteTaskWithFeedback,
   }
 }
