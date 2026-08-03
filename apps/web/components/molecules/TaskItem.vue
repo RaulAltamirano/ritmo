@@ -303,163 +303,17 @@
     </div>
   </div>
 
-  <!-- Modal de edición mejorado con selección de técnicas -->
-  <div
-    v-if="showEditModal && editingTask"
-    class="fixed inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-    @click="showEditModal = null"
-  >
-    <div
-      class="w-full max-w-lg bg-surface rounded-xl shadow-2xl border border-outline max-h-[90vh] overflow-y-auto"
-      @click.stop
-    >
-      <div class="p-4 border-b border-outline">
-        <div class="flex items-center justify-between">
-          <div>
-            <h5 class="text-lg font-semibold text-gray-900 dark:text-white">
-              Editar tarea
-            </h5>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Modifica los detalles y técnica de tiempo
-            </p>
-          </div>
-          <button
-            @click="showEditModal = null"
-            class="w-8 h-8 rounded-lg bg-surface-overlay hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center transition-all duration-200"
-          >
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="p-4 space-y-6">
-        <!-- Información básica -->
-        <div class="space-y-4">
-          <div>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >Título</label
-            >
-            <input
-              v-model="editingTask.title"
-              type="text"
-              class="w-full px-3 py-2 border border-outline-strong rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-surface text-gray-900 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >Categoría</label
-            >
-            <select
-              v-model="editingTask.category"
-              class="w-full px-3 py-2 border border-outline-strong rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-surface text-gray-900 dark:text-white"
-            >
-              <option value="">Sin categoría</option>
-              <option value="Trabajo">Trabajo</option>
-              <option value="Estudio">Estudio</option>
-              <option value="Personal">Personal</option>
-              <option value="Urgente">Urgente</option>
-              <option value="Proyecto">Proyecto</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >Prioridad</label
-            >
-            <select
-              v-model="editingTask.priority"
-              class="w-full px-3 py-2 border border-outline-strong rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-surface text-gray-900 dark:text-white"
-            >
-              <option value="baja">Baja</option>
-              <option value="media">Media</option>
-              <option value="alta">Alta</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Selección de técnica de tiempo -->
-        <div class="border-t border-outline pt-4">
-          <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
-            Técnica de tiempo
-          </h6>
-          <div class="grid grid-cols-1 gap-3">
-            <button
-              v-for="mode in timerModes"
-              :key="mode.id"
-              @click="selectTimerMode(mode)"
-              class="flex items-center justify-between p-3 rounded-lg border transition-all duration-200"
-              :class="[
-                selectedTimerMode?.id === mode.id
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-outline-strong hover:border-gray-300 dark:hover:border-gray-500 bg-surface',
-              ]"
-            >
-              <div class="flex items-center space-x-3">
-                <div
-                  class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm"
-                  :class="mode.color"
-                >
-                  <svg
-                    class="w-5 h-5 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <div class="text-sm font-medium text-gray-900 dark:text-white">
-                    {{ mode.name }}
-                  </div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ mode.description }}
-                  </div>
-                </div>
-              </div>
-              <div class="text-sm font-bold text-gray-700 dark:text-gray-300">
-                {{ mode.duration }}
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="p-4 border-t border-outline flex space-x-3">
-        <button
-          @click="showEditModal = null"
-          class="flex-1 py-2 bg-surface-overlay hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-all duration-200"
-        >
-          Cancelar
-        </button>
-        <button
-          @click="saveEdit"
-          class="flex-1 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-all duration-200"
-        >
-          Guardar
-        </button>
-      </div>
-    </div>
-  </div>
+  <TaskEditModal
+    v-model="showEditModal"
+    :task="editingTask"
+    @save="onSaveFromEditModal"
+  />
 </template>
 
 <script setup lang="ts">
   import { ref, onMounted, onUnmounted, computed } from 'vue'
   import type { Task, TimerMode, TaskItemProps } from '@/types/task'
-  import { useTimerStore } from '@/stores/timer'
+  import TaskEditModal from './TaskEditModal.vue'
 
   const props = defineProps<TaskItemProps>()
 
@@ -479,10 +333,9 @@
   const isMenuOpen = ref(false)
 
   const showNoteModal = ref(false)
-  const showEditModal = ref<boolean | null>(null)
+  const showEditModal = ref(false)
   const noteText = ref('')
   const editingTask = ref<Task | null>(null)
-  const selectedTimerMode = ref<TimerMode | null>(null)
 
   // Referencia al botón del menú para calcular posición
   const menuButtonRef = ref<HTMLElement>()
@@ -510,9 +363,6 @@
     }
   })
 
-  const timerStore = useTimerStore()
-  const timerModes = computed(() => timerStore.timerModes)
-
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60)
     const remainingSeconds = seconds % 60
@@ -537,10 +387,6 @@
       colors[category as keyof typeof colors] ||
       'bg-surface-raised/50 text-gray-700 dark:text-gray-300 border border-outline-strong/30'
     )
-  }
-
-  const handleEdit = () => {
-    emit('edit', props.task)
   }
 
   const handleDelete = () => {
@@ -570,27 +416,15 @@
   // Métodos para edición
   const openEditModal = () => {
     editingTask.value = { ...props.task }
-    // Establecer la técnica de tiempo actual basada en la duración
-    const currentDuration = props.task.duration ?? '25m'
-    const modes = timerModes.value
-    selectedTimerMode.value =
-      modes.find(mode => mode.duration === currentDuration) || modes[0]
     showEditModal.value = true
+    closeMenu()
   }
 
-  const selectTimerMode = (mode: TimerMode) => {
-    selectedTimerMode.value = mode
-  }
-
-  const saveEdit = () => {
-    if (editingTask.value && selectedTimerMode.value) {
-      editingTask.value.lastEdited = new Date()
-      editingTask.value.duration = selectedTimerMode.value.duration
-      emit('update-task', editingTask.value)
-      showEditModal.value = null
-      editingTask.value = null
-      selectedTimerMode.value = null
-    }
+  const onSaveFromEditModal = (task: Task) => {
+    emit('update-task', task)
+    emit('edit', task)
+    showEditModal.value = false
+    editingTask.value = null
   }
 
   // Métodos para controlar el menú
@@ -608,7 +442,6 @@
 
   const handleEditClick = () => {
     openEditModal()
-    closeMenu()
   }
 
   const handleNoteClick = () => {
