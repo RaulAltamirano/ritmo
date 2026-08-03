@@ -5,6 +5,7 @@ import {
   InvalidInputException,
   ResourceNotFoundException,
 } from '../../../shared/exceptions/app.exceptions.js'
+import { assertPlanOwned, resolvePlanId } from './taskPlan.js'
 
 export type TaskPriorityInput = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' | 'CRITICAL'
 
@@ -19,6 +20,7 @@ export interface CreateTaskInput {
   tags?: string[]
   estimatedDuration?: number
   dueDate?: string | Date
+  planId?: string | null
 }
 
 export interface UpdateTaskInput {
@@ -33,6 +35,7 @@ export interface UpdateTaskInput {
   isCompleted?: boolean
   estimatedDuration?: number
   dueDate?: string | Date | null
+  planId?: string | null
 }
 
 export interface FrontendTask {
@@ -93,6 +96,7 @@ export class TaskService {
       throw new InvalidInputException('title must be at most 255 characters')
     }
     const categoryId = await this.resolveCategoryId(userId, payload.category)
+    const planId = await resolvePlanId(userId, payload.planId)
     const task = await prisma.task.create({
       data: {
         userId,
@@ -108,6 +112,7 @@ export class TaskService {
         type: payload.type ?? payload.category?.toLowerCase() ?? null,
         tags: payload.tags ?? [],
         categoryId,
+        planId,
       },
       include: { category: { select: { name: true } } },
     })
@@ -156,6 +161,14 @@ export class TaskService {
         ? { connect: { id: categoryId } }
         : { disconnect: true }
       data.type = payload.category.toLowerCase()
+    }
+    if (payload.planId !== undefined) {
+      if (payload.planId === null || payload.planId === '') {
+        data.plan = { disconnect: true }
+      } else {
+        await assertPlanOwned(userId, payload.planId)
+        data.plan = { connect: { id: payload.planId } }
+      }
     }
 
     const updated = await prisma.task.update({
@@ -250,6 +263,7 @@ export class TaskService {
     completedAt: Date | null
     type: string | null
     tags: string[]
+    planId?: string | null
     createdAt: Date
     updatedAt: Date
     category?: { name: string } | null
@@ -270,6 +284,7 @@ export class TaskService {
       type: task.type ?? undefined,
       tags: task.tags,
       category: task.category?.name,
+      planId: task.planId ?? null,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
     }
