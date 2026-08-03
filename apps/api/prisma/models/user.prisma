@@ -56,6 +56,7 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   phoneVerificationTokens PhoneVerificationToken[]
   tasks                   Task[]
+  plans                   Plan[]
   categories              Category[]
   workSessions            WorkSession[]
   dailyCheckins           DailyCheckin[]

@@ -93,6 +93,13 @@ enum Priority {
   critical
 }
 
+enum PlanStatus {
+  planned
+  active
+  paused
+  completed
+}
+
 enum SecurityEventType {
   // Authentication
   login_success
@@ -293,6 +300,7 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   phoneVerificationTokens PhoneVerificationToken[]
   tasks                   Task[]
+  plans                   Plan[]
   categories              Category[]
   workSessions            WorkSession[]
   dailyCheckins           DailyCheckin[]
@@ -537,6 +545,7 @@ model Task {
   type              String?       @db.VarChar(50) // work, study, exercise, etc.
   tags              String[]
   categoryId        String?
+  planId            String?
   
   // Metadata
   isDeleted         Boolean       @default(false)
@@ -547,6 +556,7 @@ model Task {
   // Relations
   user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   category          Category?     @relation(fields: [categoryId], references: [id])
+  plan              Plan?         @relation(fields: [planId], references: [id], onDelete: SetNull)
   sessions          WorkSession[]
   
   // Indexes
@@ -554,7 +564,30 @@ model Task {
   @@index([userId, startTime])
   @@index([userId, dueDate])
   @@index([categoryId])
+  @@index([planId])
   @@map("tasks")
+}
+
+model Plan {
+  id          String     @id @default(cuid())
+  userId      String
+  name        String     @db.VarChar(255)
+  description String?
+  status      PlanStatus @default(planned)
+  color       String?    @db.VarChar(7)
+  icon        String?    @db.VarChar(50)
+
+  isDeleted   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@index([userId, isDeleted])
+  @@index([userId, status])
+  @@map("plans")
 }
 
 model Category {

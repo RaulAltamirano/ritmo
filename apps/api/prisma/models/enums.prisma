@@ -50,6 +50,13 @@ enum Priority {
   critical
 }
 
+enum PlanStatus {
+  planned
+  active
+  paused
+  completed
+}
+
 enum SecurityEventType {
   // Authentication
   login_success
