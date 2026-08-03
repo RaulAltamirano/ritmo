@@ -1,6 +1,22 @@
--- Add the `on_break` state to WorkSessionState.
--- NOTE: PostgreSQL forbids using a newly added enum value in the same
--- transaction that adds it, so this ALTER TYPE lives in its own migration.
--- The partial unique index that references 'on_break' is created in the
--- following migration (20260731090100_work_session_break_fields).
+/**
+ * Soft-delete a failed migration's ALTER TYPE so fresh DBs work when
+ * WorkSessionState was never created by init (schema drift / db push era).
+ * If the type already exists, only ensure `on_break` is present.
+ */
+DO $$
+BEGIN
+  CREATE TYPE "WorkSessionState" AS ENUM (
+    'running',
+    'paused',
+    'on_break',
+    'pending_feedback',
+    'completed',
+    'abandoned'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN
+    NULL;
+END
+$$;
+
 ALTER TYPE "WorkSessionState" ADD VALUE IF NOT EXISTS 'on_break';

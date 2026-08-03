@@ -51,6 +51,7 @@ export interface FrontendTask {
   type?: string
   tags: string[]
   category?: string
+  planId?: string | null
   createdAt: Date
   updatedAt: Date
 }
