@@ -76,7 +76,7 @@ export interface Task {
   tags?: string[]
   startTime?: Date
   endTime?: Date
-  dueDate?: Date
+  dueDate?: Date | null
   type?: string
 }
 
