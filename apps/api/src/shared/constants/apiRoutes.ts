@@ -93,18 +93,15 @@ export const API_ROUTES = {
     TIMELINE: '/timeline',
   },
 
-  // Project Management endpoints
-  PROJECTS: {
-    BASE: '/projects',
+  // Plan Management endpoints
+  PLANS: {
+    BASE: '/plans',
     LIST: '/',
     CREATE: '/',
     BY_ID: (id: string) => `/${id}`,
     UPDATE: (id: string) => `/${id}`,
     DELETE: (id: string) => `/${id}`,
-    MEMBERS: (id: string) => `/${id}/members`,
-    MEMBER: (id: string, memberId: string) => `/${id}/members/${memberId}`,
     TASKS: (id: string) => `/${id}/tasks`,
-    STATS: (id: string) => `/${id}/stats`,
   },
 
   // Session Management endpoints
@@ -180,7 +177,7 @@ export type HealthRoutes = RouteBuilder<'HEALTH'>
 export type UserRoutes = RouteBuilder<'USERS'>
 export type TaskRoutes = RouteBuilder<'TASKS'>
 export type ActivityRoutes = RouteBuilder<'ACTIVITIES'>
-export type ProjectRoutes = RouteBuilder<'PROJECTS'>
+export type PlanRoutes = RouteBuilder<'PLANS'>
 export type SessionRoutes = RouteBuilder<'SESSIONS'>
 export type AnalyticsRoutes = RouteBuilder<'ANALYTICS'>
 export type DocsRoutes = RouteBuilder<'DOCS'>
