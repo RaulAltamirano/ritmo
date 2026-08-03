@@ -78,6 +78,39 @@ export function timerPresetsDtoToTimerModes(dto: {
   })
 }
 
+/** Valor sentinel para estimación de duración libre (minutos personalizados). */
+export const FREE_ESTIMATE_DURATION_VALUE = 'free'
+
+/** Etiqueta de estimación de tarea alineada a presets canónicos (§ timer/presets). */
+export function getEstimateDurationLabel(preset: TimerMode): string {
+  const minutes = preset.minutes ?? Math.max(1, Math.round(preset.time / 60))
+  switch (preset.presetKey) {
+    case '25_5':
+      return 'Pomodoro clásico · 25 min'
+    case '52_17':
+      return 'Bloque medio · 52 min'
+    case '90_20':
+      return 'Bloque largo · 90 min'
+    default:
+      return `${preset.name} · ${minutes} min`
+  }
+}
+
+/** Opciones de duración estimada derivadas de los presets de foco (work minutes). */
+export function getEstimateDurationChoices(
+  presets: TimerMode[] = DEFAULT_TIMER_PRESETS,
+): Array<{ value: string; label: string; presetKey?: string; minutes: number }> {
+  return presets.map(preset => {
+    const minutes = preset.minutes ?? Math.max(1, Math.round(preset.time / 60))
+    return {
+      value: String(minutes),
+      minutes,
+      presetKey: preset.presetKey,
+      label: getEstimateDurationLabel(preset),
+    }
+  })
+}
+
 /** Familia conceptual del timer (spec §5.2 `timer_mode`). */
 export type WorkSessionMode = 'pomodoro' | 'ultradian' | 'custom'
 

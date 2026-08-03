@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_TIMER_PRESETS,
+  FREE_ESTIMATE_DURATION_VALUE,
+  getEstimateDurationChoices,
+  getEstimateDurationLabel,
   mapModeLabelToTimerMode,
 } from '@/composables/timer/timerPresets'
 
@@ -36,5 +39,31 @@ describe('mapModeLabelToTimerMode', () => {
   it('does NOT treat raw "52" or "17" numbers as ultradian', () => {
     expect(mapModeLabelToTimerMode('52 min block')).not.toBe('ultradian')
     expect(mapModeLabelToTimerMode('17 min')).not.toBe('ultradian')
+  })
+})
+
+describe('getEstimateDurationChoices', () => {
+  it('uses canonical work minutes from timer presets', () => {
+    const choices = getEstimateDurationChoices()
+    expect(choices.map(c => c.value)).toEqual(['25', '52', '90'])
+    expect(choices.map(c => c.presetKey)).toEqual(['25_5', '52_17', '90_20'])
+  })
+
+  it('labels match docs/knowledge timer presets', () => {
+    expect(getEstimateDurationLabel(DEFAULT_TIMER_PRESETS[0]!)).toBe(
+      'Pomodoro clásico · 25 min',
+    )
+    expect(getEstimateDurationLabel(DEFAULT_TIMER_PRESETS[1]!)).toBe(
+      'Bloque medio · 52 min',
+    )
+    expect(getEstimateDurationLabel(DEFAULT_TIMER_PRESETS[2]!)).toBe(
+      'Bloque largo · 90 min',
+    )
+  })
+})
+
+describe('FREE_ESTIMATE_DURATION_VALUE', () => {
+  it('is the sentinel string free', () => {
+    expect(FREE_ESTIMATE_DURATION_VALUE).toBe('free')
   })
 })
