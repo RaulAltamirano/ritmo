@@ -47,4 +47,30 @@ describe('IconSelect', () => {
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['MEDIUM'])
     expect(wrapper.find('[role="listbox"]').exists()).toBe(false)
   })
+
+  it('focuses the active option and supports keyboard selection', async () => {
+    const wrapper = mount(IconSelect, {
+      attachTo: document.body,
+      props: {
+        id: 'task-edit-priority',
+        modelValue: 'LOW',
+        options,
+      },
+    })
+
+    await wrapper.get('#task-edit-priority').trigger('keydown', {
+      key: 'ArrowDown',
+    })
+
+    const activeOption = wrapper.get('[data-testid="icon-select-option-LOW"]')
+    expect(activeOption.attributes('tabindex')).toBe('-1')
+    expect(document.activeElement).toBe(activeOption.element)
+
+    await activeOption.trigger('keydown', { key: 'ArrowDown' })
+    await activeOption.trigger('keydown', { key: 'Enter' })
+
+    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['MEDIUM'])
+    expect(wrapper.find('[role="listbox"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
 })

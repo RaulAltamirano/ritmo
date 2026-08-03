@@ -49,6 +49,7 @@
         :aria-selected="option.value === modelValue"
         :data-testid="`icon-select-option-${option.value}`"
         :data-active="index === activeIndex"
+        tabindex="-1"
         class="field-option"
         :class="{
           'field-option--selected': option.value === modelValue,
