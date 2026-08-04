@@ -1,62 +1,36 @@
-# =====================================================
-# RITMO API - Modern Dockerfile with 2025 best practices
-# =====================================================
+# syntax=docker/dockerfile:1.7
+# Build from repo root:
+#   docker build -f apps/api/Dockerfile -t ritmo-api .
 
-# Use Node.js 20 LTS (Alpine for smaller size)
 FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+WORKDIR /app
 
-# Install dependencies only when needed
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
-WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/api/package.json apps/api/
+COPY packages/shared/package.json packages/shared/
+COPY packages/config/package.json packages/config/
+RUN pnpm install --frozen-lockfile --filter @ritmo/api...
 
-# Install dependencies based on the preferred package manager
-COPY package.json pnpm-lock.yaml* ./
-RUN \
-  if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
-
-# Rebuild the source code only when needed
 FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app /app
 COPY . .
+RUN pnpm --filter @ritmo/api exec prisma generate
+RUN pnpm --filter @ritmo/api build
 
-# Generate Prisma client
-RUN npx prisma generate
-
-# Build the application
-RUN npm run build
-
-# Production image, copy all the files and run the app
 FROM base AS runner
-WORKDIR /app
-
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy the public folder
-COPY --from=builder /app/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-
+WORKDIR /app
+RUN addgroup -S ritmo && adduser -S ritmo -G ritmo
+COPY --from=builder --chown=ritmo:ritmo /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
+COPY --from=builder --chown=ritmo:ritmo /app/node_modules ./node_modules
+COPY --from=builder --chown=ritmo:ritmo /app/apps/api/package.json ./apps/api/
+COPY --from=builder --chown=ritmo:ritmo /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=ritmo:ritmo /app/apps/api/prisma ./apps/api/prisma
+COPY --from=builder --chown=ritmo:ritmo /app/packages ./packages
+USER ritmo
 EXPOSE 3001
-
-ENV PORT=3001
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "server.js"] 
+WORKDIR /app/apps/api
+CMD ["node", "dist/server.js"]

@@ -1,3 +1,4 @@
+// @ts-nocheck — vitest/vite and @vitejs/plugin-vue resolve different vite majors in this monorepo.
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vitest/config'
