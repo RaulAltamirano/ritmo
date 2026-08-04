@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 /**
  * Extensión de tema Tailwind compartida por apps/web y apps/landing (producto Ritmo).
@@ -153,4 +153,4 @@ module.exports = {
       '100%': { transform: 'translateY(0)', opacity: '1' },
     },
   },
-}
+};

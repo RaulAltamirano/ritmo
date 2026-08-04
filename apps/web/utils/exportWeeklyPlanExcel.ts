@@ -13,14 +13,12 @@ import { addDays, formatWeekLabel } from '~/utils/trainingWeek'
 
 function xmlCell(
   value: string,
-  opts: { type?: 'String' | 'Number'; style?: string; mergeAcross?: number } = {}
+  opts: { type?: 'String' | 'Number'; style?: string; mergeAcross?: number } = {},
 ): string {
   const type = opts.type ?? 'String'
   const styleAttr = opts.style ? ` ss:StyleID="${opts.style}"` : ''
   const mergeAttr =
-    opts.mergeAcross !== undefined
-      ? ` ss:MergeAcross="${opts.mergeAcross}"`
-      : ''
+    opts.mergeAcross !== undefined ? ` ss:MergeAcross="${opts.mergeAcross}"` : ''
   return `<Cell${styleAttr}${mergeAttr}><Data ss:Type="${type}">${escapeXml(value)}</Data></Cell>`
 }
 
@@ -71,10 +69,7 @@ const EXCEL_STYLES = ` <Styles>
  </Styles>`
 
 /** SpreadsheetML with the same Día 1–4 tables as the source routine. */
-export function buildWeeklyPlanExcelXml(
-  plan: WeeklyPlan,
-  weekStart: Date
-): string {
+export function buildWeeklyPlanExcelXml(plan: WeeklyPlan, weekStart: Date): string {
   const weekEnd = addDays(weekStart, 6)
   const weekLabel = formatWeekLabel(weekStart, weekEnd)
   const sessions = [...plan.days].sort((a, b) => a.dayNumber - b.dayNumber)
@@ -82,19 +77,19 @@ export function buildWeeklyPlanExcelXml(
 
   rows.push(
     xmlRow(
-      xmlCell('Plan', { style: 'Label' }) + xmlCell(plan.title, { mergeAcross: 3 })
-    )
+      xmlCell('Plan', { style: 'Label' }) + xmlCell(plan.title, { mergeAcross: 3 }),
+    ),
   )
   rows.push(
     xmlRow(
       xmlCell('Programa', { style: 'Label' }) +
-        xmlCell(plan.programLabel, { mergeAcross: 3 })
-    )
+        xmlCell(plan.programLabel, { mergeAcross: 3 }),
+    ),
   )
   rows.push(
     xmlRow(
-      xmlCell('Semana', { style: 'Label' }) + xmlCell(weekLabel, { mergeAcross: 3 })
-    )
+      xmlCell('Semana', { style: 'Label' }) + xmlCell(weekLabel, { mergeAcross: 3 }),
+    ),
   )
   rows.push(xmlRow(''))
 
@@ -105,8 +100,8 @@ export function buildWeeklyPlanExcelXml(
           style: trainingDayStyleId(day.focus),
           mergeAcross: 4,
         }),
-        22
-      )
+        22,
+      ),
     )
     rows.push(
       xmlRow(
@@ -114,8 +109,8 @@ export function buildWeeklyPlanExcelXml(
           xmlCell('Ejercicio', { style: 'ColHeader' }) +
           xmlCell('Series y Repeticiones', { style: 'ColHeader' }) +
           xmlCell('RIR Objetivo', { style: 'ColHeaderCenter' }) +
-          xmlCell('RPE', { style: 'ColHeaderCenter' })
-      )
+          xmlCell('RPE', { style: 'ColHeaderCenter' }),
+      ),
     )
 
     for (const exercise of day.exercises) {
@@ -125,8 +120,8 @@ export function buildWeeklyPlanExcelXml(
             xmlCell(exercise.name) +
             xmlCell(exercise.setsReps) +
             xmlCell(exercise.targetRir, { style: 'Center' }) +
-            xmlCell(exercise.rpe, { style: 'Center' })
-        )
+            xmlCell(exercise.rpe, { style: 'Center' }),
+        ),
       )
     }
 
@@ -134,27 +129,25 @@ export function buildWeeklyPlanExcelXml(
   }
 
   rows.push(
-    xmlRow(
-      xmlCell('Guía rápida: RIR y RPE', { style: 'Section', mergeAcross: 4 })
-    )
+    xmlRow(xmlCell('Guía rápida: RIR y RPE', { style: 'Section', mergeAcross: 4 })),
   )
   rows.push(
     xmlRow(
       xmlCell('Qué es RIR', { style: 'Label' }) +
-        xmlCell(RIR_DEFINITION, { style: 'Wrap', mergeAcross: 3 })
-    )
+        xmlCell(RIR_DEFINITION, { style: 'Wrap', mergeAcross: 3 }),
+    ),
   )
   rows.push(
     xmlRow(
       xmlCell('Qué es RPE', { style: 'Label' }) +
-        xmlCell(RPE_DEFINITION, { style: 'Wrap', mergeAcross: 3 })
-    )
+        xmlCell(RPE_DEFINITION, { style: 'Wrap', mergeAcross: 3 }),
+    ),
   )
   rows.push(
     xmlRow(
       xmlCell('Cómo aplicarlos', { style: 'Label' }) +
-        xmlCell(HOW_TO_APPLY, { style: 'Wrap', mergeAcross: 3 })
-    )
+        xmlCell(HOW_TO_APPLY, { style: 'Wrap', mergeAcross: 3 }),
+    ),
   )
   rows.push(xmlRow(''))
   rows.push(
@@ -162,20 +155,20 @@ export function buildWeeklyPlanExcelXml(
       xmlCell('📈 Reglas de Progresión y Descarga', {
         style: 'Section',
         mergeAcross: 4,
-      })
-    )
+      }),
+    ),
   )
   rows.push(
     xmlRow(
       xmlCell('Progresión', { style: 'Label' }) +
-        xmlCell(PROGRESSION_TIP, { style: 'Wrap', mergeAcross: 3 })
-    )
+        xmlCell(PROGRESSION_TIP, { style: 'Wrap', mergeAcross: 3 }),
+    ),
   )
   rows.push(
     xmlRow(
       xmlCell('Descarga (Deload)', { style: 'Label' }) +
-        xmlCell(DELOAD_TIP, { style: 'Wrap', mergeAcross: 3 })
-    )
+        xmlCell(DELOAD_TIP, { style: 'Wrap', mergeAcross: 3 }),
+    ),
   )
 
   return `<?xml version="1.0" encoding="UTF-8"?>

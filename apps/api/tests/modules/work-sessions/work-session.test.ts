@@ -305,13 +305,11 @@ describe('WorkSession API', () => {
       })
       const { id } = created.body.data
 
-      const res = await authedReq(accessToken)
-        .patch(`/api/work-sessions/${id}`)
-        .send({
-          state: 'on_break',
-          pausedDurationSec: 0,
-          lastClientSeenAt: new Date().toISOString(),
-        })
+      const res = await authedReq(accessToken).patch(`/api/work-sessions/${id}`).send({
+        state: 'on_break',
+        pausedDurationSec: 0,
+        lastClientSeenAt: new Date().toISOString(),
+      })
       expect(res.status).toBe(400)
       expect(res.body.error.code).toBe('INVALID_STATE')
     })
@@ -328,12 +326,10 @@ describe('WorkSession API', () => {
       })
       const { id } = created.body.data
 
-      const res = await authedReq(accessToken)
-        .patch(`/api/work-sessions/${id}`)
-        .send({
-          state: 'pending_feedback',
-          lastClientSeenAt: new Date().toISOString(),
-        })
+      const res = await authedReq(accessToken).patch(`/api/work-sessions/${id}`).send({
+        state: 'pending_feedback',
+        lastClientSeenAt: new Date().toISOString(),
+      })
       expect(res.status).toBe(400)
       expect(res.body.error.code).toBe('INVALID_STATE')
     })

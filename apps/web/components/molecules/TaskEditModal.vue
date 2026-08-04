@@ -380,9 +380,7 @@
     editingTask.value.tags = parseTags(tagsInput.value)
     editingTask.value.hasNotes = !!editingTask.value.notes?.trim()
     editingTask.value.description = editingTask.value.notes
-    editingTask.value.dueDate = dueDateLocal.value
-      ? new Date(dueDateLocal.value)
-      : null
+    editingTask.value.dueDate = dueDateLocal.value ? new Date(dueDateLocal.value) : null
     editingTask.value.lastEdited = new Date()
 
     emit('save', editingTask.value)

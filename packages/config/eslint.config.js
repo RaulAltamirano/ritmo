@@ -1,8 +1,8 @@
-import js from '@eslint/js'
-import typescript from '@typescript-eslint/eslint-plugin'
-import typescriptParser from '@typescript-eslint/parser'
-import vue from 'eslint-plugin-vue'
-import prettier from 'eslint-config-prettier'
+import js from '@eslint/js';
+import typescript from '@typescript-eslint/eslint-plugin';
+import typescriptParser from '@typescript-eslint/parser';
+import vue from 'eslint-plugin-vue';
+import prettier from 'eslint-config-prettier';
 
 export default [
   // Configuración base para archivos JS/TS
@@ -66,7 +66,7 @@ export default [
       '@typescript-eslint/no-namespace': ['error', { allowDeclarations: true }],
     },
   },
-  
+
   // Vue flat config (includes parser setup)
   ...vue.configs['flat/recommended'],
 
@@ -87,7 +87,7 @@ export default [
       'vue/require-explicit-emits': 'error',
     },
   },
-  
+
   // Configuración global
   {
     rules: {
@@ -99,10 +99,10 @@ export default [
       'prefer-template': 'error',
     },
   },
-  
+
   // Configuración de Prettier (debe ir al final)
   prettier,
-  
+
   // Ignorar archivos
   {
     ignores: [
@@ -115,4 +115,4 @@ export default [
       'pnpm-lock.yaml',
     ],
   },
-]
+];

@@ -43,8 +43,7 @@ export async function switchRemoteWorkSession(
   input: SwitchRemoteInput,
 ): Promise<SwitchRemoteResult> {
   const policy = input.durationPolicy ?? 'remaining'
-  const usedFullPreset =
-    policy === 'full_preset' || input.timeLeftSec < 60
+  const usedFullPreset = policy === 'full_preset' || input.timeLeftSec < 60
   const targetDurationSec = usedFullPreset
     ? Math.max(60, input.mode.minutes * 60)
     : Math.floor(input.timeLeftSec)

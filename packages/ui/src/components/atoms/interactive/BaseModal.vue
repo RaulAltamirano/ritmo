@@ -302,11 +302,7 @@
 
 <template>
   <Teleport to="body">
-    <Transition
-      name="modal"
-      appear
-      :duration="{ enter: 360, leave: 240 }"
-    >
+    <Transition name="modal" appear :duration="{ enter: 360, leave: 240 }">
       <div
         v-if="isOpen"
         ref="containerRef"
@@ -337,46 +333,46 @@
             class="relative flex w-full flex-col"
             :class="[modalClasses]"
           >
-          <!-- Header -->
-          <header
-            v-if="$slots.header || title"
-            class="flex shrink-0 items-center justify-between gap-3 p-4 sm:p-6"
-            :class="[headerClasses]"
-          >
-            <slot name="header" :title-id="titleId">
-              <h2 :id="titleId" :class="titleClasses">
-                {{ title }}
-              </h2>
-            </slot>
-
-            <button
-              v-if="showCloseButton"
-              type="button"
-              :aria-label="closeButtonLabel"
-              :class="closeButtonClasses"
-              @click="handleClose"
+            <!-- Header -->
+            <header
+              v-if="$slots.header || title"
+              class="flex shrink-0 items-center justify-between gap-3 p-4 sm:p-6"
+              :class="[headerClasses]"
             >
-              <X
-                class="h-5 w-5 text-gray-400 transition-colors duration-200 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                aria-hidden="true"
-              />
-            </button>
-          </header>
+              <slot name="header" :title-id="titleId">
+                <h2 :id="titleId" :class="titleClasses">
+                  {{ title }}
+                </h2>
+              </slot>
 
-          <!-- Content -->
-          <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
-            <slot />
+              <button
+                v-if="showCloseButton"
+                type="button"
+                :aria-label="closeButtonLabel"
+                :class="closeButtonClasses"
+                @click="handleClose"
+              >
+                <X
+                  class="h-5 w-5 text-gray-400 transition-colors duration-200 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                  aria-hidden="true"
+                />
+              </button>
+            </header>
+
+            <!-- Content -->
+            <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+              <slot />
+            </div>
+
+            <!-- Footer -->
+            <footer
+              v-if="$slots.footer"
+              class="flex shrink-0 flex-wrap items-center justify-end gap-3 p-4 sm:p-6"
+              :class="[footerClasses]"
+            >
+              <slot name="footer" />
+            </footer>
           </div>
-
-          <!-- Footer -->
-          <footer
-            v-if="$slots.footer"
-            class="flex shrink-0 flex-wrap items-center justify-end gap-3 p-4 sm:p-6"
-            :class="[footerClasses]"
-          >
-            <slot name="footer" />
-          </footer>
-        </div>
         </div>
       </div>
     </Transition>

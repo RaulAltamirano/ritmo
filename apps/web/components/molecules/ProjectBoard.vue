@@ -172,7 +172,7 @@
 <script setup lang="ts">
   import { Search } from 'lucide-vue-next'
   import { computed, defineEmits, ref } from 'vue'
-  import BaseInput from '@/components/atoms/BaseInput.vue'
+  import BaseInput from '@ritmo/ui/components/atoms/forms/BaseInput.vue'
   import TaskCard from './TaskCard.vue'
   import TaskFilters from './TaskFilters.vue'
 

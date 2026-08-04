@@ -74,6 +74,11 @@
       "env": ["NODE_ENV"],
       "cache": true
     },
+    "format:check": {
+      "outputs": [],
+      "env": ["NODE_ENV"],
+      "cache": true
+    },
     "type-check": {
       "dependsOn": ["^build"],
       "outputs": [],

@@ -48,6 +48,13 @@ const COLOR_CYCLE = [
   'bg-sky-500',
 ]
 
+/** Minutos de estimación por defecto al crear una quick-task (Pomodoro 25/5). */
+export function getDefaultEstimateMinutes(): number {
+  const pomodoro =
+    DEFAULT_TIMER_PRESETS.find(p => p.presetKey === '25_5') ?? DEFAULT_TIMER_PRESETS[0]
+  return pomodoro?.minutes ?? 25
+}
+
 /** Forma alineada a `UserPreferences.timerPresets` (spec §5.4). */
 export interface TimerPresetWire {
   key: string

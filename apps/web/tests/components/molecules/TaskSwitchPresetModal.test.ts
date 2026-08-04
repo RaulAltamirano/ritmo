@@ -20,7 +20,8 @@ const stubs = {
   BaseButton: {
     props: ['disabled'],
     emits: ['click'],
-    template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+    template:
+      '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
   },
 }
 
@@ -58,7 +59,9 @@ describe('TaskSwitchPresetModal', () => {
     const wrapper = mountModal()
 
     expect(wrapper.text()).toContain('Quedan 50:00 en «A»')
-    expect(wrapper.text()).toContain('El tiempo restante no cabe en el bloque de esta tarea.')
+    expect(wrapper.text()).toContain(
+      'El tiempo restante no cabe en el bloque de esta tarea.',
+    )
     expect(button(wrapper, 'Continuar restante')).toBeUndefined()
     expect(button(wrapper, 'Arrancar 25 min')).toBeTruthy()
   })

@@ -25,6 +25,7 @@
     "test:coverage": "turbo test -- --coverage",
     "lint": "turbo lint",
     "format": "turbo format",
+    "format:check": "turbo run format:check --filter=!ritmo-frontend",
     "type-check": "turbo run type-check --filter=!ritmo-frontend --filter=!@ritmo/web",
     "type-check:web": "turbo run type-check --filter=@ritmo/web",
     "clean": "turbo clean",

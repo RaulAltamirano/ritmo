@@ -19,8 +19,7 @@ vi.mock('@/config/environment', () => ({
 vi.mock('@/composables/timer/timerPresets', () => ({
   mapModeLabelToTimerMode: (name: string) =>
     name === 'Pomodoro' ? 'pomodoro' : 'pomodoro',
-  mapPresetKeyToTimerMode: (key: string) =>
-    key === '25_5' ? 'pomodoro' : 'custom',
+  mapPresetKeyToTimerMode: (key: string) => (key === '25_5' ? 'pomodoro' : 'custom'),
 }))
 
 vi.mock('@/stores/auth', () => ({
@@ -75,7 +74,10 @@ describe('tryStartRemoteWorkSession', () => {
       { minutes: 25, name: 'Pomodoro' },
     )
     expect(timerStore.bindRemoteWorkSession).toHaveBeenCalledWith('ws-99')
-    const createCall = fetchMock.mock.calls[1] as [string, { body: Record<string, unknown> }]
+    const createCall = fetchMock.mock.calls[1] as [
+      string,
+      { body: Record<string, unknown> },
+    ]
     expect(createCall[1].body).toMatchObject({ breakDurationSec: 0 })
   })
 
@@ -93,7 +95,10 @@ describe('tryStartRemoteWorkSession', () => {
       { id: 'task-1', name: 'T' },
       { minutes: 25, name: 'Pomodoro', breakSec: 300, presetKey: '25_5' },
     )
-    const createCall = fetchMock.mock.calls[1] as [string, { body: Record<string, unknown> }]
+    const createCall = fetchMock.mock.calls[1] as [
+      string,
+      { body: Record<string, unknown> },
+    ]
     expect(createCall[1].body).toMatchObject({
       targetDurationSec: 1500,
       breakDurationSec: 300,

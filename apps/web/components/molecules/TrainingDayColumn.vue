@@ -55,18 +55,16 @@
   const headingId = computed(() => `training-day-${props.column.key}`)
 
   const weekdayLabel = computed(() =>
-    new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(props.column.date)
+    new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(props.column.date),
   )
 
   const dateLabel = computed(() =>
     new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(
-      props.column.date
-    )
+      props.column.date,
+    ),
   )
 
-  const titleLabel = computed(
-    () => props.column.trainingDay?.name ?? 'Rest'
-  )
+  const titleLabel = computed(() => props.column.trainingDay?.name ?? 'Rest')
 
   const focus = computed(() => props.column.trainingDay?.focus ?? null)
 

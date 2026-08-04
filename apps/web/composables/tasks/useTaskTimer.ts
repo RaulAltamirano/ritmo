@@ -43,8 +43,7 @@ export function useTaskTimer() {
       breakSec: mode.breakSec,
     }
 
-    const switching =
-      !!timerStore.activeTask && timerStore.activeTask.id !== task.id
+    const switching = !!timerStore.activeTask && timerStore.activeTask.id !== task.id
 
     if (switching && timerStore.remoteWorkSessionId) {
       const active = timerStore.activeTask!

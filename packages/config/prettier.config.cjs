@@ -8,15 +8,15 @@ module.exports = {
   useTabs: false,
   printWidth: 80,
   endOfLine: 'lf',
-  
+
   // Configuración específica para Vue
   vueIndentScriptAndStyle: false,
-  
+
   // Configuración específica para TypeScript
   arrowParens: 'avoid',
   bracketSpacing: true,
   bracketSameLine: false,
-  
+
   // Configuración específica para JSON
   overrides: [
     {
@@ -44,4 +44,4 @@ module.exports = {
       },
     },
   ],
-}
+};

@@ -15,6 +15,7 @@ export interface FrontendTask {
   type?: string // 'work' | 'study' | 'exercise' | etc.
   tags: string[]
   category?: string
+  planId?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -32,6 +33,7 @@ export interface CreateTaskPayload {
   type?: string
   tags?: string[]
   estimatedDuration?: number
+  planId?: string | null
 }
 
 export interface UpdateTaskPayload {

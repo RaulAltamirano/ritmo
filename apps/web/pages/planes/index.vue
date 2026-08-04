@@ -1,8 +1,8 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <PageHeader
-      title="Mis planes"
-      subtitle="Define rutas de estudio, preparación de exámenes, hábitos o metas de bienestar. Cada plan agrupa tus tareas con un mismo objetivo."
+      title="My plans"
+      subtitle="Define study paths, exam prep, habits, or wellness goals. Each plan groups tasks around one objective."
       actions
     >
       <template #actions>
@@ -12,7 +12,7 @@
           @click="showFilters = !showFilters"
         >
           <Filter :size="16" />
-          <span>Filtros</span>
+          <span>Filters</span>
         </BaseButton>
 
         <BaseButton
@@ -21,7 +21,7 @@
           @click="openNewProjectModal"
         >
           <Plus :size="16" />
-          <span>Nuevo plan</span>
+          <span>New plan</span>
         </BaseButton>
       </template>
     </PageHeader>
@@ -35,12 +35,12 @@
             <h2
               class="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-white"
             >
-              ¿Qué quieres conseguir?
+              What do you want to achieve?
             </h2>
             <p class="mt-2 text-base leading-relaxed text-gray-600 dark:text-gray-300">
-              Un plan puede ser aprender inglés o gramática, preparar un examen, dejar
-              un mal hábito o cuidar tu salud. Elige una idea para rellenar la búsqueda
-              o crea un plan desde cero.
+              A plan can be learning a language, preparing for an exam, building a
+              habit, or taking care of your health. Pick an idea to fill the search, or
+              create a plan from scratch.
             </p>
           </div>
           <div class="flex flex-wrap gap-2 lg:justify-end">
@@ -59,8 +59,8 @@
         <div class="mt-6 max-w-xl">
           <BaseInput
             v-model="searchQuery"
-            label="Buscar en tus planes"
-            placeholder="Ej.: inglés, oposición, hábitos, peso…"
+            label="Search your plans"
+            placeholder="e.g. English, exam, habits, fitness…"
             :left-icon="Search"
             clearable
             autocomplete="off"
@@ -75,8 +75,21 @@
         class="flex flex-col items-center justify-center py-16 gap-4"
       >
         <BaseSpinner size="lg" color="primary" />
-        <p class="text-base text-gray-600 dark:text-gray-400">Cargando tus planes…</p>
+        <p class="text-base text-gray-600 dark:text-gray-400">Loading your plans…</p>
       </div>
+
+      <BaseCard
+        v-else-if="loadError"
+        variant="simple"
+        size="md"
+        class="mb-6"
+        :hoverable="false"
+      >
+        <p class="text-base text-red-600 dark:text-red-400">{{ loadError }}</p>
+        <BaseButton variant="outline" class="mt-4" @click="loadPlans">
+          Retry
+        </BaseButton>
+      </BaseCard>
 
       <div v-else>
         <BaseCard
@@ -91,36 +104,35 @@
               <label
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 for="planes-filter-status"
-                >Estado</label
+                >Status</label
               >
               <select
                 id="planes-filter-status"
                 v-model="statusFilter"
                 class="px-3 py-2 min-w-[12rem] border border-outline-strong rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-surface text-gray-900 dark:text-white"
               >
-                <option value="">Todos los estados</option>
-                <option value="activo">Activo</option>
-                <option value="en_progreso">En progreso</option>
-                <option value="planificado">Planificado</option>
-                <option value="pausado">Pausado</option>
-                <option value="completado">Completado</option>
+                <option value="">All statuses</option>
+                <option value="activo">Active</option>
+                <option value="planificado">Planned</option>
+                <option value="pausado">Paused</option>
+                <option value="completado">Completed</option>
               </select>
             </div>
             <div>
               <label
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 for="planes-filter-sort"
-                >Ordenar por</label
+                >Sort by</label
               >
               <select
                 id="planes-filter-sort"
                 v-model="sortBy"
                 class="px-3 py-2 min-w-[12rem] border border-outline-strong rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-surface text-gray-900 dark:text-white"
               >
-                <option value="createdAt">Fecha de creación</option>
-                <option value="name">Nombre</option>
-                <option value="progress">Avance</option>
-                <option value="pendingTasks">Tareas pendientes</option>
+                <option value="createdAt">Created date</option>
+                <option value="name">Name</option>
+                <option value="progress">Progress</option>
+                <option value="pendingTasks">Pending tasks</option>
               </select>
             </div>
           </div>
@@ -149,7 +161,7 @@
               @click="openNewProjectModal"
             >
               <Plus :size="16" />
-              <span>Crear mi primer plan</span>
+              <span>Create my first plan</span>
             </BaseButton>
           </EmptyState>
         </BaseCard>
@@ -157,6 +169,8 @@
         <ProjectModal
           v-model="showProjectModal"
           :project="editingProject"
+          :saving="isSaving"
+          :error-message="saveError"
           @save="handleSaveProject"
         />
       </div>
@@ -176,15 +190,14 @@
   import ProjectCard from '~/components/molecules/ProjectCard.vue'
   import ProjectModal from '~/components/molecules/ProjectModal.vue'
   import { useProjectsStore } from '@/stores/projects'
-  import type { Project } from '@/types/project'
+  import type { Project, ProjectFormData } from '@/types/project'
 
   useHead({
-    title: 'Mis planes',
+    title: 'My plans',
     meta: [
       {
         name: 'description',
-        content:
-          'Planes de estudio, preparación de exámenes, hábitos y metas personales en un solo lugar.',
+        content: 'Study plans, exam prep, habits, and personal goals in one place.',
       },
     ],
   })
@@ -194,10 +207,10 @@
   })
 
   const inspirationChips = [
-    { label: 'Idiomas', query: 'inglés' },
-    { label: 'Examen / oposición', query: 'examen' },
-    { label: 'Hábitos', query: 'hábito' },
-    { label: 'Salud y bienestar', query: 'salud' },
+    { label: 'Languages', query: 'english' },
+    { label: 'Exam prep', query: 'exam' },
+    { label: 'Habits', query: 'habit' },
+    { label: 'Health & wellness', query: 'health' },
   ] as const
 
   const projectsStore = useProjectsStore()
@@ -208,11 +221,19 @@
   const statusFilter = ref('')
   const sortBy = ref('createdAt')
   const searchQuery = ref('')
-  const isLoading = ref(true)
+  const isLoading = computed(() => projectsStore.loading && !showProjectModal.value)
+  const loadError = computed(() =>
+    showProjectModal.value ? null : projectsStore.error,
+  )
+  const isSaving = ref(false)
+  const saveError = ref<string | null>(null)
+
+  async function loadPlans() {
+    await projectsStore.fetchPlans()
+  }
 
   onMounted(() => {
-    projectsStore.initializeData()
-    isLoading.value = false
+    void loadPlans()
   })
 
   function applyInspiration(query: string) {
@@ -253,31 +274,52 @@
   })
 
   const emptyTitle = computed(() => {
-    if (statusFilter.value) return 'No hay planes con ese estado'
-    if (searchQuery.value.trim()) return 'Nada coincide con tu búsqueda'
-    return 'Aún no tienes planes'
+    if (statusFilter.value) return 'No plans with that status'
+    if (searchQuery.value.trim()) return 'Nothing matches your search'
+    return 'You do not have any plans yet'
   })
 
   const emptyDescription = computed(() => {
     if (statusFilter.value) {
-      return 'Prueba otro estado o crea un plan nuevo para seguir avanzando.'
+      return 'Try another status, or create a new plan to keep moving.'
     }
     if (searchQuery.value.trim()) {
-      return 'Ajusta las palabras o quita el filtro de búsqueda para ver todos tus planes.'
+      return 'Adjust your words or clear the search filter to see all your plans.'
     }
-    return 'Crea un plan para un idioma, un examen, un hábito o una meta personal y organiza las tareas alrededor de ese objetivo.'
+    return 'Create a plan for a language, an exam, a habit, or a personal goal, and organize tasks around that objective.'
   })
 
   const openNewProjectModal = () => {
     editingProject.value = null
+    saveError.value = null
     showProjectModal.value = true
   }
 
-  const handleSaveProject = (project: Project) => {
+  const handleSaveProject = async (form: ProjectFormData) => {
+    saveError.value = null
     if (editingProject.value) {
-      projectsStore.updateProject(project)
-    } else {
-      projectsStore.addProject(project)
+      projectsStore.updateProject({
+        ...editingProject.value,
+        name: form.name,
+        description: form.description,
+        status: form.status,
+        color: form.color,
+        updatedAt: new Date(),
+      })
+      showProjectModal.value = false
+      return
+    }
+
+    isSaving.value = true
+    try {
+      const result = await projectsStore.createPlan(form)
+      if (result.success) {
+        showProjectModal.value = false
+      } else {
+        saveError.value = result.error
+      }
+    } finally {
+      isSaving.value = false
     }
   }
 </script>

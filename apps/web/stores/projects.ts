@@ -1,158 +1,162 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Project } from '@/types/project'
-import type { Task } from '@/types/task'
+import { useHttpClient } from '@/composables/shared/useHttpClient'
+import { API_ENDPOINTS } from '@/constants/api'
+import type { FrontendPlan, Project, CreatePlanPayload } from '@/types/project'
+import { frontendPlanToProject, projectFormToCreatePayload } from '@/types/project'
+import type { ProjectFormData } from '@/types/project'
+import type { FrontendTask, Task } from '@/types/task'
+import { frontendTaskToUiTask } from '@/types/task'
 
-// Función para generar IDs únicos
+type ActionResult<T = undefined> =
+  | { success: true; data?: T; error?: never }
+  | { success: false; data?: never; error: string }
+
 const generateId = (prefix = 'item') => {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
 
-// Función para validar y normalizar IDs
 const normalizeProjectId = (id: string): string => {
-  // Si el ID es un número simple, convertirlo al formato estándar
-  if (/^\d+$/.test(id)) {
-    return `project_${id}`
+  if (/^\d+$/.test(id)) return `project_${id}`
+  if (id.startsWith('project_')) return id
+  return id
+}
+
+/** Map API task statuses onto ProjectBoard column keys. */
+function apiStatusToBoardStatus(status: string): string {
+  switch (status) {
+    case 'in_progress':
+    case 'review':
+      return 'en_progreso'
+    case 'completed':
+      return 'completado'
+    case 'todo':
+    case 'cancelled':
+    case 'archived':
+    default:
+      return 'pendiente'
   }
-  // Si ya tiene el formato correcto, devolverlo tal como está
-  if (id.startsWith('project_')) {
-    return id
+}
+
+function apiTaskToBoardTask(t: FrontendTask): Task {
+  const ui = frontendTaskToUiTask(t)
+  return {
+    ...ui,
+    projectId: t.planId ?? undefined,
+    status: apiStatusToBoardStatus(t.status),
   }
-  // Si no tiene formato, agregar el prefijo
-  return `project_${id}`
 }
 
 export const useProjectsStore = defineStore('projects', () => {
-  // Estado
+  const http = useHttpClient()
+
   const projects = ref<Project[]>([])
   const tasks = ref<Task[]>([])
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
-  // Inicializar datos solo en el cliente para evitar problemas de hidratación
-  const initializeData = () => {
-    if (process.client && projects.value.length === 0) {
-      projects.value = [
-        {
-          id: 'project_1',
-          name: 'Inglés B2',
-          description: 'Gramática, vocabulario y speaking para certificación.',
-          status: 'activo',
-          progress: 75,
-          pendingTasks: 3,
-          totalTasks: 12,
-          createdAt: new Date('2024-01-15'),
-          updatedAt: new Date('2024-01-20'),
-          color: 'blue',
-          icon: 'Compass',
-        },
-        {
-          id: 'project_2',
-          name: 'Oposición administración',
-          description: 'Temario, test y esquemas con calendario de repasos.',
-          status: 'en_progreso',
-          progress: 45,
-          pendingTasks: 8,
-          totalTasks: 15,
-          createdAt: new Date('2024-01-10'),
-          updatedAt: new Date('2024-01-18'),
-          color: 'purple',
-          icon: 'Compass',
-        },
-        {
-          id: 'project_3',
-          name: 'Hábitos y salud',
-          description: 'Sueño, movimiento diario y comida consciente.',
-          status: 'planificado',
-          progress: 0,
-          pendingTasks: 12,
-          totalTasks: 12,
-          createdAt: new Date('2024-01-05'),
-          updatedAt: new Date('2024-01-05'),
-          color: 'green',
-          icon: 'Compass',
-        },
-      ]
-
-      tasks.value = [
-        {
-          id: 'task_1',
-          name: 'Design user interface',
-          description: 'Crear mockups y wireframes para la aplicación',
-          status: 'completado',
-          priority: 'alta',
-          progress: 100,
-          completed: true,
-          createdAt: new Date('2024-01-15'),
-          projectId: 'project_1',
-        },
-        {
-          id: 'task_2',
-          name: 'Configurar base de datos',
-          description: 'Instalar y configurar PostgreSQL',
-          status: 'en_progreso',
-          priority: 'alta',
-          progress: 60,
-          completed: false,
-          createdAt: new Date('2024-01-16'),
-          projectId: 'project_1',
-        },
-        {
-          id: 'task_3',
-          name: 'Implementar autenticación',
-          description: 'User login and registration system',
-          status: 'pendiente',
-          priority: 'media',
-          progress: 0,
-          completed: false,
-          createdAt: new Date('2024-01-17'),
-          projectId: 'project_1',
-        },
-        {
-          id: 'task_4',
-          name: 'Crear API endpoints',
-          description: 'Desarrollar endpoints REST para el backend',
-          status: 'pendiente',
-          priority: 'alta',
-          progress: 0,
-          completed: false,
-          createdAt: new Date('2024-01-18'),
-          projectId: 'project_1',
-        },
-        {
-          id: 'task_5',
-          name: 'Diseñar UI móvil',
-          description: 'Crear diseños para la aplicación móvil',
-          status: 'en_progreso',
-          priority: 'media',
-          progress: 30,
-          completed: false,
-          createdAt: new Date('2024-01-12'),
-          projectId: 'project_2',
-        },
-        {
-          id: 'task_6',
-          name: 'Configurar entorno de desarrollo',
-          description: 'Preparar el entorno para el desarrollo del backend',
-          status: 'pendiente',
-          priority: 'baja',
-          progress: 0,
-          completed: false,
-          createdAt: new Date('2024-01-06'),
-          projectId: 'project_3',
-        },
-      ]
+  const fetchPlans = async (): Promise<ActionResult> => {
+    if (loading.value) return { success: false, error: 'Fetch already in progress' }
+    loading.value = true
+    error.value = null
+    try {
+      const response = await http.get<FrontendPlan[]>(API_ENDPOINTS.PLANS.LIST)
+      if (response.success && Array.isArray(response.data)) {
+        projects.value = response.data.map(frontendPlanToProject)
+        return { success: true }
+      }
+      throw new Error('Failed to fetch plans')
+    } catch (err: unknown) {
+      const e = err as { userMessage?: string; message?: string }
+      const msg = e?.userMessage ?? e?.message ?? 'Could not load plans'
+      error.value = msg
+      return { success: false, error: msg }
+    } finally {
+      loading.value = false
     }
   }
 
-  // Getters
+  const createPlan = async (form: ProjectFormData): Promise<ActionResult<Project>> => {
+    const name = form.name.trim()
+    if (!name) return { success: false, error: 'Name is required' }
+    if (name.length > 255) {
+      return { success: false, error: 'Name must be at most 255 characters' }
+    }
+
+    loading.value = true
+    error.value = null
+    try {
+      const payload: CreatePlanPayload = projectFormToCreatePayload(form)
+      const response = await http.post<FrontendPlan>(
+        API_ENDPOINTS.PLANS.CREATE,
+        payload,
+      )
+      if (response.success && response.data) {
+        const project = frontendPlanToProject(response.data)
+        projects.value.unshift(project)
+        return { success: true, data: project }
+      }
+      throw new Error('Failed to create plan')
+    } catch (err: unknown) {
+      const e = err as { userMessage?: string; message?: string }
+      const msg = e?.userMessage ?? e?.message ?? 'Could not create plan'
+      error.value = msg
+      return { success: false, error: msg }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchPlan = async (planId: string): Promise<ActionResult<Project>> => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await http.get<FrontendPlan>(API_ENDPOINTS.PLANS.BY_ID(planId))
+      if (response.success && response.data) {
+        const project = frontendPlanToProject(response.data)
+        const idx = projects.value.findIndex(p => p.id === project.id)
+        if (idx === -1) projects.value.unshift(project)
+        else projects.value[idx] = project
+        return { success: true, data: project }
+      }
+      throw new Error('Failed to fetch plan')
+    } catch (err: unknown) {
+      const e = err as { userMessage?: string; message?: string }
+      const msg = e?.userMessage ?? e?.message ?? 'Could not load plan'
+      error.value = msg
+      return { success: false, error: msg }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchPlanTasks = async (planId: string): Promise<ActionResult> => {
+    try {
+      const response = await http.get<FrontendTask[]>(API_ENDPOINTS.PLANS.TASKS(planId))
+      if (response.success && Array.isArray(response.data)) {
+        const mapped = response.data.map(apiTaskToBoardTask)
+        tasks.value = [...tasks.value.filter(t => t.projectId !== planId), ...mapped]
+        return { success: true }
+      }
+      throw new Error('Failed to fetch plan tasks')
+    } catch (err: unknown) {
+      const e = err as { userMessage?: string; message?: string }
+      const msg = e?.userMessage ?? e?.message ?? 'Could not load plan tasks'
+      error.value = msg
+      return { success: false, error: msg }
+    }
+  }
+
+  /** @deprecated Prefer fetchPlans — mock seed removed. */
+  const initializeData = () => {
+    void fetchPlans()
+  }
+
   const getProjectById = (id: string) => {
-    // Normalizar el ID para buscar
     const normalizedId = normalizeProjectId(id)
-
-    const project = projects.value.find(
-      (project: Project) => project.id === normalizedId,
+    return projects.value.find(
+      (project: Project) => project.id === normalizedId || project.id === id,
     )
-
-    return project
   }
 
   const getTasksByProjectId = (projectId: string) => {
@@ -177,11 +181,9 @@ export const useProjectsStore = defineStore('projects', () => {
     }
   }
 
-  // Actions
   const addProject = (project: Project) => {
-    // Asegurar que el proyecto tenga un ID único
-    if (!project.id || project.id.startsWith('project_')) {
-      project.id = generateId('project')
+    if (!project.id) {
+      project.id = generateId('plan')
     }
     projects.value.unshift(project)
   }
@@ -195,12 +197,10 @@ export const useProjectsStore = defineStore('projects', () => {
 
   const deleteProject = (projectId: string) => {
     projects.value = projects.value.filter((p: Project) => p.id !== projectId)
-    // También eliminar las tareas asociadas
     tasks.value = tasks.value.filter((t: Task) => t.projectId !== projectId)
   }
 
   const addTask = (task: Task) => {
-    // Asegurar que la tarea tenga un ID único
     if (!task.id || task.id.startsWith('task_')) {
       task.id = generateId('task')
     }
@@ -224,7 +224,8 @@ export const useProjectsStore = defineStore('projects', () => {
     }
   }
 
-  const updateProjectStats = (projectId: string) => {
+  const updateProjectStats = (projectId: string | undefined) => {
+    if (!projectId) return
     const stats = getProjectStats(projectId)
     const project = projects.value.find((p: Project) => p.id === projectId)
     if (project) {
@@ -236,16 +237,13 @@ export const useProjectsStore = defineStore('projects', () => {
   }
 
   return {
-    // State
     projects,
     tasks,
-
-    // Getters
+    loading,
+    error,
     getProjectById,
     getTasksByProjectId,
     getProjectStats,
-
-    // Actions
     addProject,
     updateProject,
     deleteProject,
@@ -253,6 +251,10 @@ export const useProjectsStore = defineStore('projects', () => {
     updateTask,
     deleteTask,
     updateProjectStats,
+    fetchPlans,
+    fetchPlan,
+    fetchPlanTasks,
+    createPlan,
     initializeData,
     generateId,
     normalizeProjectId,

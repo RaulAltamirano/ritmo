@@ -50,9 +50,7 @@
 
   function itemButtonClass(item: BottomNavItem): string {
     if (item.isPrincipal) {
-      return isItemActive(item)
-        ? 'text-white'
-        : 'text-white/90 hover:text-white'
+      return isItemActive(item) ? 'text-white' : 'text-white/90 hover:text-white'
     }
     return isItemActive(item)
       ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/35 dark:text-primary-300'
@@ -83,9 +81,7 @@
           ]"
           :aria-label="item.label"
           :aria-current="isItemActive(item) && !item.isMore ? 'page' : undefined"
-          :aria-expanded="
-            item.isMore ? (moreExpanded ? 'true' : 'false') : undefined
-          "
+          :aria-expanded="item.isMore ? (moreExpanded ? 'true' : 'false') : undefined"
           :aria-controls="item.isMore ? moreControlsId : undefined"
           @click="onItemClick(item)"
         >
@@ -93,7 +89,9 @@
             v-if="item.isPrincipal"
             class="flex h-12 w-12 items-center justify-center rounded-full bg-primary-600 shadow-[0_8px_20px_-6px_rgb(13_148_136/0.65)] ring-4 ring-canvas transition-transform duration-200 ease-out dark:bg-primary-500 dark:shadow-[0_8px_22px_-6px_rgb(45_212_191/0.45)]"
             :class="
-              isItemActive(item) ? 'scale-105 ring-primary-100/80 dark:ring-primary-900/50' : ''
+              isItemActive(item)
+                ? 'scale-105 ring-primary-100/80 dark:ring-primary-900/50'
+                : ''
             "
           >
             <ClientIcon :icon="item.icon" :size="22" />

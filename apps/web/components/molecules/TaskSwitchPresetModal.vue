@@ -10,8 +10,9 @@
   >
     <div v-if="prompt" class="space-y-4">
       <p class="text-sm text-content-secondary">
-        Quedan {{ formatRemaining(prompt.remainingSec) }} en «{{ prompt.fromTaskName }}».
-        El preset de «{{ prompt.toTask.name }}» es {{ prompt.mode.minutes }} min.
+        Quedan {{ formatRemaining(prompt.remainingSec) }} en «{{
+          prompt.fromTaskName
+        }}». El preset de «{{ prompt.toTask.name }}» es {{ prompt.mode.minutes }} min.
       </p>
       <p v-if="!prompt.canContinueRemaining" class="text-sm text-content-secondary">
         El tiempo restante no cabe en el bloque de esta tarea.
@@ -20,7 +21,9 @@
 
     <template #footer>
       <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
-        <BaseButton variant="ghost" :disabled="busy" @click="cancel"> Cancelar </BaseButton>
+        <BaseButton variant="ghost" :disabled="busy" @click="cancel">
+          Cancelar
+        </BaseButton>
         <BaseButton
           v-if="prompt?.canContinueRemaining"
           variant="secondary"

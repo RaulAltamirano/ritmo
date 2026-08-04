@@ -10,11 +10,7 @@
       @more-toggle="toggleMore"
     />
 
-    <BaseBottomSheet
-      v-model:open="showMore"
-      :id="MORE_SHEET_ID"
-      title="More"
-    >
+    <BaseBottomSheet v-model:open="showMore" :id="MORE_SHEET_ID" title="More">
       <div class="flex flex-col gap-1">
         <NuxtLink
           v-for="item in MORE_NAV_ITEMS"
@@ -44,10 +40,7 @@
       </div>
     </BaseBottomSheet>
 
-    <div
-      class="h-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
-      aria-hidden="true"
-    />
+    <div class="h-[calc(4.75rem+env(safe-area-inset-bottom,0px))]" aria-hidden="true" />
   </div>
 </template>
 

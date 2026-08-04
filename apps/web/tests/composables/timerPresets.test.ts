@@ -2,10 +2,17 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_TIMER_PRESETS,
   FREE_ESTIMATE_DURATION_VALUE,
+  getDefaultEstimateMinutes,
   getEstimateDurationChoices,
   getEstimateDurationLabel,
   mapModeLabelToTimerMode,
 } from '@/composables/timer/timerPresets'
+
+describe('getDefaultEstimateMinutes', () => {
+  it('returns the canonical Pomodoro work minutes', () => {
+    expect(getDefaultEstimateMinutes()).toBe(25)
+  })
+})
 
 describe('mapModeLabelToTimerMode', () => {
   it('maps the Pomodoro 25/5 preset to pomodoro', () => {

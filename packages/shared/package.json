@@ -20,7 +20,8 @@
     "clean": "rm -rf dist",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext .js,.ts --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write . --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check . --ignore-path ../../.prettierignore"
   },
   "dependencies": {
     "crypto-js": "^4.2.0",

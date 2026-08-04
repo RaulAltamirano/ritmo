@@ -3,8 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import BaseModal from './BaseModal.vue'
 
-const dialogEl = () =>
-  document.body.querySelector<HTMLElement>('[role="dialog"].modal')
+const dialogEl = () => document.body.querySelector<HTMLElement>('[role="dialog"].modal')
 
 describe('BaseModal', () => {
   afterEach(() => {
@@ -264,9 +263,7 @@ describe('BaseModal', () => {
     await flushPromises()
     await nextTick()
 
-    const closeBtn = dialogEl()?.querySelector(
-      'button[aria-label="Cerrar ventana"]',
-    )
+    const closeBtn = dialogEl()?.querySelector('button[aria-label="Cerrar ventana"]')
     expect(closeBtn).toBeTruthy()
     wrapper.unmount()
   })

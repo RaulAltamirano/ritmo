@@ -89,10 +89,7 @@
 </script>
 
 <template>
-  <div
-    v-if="open"
-    class="fixed inset-0 z-[10000] flex flex-col justify-end"
-  >
+  <div v-if="open" class="fixed inset-0 z-[10000] flex flex-col justify-end">
     <div
       data-testid="bottom-sheet-backdrop"
       class="absolute inset-0 bg-secondary-950/40 transition-opacity duration-200 ease-out motion-reduce:transition-none dark:bg-black/55"

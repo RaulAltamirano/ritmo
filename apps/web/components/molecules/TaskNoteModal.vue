@@ -9,7 +9,10 @@
   >
     <template #header="{ titleId }">
       <div class="min-w-0">
-        <h2 :id="titleId" class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <h2
+          :id="titleId"
+          class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+        >
           Notas de la tarea
         </h2>
         <p class="mt-1 text-sm text-content-secondary">{{ taskTitle }}</p>

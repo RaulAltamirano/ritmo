@@ -37,11 +37,13 @@ describe('FloatingTimer', () => {
     patchWorkSessionMock.mockResolvedValue({ data: {} })
   })
 
-  function prepareStore(opts: {
-    phase?: 'focus' | 'break'
-    remoteId?: string | null
-    timeLeft?: number
-  } = {}) {
+  function prepareStore(
+    opts: {
+      phase?: 'focus' | 'break'
+      remoteId?: string | null
+      timeLeft?: number
+    } = {},
+  ) {
     const pinia = createPinia()
     setActivePinia(pinia)
     const store = useTimerStore()
@@ -116,7 +118,11 @@ describe('FloatingTimer', () => {
   })
 
   it('calls skipBreak when skip control is clicked', async () => {
-    const { pinia } = prepareStore({ phase: 'break', remoteId: 'ws_123', timeLeft: 180 })
+    const { pinia } = prepareStore({
+      phase: 'break',
+      remoteId: 'ws_123',
+      timeLeft: 180,
+    })
     const wrapper = mountTimer(pinia)
     await flushPromises()
 

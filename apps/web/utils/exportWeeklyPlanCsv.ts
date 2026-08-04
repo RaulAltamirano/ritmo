@@ -41,8 +41,8 @@ export function buildWeeklyPlanCsv(plan: WeeklyPlan, weekStart: Date): string {
     lines.push(
       toCsvLine(
         ['Bloque', 'Ejercicio', 'Series y Repeticiones', 'RIR Objetivo', 'RPE'],
-        separator
-      )
+        separator,
+      ),
     )
 
     for (const exercise of day.exercises) {
@@ -55,8 +55,8 @@ export function buildWeeklyPlanCsv(plan: WeeklyPlan, weekStart: Date): string {
             exercise.targetRir,
             exercise.rpe,
           ],
-          separator
-        )
+          separator,
+        ),
       )
     }
     lines.push('')

@@ -7,7 +7,8 @@ html.is-switching-theme,
 html.is-switching-theme *,
 html.is-switching-theme *::before,
 html.is-switching-theme *::after {
-  transition-property: color, background-color, border-color, fill, stroke, box-shadow !important;
+  transition-property:
+    color, background-color, border-color, fill, stroke, box-shadow !important;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
   transition-duration: 200ms !important;
 }

@@ -103,9 +103,7 @@ describe('applyRemoteTaskSwitch', () => {
   it('does not attribute the switch prompt pause to the new task', async () => {
     const promptOpenedAt = new Date('2026-01-01T00:10:00Z')
     timerState.activeTask!.pausedAt = promptOpenedAt
-    vi.spyOn(Date, 'now').mockReturnValue(
-      new Date('2026-01-01T00:12:00Z').getTime(),
-    )
+    vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-01-01T00:12:00Z').getTime())
     resumeTimerMock.mockImplementation(() => {
       const activeTask = timerState.activeTask
       if (!activeTask?.pausedAt) return

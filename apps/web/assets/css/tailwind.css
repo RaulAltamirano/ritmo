@@ -14,32 +14,32 @@
 
   :root {
     /* Surfaces */
-    --color-canvas:          #F7F6F3;
-    --color-surface:         #FDFCFA;
-    --color-surface-raised:  #F0EEEA;
-    --color-surface-overlay: #E8E6E2;
+    --color-canvas: #f7f6f3;
+    --color-surface: #fdfcfa;
+    --color-surface-raised: #f0eeea;
+    --color-surface-overlay: #e8e6e2;
 
     /* Text */
-    --color-text-primary:   theme('colors.gray.900');
+    --color-text-primary: theme('colors.gray.900');
     --color-text-secondary: theme('colors.gray.600');
-    --color-text-muted:     theme('colors.gray.400');
-    --color-text-disabled:  theme('colors.gray.300');
+    --color-text-muted: theme('colors.gray.400');
+    --color-text-disabled: theme('colors.gray.300');
 
     /* Borders */
-    --color-border:        #E2E0DC;
-    --color-border-strong: #CCCAC6;
+    --color-border: #e2e0dc;
+    --color-border-strong: #cccac6;
 
     /* Brand — primary interactive color */
-    --color-brand:        theme('colors.primary.500');
+    --color-brand: theme('colors.primary.500');
     --color-brand-subtle: theme('colors.primary.50');
-    --color-brand-text:   theme('colors.primary.700');
+    --color-brand-text: theme('colors.primary.700');
 
     /* Status */
-    --color-error:          theme('colors.error.500');
-    --color-error-subtle:   theme('colors.error.50');
-    --color-success:        theme('colors.success.500');
+    --color-error: theme('colors.error.500');
+    --color-error-subtle: theme('colors.error.50');
+    --color-success: theme('colors.success.500');
     --color-success-subtle: theme('colors.success.50');
-    --color-warning:        theme('colors.warning.500');
+    --color-warning: theme('colors.warning.500');
     --color-warning-subtle: theme('colors.warning.50');
 
     /* Shadows — lighter in light mode */
@@ -53,32 +53,32 @@
 
   .dark {
     /* Surfaces — warm dark scale */
-    --color-canvas:          #141418;
-    --color-surface:         #1E1E24;
-    --color-surface-raised:  #252530;
-    --color-surface-overlay: #2A2A32;
+    --color-canvas: #141418;
+    --color-surface: #1e1e24;
+    --color-surface-raised: #252530;
+    --color-surface-overlay: #2a2a32;
 
     /* Text — lighter tonal variants, never pure white */
-    --color-text-primary:   theme('colors.gray.50');
+    --color-text-primary: theme('colors.gray.50');
     --color-text-secondary: theme('colors.gray.400');
-    --color-text-muted:     theme('colors.gray.500');
-    --color-text-disabled:  theme('colors.gray.600');
+    --color-text-muted: theme('colors.gray.500');
+    --color-text-disabled: theme('colors.gray.600');
 
     /* Borders */
-    --color-border:        #2A2A32;
+    --color-border: #2a2a32;
     --color-border-strong: #363642;
 
     /* Brand — lighter tonal variant so it stays accessible on dark surfaces */
-    --color-brand:        theme('colors.primary.400');
+    --color-brand: theme('colors.primary.400');
     --color-brand-subtle: theme('colors.primary.950');
-    --color-brand-text:   theme('colors.primary.300');
+    --color-brand-text: theme('colors.primary.300');
 
     /* Status — lighter variants for dark surfaces */
-    --color-error:          theme('colors.error.400');
-    --color-error-subtle:   theme('colors.error.950');
-    --color-success:        theme('colors.success.400');
+    --color-error: theme('colors.error.400');
+    --color-error-subtle: theme('colors.error.950');
+    --color-success: theme('colors.success.400');
     --color-success-subtle: theme('colors.success.950');
-    --color-warning:        theme('colors.warning.400');
+    --color-warning: theme('colors.warning.400');
     --color-warning-subtle: theme('colors.warning.950');
 
     /* Shadows — deeper opacity so elevation reads clearly on dark surfaces */

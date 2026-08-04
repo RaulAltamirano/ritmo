@@ -1,4 +1,9 @@
-import type { TrainingDay, WeekColumn, WeekdayIndex, WeeklyPlan } from '~/types/training'
+import type {
+  TrainingDay,
+  WeekColumn,
+  WeekdayIndex,
+  WeeklyPlan,
+} from '~/types/training'
 
 /** Sunday-start week, local timezone (calendar date only). */
 export function startOfWeekSunday(date: Date): Date {

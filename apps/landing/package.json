@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint . --fix",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
+    "format": "prettier --write . --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check . --ignore-path ../../.prettierignore",
     "type-check": "vue-tsc --noEmit",
     "clean": "rm -rf dist"
   },

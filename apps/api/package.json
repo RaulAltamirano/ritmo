@@ -27,7 +27,8 @@
     "test:db:reset": "tsx scripts/test-db-reset.ts",
     "test:db:studio": "tsx scripts/test-db-studio.ts",
     "lint": "eslint . --fix",
-    "format": "prettier --write .",
+    "format": "prettier --write . --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check . --ignore-path ../../.prettierignore",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

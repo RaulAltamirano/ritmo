@@ -406,7 +406,8 @@
   })
 
   const pauseBtnClasses = computed(() => {
-    if (isBreak.value) return 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
+    if (isBreak.value)
+      return 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
     if (isCritical.value) return 'text-error-500 hover:bg-error-500/10'
     if (isWarning.value) return 'text-warning-500 hover:bg-warning-500/10'
     return 'text-primary-600 dark:text-primary-400 hover:bg-primary-500/10'

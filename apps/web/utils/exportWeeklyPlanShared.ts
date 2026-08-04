@@ -45,7 +45,7 @@ export function escapeCsvCell(value: string, separator: string): string {
 }
 
 export function toCsvLine(cells: string[], separator: string): string {
-  return cells.map((cell) => escapeCsvCell(cell, separator)).join(separator)
+  return cells.map(cell => escapeCsvCell(cell, separator)).join(separator)
 }
 
 export function escapeXml(value: string): string {

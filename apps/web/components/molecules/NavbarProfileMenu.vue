@@ -7,9 +7,7 @@
       :aria-expanded="open ? 'true' : 'false'"
       @click="emit('toggle')"
     >
-      <div
-        class="relative size-8 shrink-0 overflow-hidden rounded-full"
-      >
+      <div class="relative size-8 shrink-0 overflow-hidden rounded-full">
         <img
           v-if="ready"
           :src="avatar"
@@ -104,12 +102,8 @@
           <button
             type="button"
             class="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-            :class="
-              floatingTimer ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
-            "
-            :aria-label="
-              floatingTimer ? 'Hide floating timer' : 'Show floating timer'
-            "
+            :class="floatingTimer ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'"
+            :aria-label="floatingTimer ? 'Hide floating timer' : 'Show floating timer'"
             @click="emit('toggle-timer')"
           >
             <span

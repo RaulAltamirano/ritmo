@@ -24,9 +24,9 @@ describe('areSameTimerPreset', () => {
   })
 
   it('falls back to minutes when either key missing', () => {
-    expect(areSameTimerPreset({ minutes: 90 }, { minutes: 90, presetKey: '90_20' })).toBe(
-      true,
-    )
+    expect(
+      areSameTimerPreset({ minutes: 90 }, { minutes: 90, presetKey: '90_20' }),
+    ).toBe(true)
     expect(areSameTimerPreset({ minutes: 90 }, { minutes: 25 })).toBe(false)
   })
 })

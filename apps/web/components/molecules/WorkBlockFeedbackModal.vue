@@ -109,10 +109,7 @@
           placeholder="Breve reflexión sobre el bloque…"
           aria-describedby="reflection-notes-count"
         />
-        <span
-          id="reflection-notes-count"
-          class="block text-xs text-content-secondary"
-        >
+        <span id="reflection-notes-count" class="block text-xs text-content-secondary">
           {{ form.notes.length }}/500
         </span>
       </label>

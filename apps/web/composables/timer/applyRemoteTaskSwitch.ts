@@ -79,10 +79,7 @@ export async function applyRemoteTaskSwitch(
       return
     }
     if (msg === 'CHECKIN_REQUIRED') return
-    if (
-      msg === 'WORK_SESSION_CONFLICT' ||
-      msg === 'WORK_SESSION_CONFLICT_UNRESOLVED'
-    ) {
+    if (msg === 'WORK_SESSION_CONFLICT' || msg === 'WORK_SESSION_CONFLICT_UNRESOLVED') {
       timerStore.clearRemoteWorkSession()
       startLocalTask()
       if (msg === 'WORK_SESSION_CONFLICT_UNRESOLVED') {

@@ -7,18 +7,19 @@ export type WeeklyExportFormat = 'csv' | 'excel'
 
 export function weeklyExportFilename(
   weekStart: Date,
-  format: WeeklyExportFormat
+  format: WeeklyExportFormat,
+  slug = 'semana',
 ): string {
   const stamp = dateIso(weekStart)
-  return format === 'excel'
-    ? `ritmo-semana-${stamp}.xls`
-    : `ritmo-semana-${stamp}.csv`
+  const ext = format === 'excel' ? 'xls' : 'csv'
+  return `ritmo-${slug}-${stamp}.${ext}`
 }
 
 export function downloadWeeklyPlanExport(
   plan: WeeklyPlan,
   weekStart: Date,
-  format: WeeklyExportFormat
+  format: WeeklyExportFormat,
+  slug = 'semana',
 ): void {
   const isExcel = format === 'excel'
   const content = isExcel
@@ -32,7 +33,7 @@ export function downloadWeeklyPlanExport(
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = weeklyExportFilename(weekStart, format)
+  link.download = weeklyExportFilename(weekStart, format, slug)
   link.rel = 'noopener'
   document.body.appendChild(link)
   link.click()

@@ -40,13 +40,14 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/tasks/${id}`,
   },
 
-  // Project management endpoints
-  PROJECTS: {
-    LIST: '/projects',
-    CREATE: '/projects',
-    UPDATE: (id: string) => `/projects/${id}`,
-    DELETE: (id: string) => `/projects/${id}`,
-    MEMBERS: (id: string) => `/projects/${id}/members`,
+  // Plan management endpoints (goal containers; UI route /planes)
+  PLANS: {
+    LIST: '/plans',
+    CREATE: '/plans',
+    BY_ID: (id: string) => `/plans/${id}`,
+    UPDATE: (id: string) => `/plans/${id}`,
+    DELETE: (id: string) => `/plans/${id}`,
+    TASKS: (id: string) => `/plans/${id}/tasks`,
   },
 } as const
 

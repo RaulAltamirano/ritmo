@@ -12,9 +12,7 @@ export function effectivePausedSec(
   nowMs: number,
 ): number {
   const open =
-    pausedAt != null
-      ? Math.max(0, Math.floor((nowMs - pausedAt.getTime()) / 1000))
-      : 0
+    pausedAt != null ? Math.max(0, Math.floor((nowMs - pausedAt.getTime()) / 1000)) : 0
   return accumulatedSec + open
 }
 
@@ -30,10 +28,7 @@ export function focusRemainingSec(input: {
     input.pausedAt,
     input.nowMs,
   )
-  const worked = Math.max(
-    0,
-    Math.floor((input.nowMs - input.startMs) / 1000) - paused,
-  )
+  const worked = Math.max(0, Math.floor((input.nowMs - input.startMs) / 1000) - paused)
   return Math.max(0, input.targetDurationSec - worked)
 }
 

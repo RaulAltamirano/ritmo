@@ -95,7 +95,5 @@
     'mark-read': [id: number]
   }>()
 
-  const unreadCount = computed(
-    () => props.notifications.filter(n => n.unread).length,
-  )
+  const unreadCount = computed(() => props.notifications.filter(n => n.unread).length)
 </script>

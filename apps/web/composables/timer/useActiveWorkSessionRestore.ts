@@ -76,9 +76,7 @@ export function parseActivePayload(raw: unknown): ActiveWorkSessionApi | null {
       typeof o.breakDurationSec === 'number' ? o.breakDurationSec : null,
     breakStartedAt,
     breakPausedDurationSec:
-      typeof o.breakPausedDurationSec === 'number'
-        ? o.breakPausedDurationSec
-        : 0,
+      typeof o.breakPausedDurationSec === 'number' ? o.breakPausedDurationSec : 0,
     timerMode: typeof o.timerMode === 'string' ? o.timerMode : null,
     presetKey: typeof o.presetKey === 'string' ? o.presetKey : undefined,
     task: { id: task.id, title: task.title },

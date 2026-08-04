@@ -87,8 +87,7 @@
   const timerStore = useTimerStore()
 
   const hasActiveRemoteSession = (task: Task) =>
-    Boolean(timerStore.remoteWorkSessionId) &&
-    timerStore.activeTask?.id === task.id
+    Boolean(timerStore.remoteWorkSessionId) && timerStore.activeTask?.id === task.id
 
   const handleRequestComplete = (task: Task) => {
     emit('request-complete', task)

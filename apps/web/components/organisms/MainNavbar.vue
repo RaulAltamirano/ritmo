@@ -21,7 +21,9 @@
         class="transition-opacity duration-200 hover:opacity-80"
         aria-label="Go to Dashboard"
       >
-        <h1 class="text-[15px] font-semibold tracking-tight text-secondary-900 dark:text-secondary-50">
+        <h1
+          class="text-[15px] font-semibold tracking-tight text-secondary-900 dark:text-secondary-50"
+        >
           Ritmo
         </h1>
       </NuxtLink>

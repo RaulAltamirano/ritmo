@@ -22,9 +22,7 @@ describe('IconSelect', () => {
 
     const trigger = wrapper.get('#task-edit-priority')
     expect(trigger.text()).toContain('Alta')
-    expect(wrapper.find('[data-testid="icon-select-trigger-icon"]').exists()).toBe(
-      true,
-    )
+    expect(wrapper.find('[data-testid="icon-select-trigger-icon"]').exists()).toBe(true)
   })
 
   it('opens a list with icons and emits the chosen value', async () => {
@@ -39,9 +37,7 @@ describe('IconSelect', () => {
     await wrapper.get('#task-edit-priority').trigger('click')
     expect(wrapper.find('[role="listbox"]').exists()).toBe(true)
     expect(wrapper.findAll('[role="option"]')).toHaveLength(3)
-    expect(wrapper.findAll('[data-testid="icon-select-option-icon"]')).toHaveLength(
-      3,
-    )
+    expect(wrapper.findAll('[data-testid="icon-select-option-icon"]')).toHaveLength(3)
 
     await wrapper.get('[data-testid="icon-select-option-MEDIUM"]').trigger('click')
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['MEDIUM'])

@@ -12,13 +12,13 @@
         <div class="flex items-center justify-between">
           <div>
             <h5 class="text-xl font-semibold text-gray-900 dark:text-white">
-              {{ isEditing ? 'Editar plan' : 'Nuevo plan' }}
+              {{ isEditing ? 'Edit plan' : 'New plan' }}
             </h5>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {{
                 isEditing
-                  ? 'Ajusta nombre, estado o color de este plan.'
-                  : 'Un plan agrupa tareas hacia un mismo objetivo: estudio, examen, hábito o meta personal.'
+                  ? 'Update the name, status, or color of this plan.'
+                  : 'A plan groups tasks toward one goal: study, exam, habit, or personal target.'
               }}
             </p>
           </div>
@@ -32,62 +32,61 @@
       </div>
 
       <form @submit.prevent="handleSubmit" class="p-6 space-y-6">
-        <!-- Nombre del plan -->
+        <!-- Plan name -->
         <div>
           <label
             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
-            Nombre del plan *
+            Plan name *
           </label>
           <input
             v-model="formData.name"
             type="text"
             required
-            placeholder="Ej.: Inglés B2, Oposición 2026, Bajar de peso…"
+            placeholder="e.g. English B2, Exam 2026, Get fit…"
             class="w-full px-4 py-3 border border-outline-strong rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-surface text-gray-900 dark:text-white"
           />
         </div>
 
-        <!-- Descripción -->
+        <!-- Description -->
         <div>
           <label
             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
-            Descripción
+            Description
           </label>
           <textarea
             v-model="formData.description"
             rows="3"
-            placeholder="Qué quieres lograr y en qué plazo (opcional)…"
+            placeholder="What you want to achieve and by when (optional)…"
             class="w-full px-4 py-3 border border-outline-strong rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-surface text-gray-900 dark:text-white resize-none"
           ></textarea>
         </div>
 
-        <!-- Estado -->
+        <!-- Status -->
         <div>
           <label
             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
-            Estado
+            Status
           </label>
           <select
             v-model="formData.status"
             class="w-full px-4 py-3 border border-outline-strong rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-surface text-gray-900 dark:text-white"
           >
-            <option value="planificado">Planificado</option>
-            <option value="en_progreso">En Progreso</option>
-            <option value="activo">Activo</option>
-            <option value="pausado">Pausado</option>
-            <option value="completado">Completado</option>
+            <option value="planificado">Planned</option>
+            <option value="activo">Active</option>
+            <option value="pausado">Paused</option>
+            <option value="completado">Completed</option>
           </select>
         </div>
 
-        <!-- Color del proyecto -->
+        <!-- Plan color -->
         <div>
           <label
             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
-            Color del plan
+            Plan color
           </label>
           <div class="grid grid-cols-6 gap-2">
             <button
@@ -113,20 +112,32 @@
         </div>
       </form>
 
-      <div class="p-6 border-t border-outline flex space-x-3">
-        <button
-          @click="$emit('update:modelValue', false)"
-          class="flex-1 py-3 bg-surface-overlay hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-all duration-200"
+      <div class="p-6 border-t border-outline space-y-3">
+        <p
+          v-if="errorMessage"
+          class="text-sm text-red-600 dark:text-red-400"
+          role="alert"
         >
-          Cancelar
-        </button>
-        <button
-          @click="handleSubmit"
-          :disabled="!formData.name.trim()"
-          class="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200"
-        >
-          {{ isEditing ? 'Actualizar' : 'Crear plan' }}
-        </button>
+          {{ errorMessage }}
+        </p>
+        <div class="flex space-x-3">
+          <button
+            type="button"
+            :disabled="saving"
+            @click="$emit('update:modelValue', false)"
+            class="flex-1 py-3 bg-surface-overlay hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-all duration-200 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="handleSubmit"
+            :disabled="!formData.name.trim() || saving"
+            class="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200"
+          >
+            {{ saving ? 'Saving…' : isEditing ? 'Update' : 'Create plan' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -135,13 +146,24 @@
 <script setup lang="ts">
   import { ref, computed, watch } from 'vue'
   import { X, Check } from 'lucide-vue-next'
-  import type { ProjectModalProps, Project, ProjectFormData } from '@/types/project'
+  import type { ProjectModalProps, ProjectFormData } from '@/types/project'
 
-  const props = defineProps<ProjectModalProps>()
+  const props = withDefaults(
+    defineProps<
+      ProjectModalProps & {
+        saving?: boolean
+        errorMessage?: string | null
+      }
+    >(),
+    {
+      saving: false,
+      errorMessage: null,
+    },
+  )
 
   const emit = defineEmits<{
     'update:modelValue': [value: boolean]
-    save: [project: Project]
+    save: [form: ProjectFormData]
   }>()
 
   const formData = ref<ProjectFormData>({
@@ -168,7 +190,6 @@
     { value: 'rose', class: 'bg-gradient-to-br from-rose-500 to-rose-600' },
   ]
 
-  // Watch for changes in project and update formData
   watch(
     () => props.project,
     newProject => {
@@ -176,11 +197,10 @@
         formData.value = {
           name: newProject.name,
           description: newProject.description,
-          status: newProject.status,
+          status: newProject.status === 'en_progreso' ? 'activo' : newProject.status,
           color: newProject.color,
         }
       } else {
-        // Reset form for new project
         formData.value = {
           name: '',
           description: '',
@@ -192,7 +212,6 @@
     { immediate: true },
   )
 
-  // Watch for modal opening to reset form
   watch(
     () => props.modelValue,
     isOpen => {
@@ -208,23 +227,12 @@
   )
 
   const handleSubmit = () => {
-    if (!formData.value.name.trim()) return
-
-    const projectData: Project = {
-      id: props.project?.id ?? '',
+    if (!formData.value.name.trim() || props.saving) return
+    emit('save', {
       name: formData.value.name.trim(),
       description: formData.value.description.trim(),
       status: formData.value.status,
-      progress: props.project?.progress ?? 0,
-      pendingTasks: props.project?.pendingTasks ?? 0,
-      totalTasks: props.project?.totalTasks ?? 0,
-      createdAt: props.project?.createdAt || new Date(),
-      updatedAt: new Date(),
       color: formData.value.color,
-      icon: 'FolderOpen',
-    }
-
-    emit('save', projectData)
-    emit('update:modelValue', false)
+    })
   }
 </script>

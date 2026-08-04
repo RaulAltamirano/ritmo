@@ -36,11 +36,7 @@
 <script setup lang="ts">
   import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
   import { computed } from 'vue'
-  import {
-    addDays,
-    formatWeekLabel,
-    startOfWeekSunday,
-  } from '~/utils/trainingWeek'
+  import { addDays, formatWeekLabel, startOfWeekSunday } from '~/utils/trainingWeek'
 
   const weekStart = defineModel<Date>({ required: true })
 

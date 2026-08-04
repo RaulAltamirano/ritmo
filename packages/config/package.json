@@ -24,7 +24,8 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint . --fix",
-    "format": "prettier --write .",
+    "format": "prettier --write . --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check . --ignore-path ../../.prettierignore",
     "type-check": "tsc --noEmit",
     "validate": "tsx src/validation.ts"
   },

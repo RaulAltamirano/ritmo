@@ -30,8 +30,8 @@
     <div
       class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-3"
     >
-      <span>{{ project.progress }}% de avance</span>
-      <span>{{ project.pendingTasks }} tareas pendientes</span>
+      <span>{{ project.progress }}% progress</span>
+      <span>{{ project.pendingTasks }} pending tasks</span>
     </div>
 
     <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
@@ -45,14 +45,14 @@
     <div
       class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500"
     >
-      <span>Creado {{ formatDate(project.createdAt) }}</span>
+      <span>Created {{ formatDate(project.createdAt) }}</span>
       <div class="flex items-center space-x-1">
         <ArrowRight
           :size="12"
           class="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         />
         <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          >Abrir plan</span
+          >Open plan</span
         >
       </div>
     </div>
@@ -105,11 +105,11 @@
   }
 
   const statusLabels: Record<string, string> = {
-    activo: 'Activo',
-    en_progreso: 'En Progreso',
-    planificado: 'Planificado',
-    pausado: 'Pausado',
-    completado: 'Completado',
+    activo: 'Active',
+    en_progreso: 'In progress',
+    planificado: 'Planned',
+    pausado: 'Paused',
+    completado: 'Completed',
   }
 
   const formatDate = (date: Date) => {
@@ -117,20 +117,15 @@
     const diffTime = Math.abs(now.getTime() - date.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffDays === 1) return 'hoy'
-    if (diffDays < 7) return `hace ${diffDays} días`
-    if (diffDays < 30) return `hace ${Math.floor(diffDays / 7)} semanas`
-    return `hace ${Math.floor(diffDays / 30)} meses`
+    if (diffDays === 1) return 'today'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    return `${Math.floor(diffDays / 30)} months ago`
   }
 
   const handleProjectClick = async () => {
     try {
-      const url = `/planes/${props.project.id}`
-
-      // Usar navegación directa del navegador
-      if (process.client) {
-        window.location.href = url
-      }
+      await navigateTo(`/planes/${props.project.id}`)
     } catch (error) {
       console.error('ProjectCard: Error al navegar:', error)
     }
