@@ -7,7 +7,7 @@
     "dev:web": "turbo dev --filter=@ritmo/web",
     "dev:api": "turbo dev --filter=@ritmo/api",
     "dev:landing": "turbo dev --filter=@ritmo/landing",
-    "build": "turbo build",
+    "build": "turbo build --filter=!ritmo-frontend",
     "build:web": "turbo build --filter=@ritmo/web",
     "build:api": "turbo build --filter=@ritmo/api",
     "start": "nuxt start",
