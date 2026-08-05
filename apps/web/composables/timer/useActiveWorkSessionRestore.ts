@@ -1,4 +1,4 @@
-import { getActiveWorkSession, listWorkSessions } from '@/services/workSessionsApi'
+import { getActiveWorkSession, listWorkSessions, patchWorkSession } from '@/services/workSessionsApi'
 import { useAuthStore } from '@/stores/auth'
 import { useSessionGateStore } from '@/stores/sessionGate'
 import { useTimerStore } from '@/stores/timer'
@@ -170,6 +170,17 @@ async function doRestore(): Promise<void> {
         (row.state === 'pending_feedback' || !!timer.remoteWorkSessionId)
 
       if (needsFeedbackModal) {
+        if (row.state === 'on_break') {
+          try {
+            await patchWorkSession(row.id, {
+              lastClientSeenAt: new Date().toISOString(),
+              state: 'pending_feedback',
+              pausedDurationSec: row.pausedDurationSec,
+            })
+          } catch {
+            /* open reflection anyway; user can retry/abandon from modal */
+          }
+        }
         gate.openFeedback(row.id)
       }
       return

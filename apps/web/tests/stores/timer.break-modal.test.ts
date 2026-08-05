@@ -123,4 +123,38 @@ describe('timer store — break modal flag', () => {
     expect(store.phase).toBe('break')
     expect(store.breakModalOpen).toBe(true)
   })
+
+  it('hydrate expired on_break does not open break modal', async () => {
+    const { useTimerStore } = await import('@/stores/timer')
+    const store = useTimerStore()
+    store.hydrateFromActiveRemoteSession({
+      id: 'ws_expired',
+      state: 'on_break',
+      startTime: new Date(Date.now() - 40 * 60_000).toISOString(),
+      targetDurationSec: 1500,
+      pausedDurationSec: 0,
+      breakDurationSec: 300,
+      breakStartedAt: new Date(Date.now() - 10 * 60_000).toISOString(),
+      breakPausedDurationSec: 0,
+      task: { id: 't1', title: 'Task' },
+      timerMode: 'pomodoro',
+      presetKey: '25_5',
+    })
+    expect(store.breakModalOpen).toBe(false)
+    expect(store.isRunning).toBe(false)
+  })
+
+  it('finishBreak restores running state when pending_feedback PATCH fails', async () => {
+    const { useTimerStore } = await import('@/stores/timer')
+    const store = useTimerStore()
+    seedFocusThenBreak(store)
+    store.remoteWorkSessionId = 'ws_fail'
+    store.dismissBreakModal()
+    store.openBreakModal()
+    patchWorkSessionMock.mockRejectedValueOnce({ statusCode: 500 })
+    await expect(store.finishBreak()).rejects.toThrow('WORK_SESSION_FINISH_BREAK_FAILED')
+    expect(store.isRunning).toBe(true)
+    expect(store.breakModalOpen).toBe(true)
+    expect(store.breakFinishInFlight).toBe(false)
+  })
 })

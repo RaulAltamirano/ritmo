@@ -39,4 +39,16 @@ describe('TaskCard break state', () => {
       'rgb(14, 165, 233)',
     )
   })
+
+  it('shows Descanso countdown when paused on break', () => {
+    const wrapper = mount(TaskCard, {
+      props: {
+        task: baseTask({ isRunning: false, isOnBreak: true, timeRemaining: 120 }),
+      },
+    })
+
+    expect(wrapper.text()).toContain('Descanso')
+    expect(wrapper.text()).toMatch(/02:00/)
+    expect(wrapper.classes().join(' ')).toMatch(/emerald/)
+  })
 })

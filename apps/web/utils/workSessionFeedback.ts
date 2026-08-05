@@ -8,6 +8,7 @@ export function needsWorkSessionFeedback(args: {
 }): boolean {
   return (
     args.state === 'pending_feedback' ||
-    (args.state === 'running' && args.timeLeftSec <= 0)
+    (args.state === 'running' && args.timeLeftSec <= 0) ||
+    (args.state === 'on_break' && args.timeLeftSec <= 0)
   )
 }

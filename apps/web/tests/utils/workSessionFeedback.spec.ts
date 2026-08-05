@@ -16,4 +16,14 @@ describe('needsWorkSessionFeedback', () => {
   it('is false for paused', () => {
     expect(needsWorkSessionFeedback({ state: 'paused', timeLeftSec: 0 })).toBe(false)
   })
+  it('is true for on_break with no time left', () => {
+    expect(needsWorkSessionFeedback({ state: 'on_break', timeLeftSec: 0 })).toBe(
+      true,
+    )
+  })
+  it('is false for on_break with time left', () => {
+    expect(
+      needsWorkSessionFeedback({ state: 'on_break', timeLeftSec: 120 }),
+    ).toBe(false)
+  })
 })

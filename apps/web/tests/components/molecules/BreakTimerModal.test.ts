@@ -82,4 +82,22 @@ describe('BreakTimerModal', () => {
     await wrapper.get('[data-testid="break-modal-skip"]').trigger('click')
     expect(skipSpy).toHaveBeenCalled()
   })
+
+  it('Saltar ignores duplicate clicks while skip is in flight', async () => {
+    const store = prepareBreak()
+    let resolveSkip: () => void = () => {}
+    const skipSpy = vi.spyOn(store, 'skipBreak').mockImplementation(
+      () =>
+        new Promise<void>(resolve => {
+          resolveSkip = resolve
+        }),
+    )
+    const wrapper = mountModal()
+    const btn = wrapper.get('[data-testid="break-modal-skip"]')
+    await btn.trigger('click')
+    await btn.trigger('click')
+    expect(skipSpy).toHaveBeenCalledTimes(1)
+    resolveSkip()
+    await skipSpy.mock.results[0]?.value
+  })
 })

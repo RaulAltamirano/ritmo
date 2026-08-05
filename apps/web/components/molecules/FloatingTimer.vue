@@ -132,7 +132,9 @@
           <p v-if="remoteIdPreview" class="mt-0.5 text-xs text-gray-500 font-mono">
             Bloque: {{ remoteIdPreview }}
           </p>
-          <p class="mt-0.5 text-xs text-gray-400">Click para detalles</p>
+          <p class="mt-0.5 text-xs text-gray-400">
+            {{ isBreak ? 'Click para abrir el descanso' : 'Click para detalles' }}
+          </p>
         </div>
       </Transition>
 
@@ -459,7 +461,10 @@
     timerStore.resetTimer()
   }
   const handleSkipBreak = () => {
-    void timerStore.skipBreak()
+    if (timerStore.breakFinishInFlight) return
+    void timerStore.skipBreak().catch(() => {
+      /* store already notifies */
+    })
   }
   const handleClose = async () => {
     // After natural finish, reflection owns the remote session — do not abandon.

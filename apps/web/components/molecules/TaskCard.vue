@@ -3,7 +3,7 @@
     class="tcard"
     data-testid="task-card"
     :class="[
-      task.isRunning
+      task.isRunning || task.isOnBreak
         ? task.isOnBreak
           ? 'bg-emerald-50/70 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50'
           : 'bg-primary-50/70 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800/50'
@@ -81,7 +81,7 @@
       </button>
 
       <div
-        v-if="task.isRunning"
+        v-if="task.isRunning || task.isOnBreak"
         class="font-mono text-sm font-semibold tracking-wide flex-shrink-0"
         :class="
           task.isOnBreak

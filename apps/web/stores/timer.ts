@@ -113,6 +113,9 @@ export const useTimerStore = defineStore('timer', {
 
     /** Modal de descanso visible (UI); el descanso sigue en FloatingTimer al cerrar. */
     breakModalOpen: false,
+
+    /** Evita finishBreak/skipBreak concurrentes (modal + floating). */
+    breakFinishInFlight: false,
   }),
 
   getters: {
@@ -614,46 +617,60 @@ export const useTimerStore = defineStore('timer', {
      * sesión remota; en local cierra el bloque como completado.
      */
     async finishBreak() {
+      if (this.breakFinishInFlight) return
+      this.breakFinishInFlight = true
+      const prevModalOpen = this.breakModalOpen
+      const prevRunning = this.isRunning
+      const prevPaused = this.isPaused
       this.stopTimerInterval()
       this.breakModalOpen = false
       this.isRunning = false
-      if (this.remoteWorkSessionId) {
-        const sid = this.remoteWorkSessionId
-        try {
-          await patchWorkSession(sid, {
-            lastClientSeenAt: new Date().toISOString(),
-            state: 'pending_feedback',
-            pausedDurationSec: this.activeTask?.totalPausedTime ?? 0,
-          })
-        } catch (e: unknown) {
-          const { status } = parseFetchError(e)
-          if (status === 404 || status === 410 || status === 409) {
-            this.clearRemoteWorkSession()
-          }
-          this.showNotification(
-            'No se pudo finalizar el descanso',
-            'Reintenta o cierra el timer.',
-            'error',
-          )
-          throw new Error('WORK_SESSION_FINISH_BREAK_FAILED')
-        }
-        if (process.client) {
-          const cfg = loadConfig()
-          if (cfg.timer?.reflectionModalRequired === false) {
-            try {
-              await abandonWorkSession(sid)
-            } catch {
-              /* sin bloqueo UI */
+      try {
+        if (this.remoteWorkSessionId) {
+          const sid = this.remoteWorkSessionId
+          try {
+            await patchWorkSession(sid, {
+              lastClientSeenAt: new Date().toISOString(),
+              state: 'pending_feedback',
+              pausedDurationSec: this.activeTask?.totalPausedTime ?? 0,
+            })
+          } catch (e: unknown) {
+            const { status } = parseFetchError(e)
+            if (status === 404 || status === 410 || status === 409) {
+              this.clearRemoteWorkSession()
+            } else {
+              this.breakModalOpen = prevModalOpen
+              this.isRunning = prevRunning
+              this.isPaused = prevPaused
+              if (prevRunning && !prevPaused) this.startTimerInterval()
             }
-            this.closeTimer()
-            return
+            this.showNotification(
+              'No se pudo finalizar el descanso',
+              'Reintenta o cierra el timer.',
+              'error',
+            )
+            throw new Error('WORK_SESSION_FINISH_BREAK_FAILED')
           }
-          const { useSessionGateStore } = await import('@/stores/sessionGate')
-          useSessionGateStore().openFeedback(sid)
+          if (process.client) {
+            const cfg = loadConfig()
+            if (cfg.timer?.reflectionModalRequired === false) {
+              try {
+                await abandonWorkSession(sid)
+              } catch {
+                /* sin bloqueo UI */
+              }
+              this.closeTimer()
+              return
+            }
+            const { useSessionGateStore } = await import('@/stores/sessionGate')
+            useSessionGateStore().openFeedback(sid)
+          }
+          return
         }
-        return
+        this.completeTask()
+      } finally {
+        this.breakFinishInFlight = false
       }
-      this.completeTask()
     },
 
     /** Fin de cuenta atrás del foco: descanso o reflexión/cierre. */
