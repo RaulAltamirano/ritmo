@@ -87,16 +87,18 @@
 
   // Detectar preferencias de movimiento reducido
   onMounted(() => {
-    if (typeof globalThis.window !== 'undefined') {
-      motionMediaQuery = globalThis.window.matchMedia(
-        '(prefers-reduced-motion: reduce)',
-      )
-      prefersReducedMotion.value = motionMediaQuery.matches
+    if (typeof globalThis.window === 'undefined') return
 
-      motionMediaQuery.addEventListener('change', handleMotionPreferenceChange)
-      globalThis.window.addEventListener('keydown', handleModifierKeyDown)
-      globalThis.window.addEventListener('keyup', handleModifierKeyUp)
-    }
+    globalThis.window.addEventListener('keydown', handleModifierKeyDown)
+    globalThis.window.addEventListener('keyup', handleModifierKeyUp)
+
+    if (typeof globalThis.window.matchMedia !== 'function') return
+
+    motionMediaQuery = globalThis.window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    )
+    prefersReducedMotion.value = motionMediaQuery.matches
+    motionMediaQuery.addEventListener('change', handleMotionPreferenceChange)
   })
 
   onUnmounted(() => {
@@ -163,21 +165,7 @@
   const transitions = useAtomicTransitions('normal', 'out')
   const interactiveStates = useAtomicStates(state.value)
 
-  // Computed para aria-describedby dinámico
-  const describedBy = computed(() => {
-    const ids = []
-    if (props.ariaDescribedby) ids.push(props.ariaDescribedby)
-    if (props.loading) ids.push(`${buttonId.value}-loading`)
-    return ids.length > 0 ? ids.join(' ') : undefined
-  })
-
-  // Función para aria-describedby con i18n
-  const getDescribedBy = () => {
-    const ids = []
-    if (props.ariaDescribedby) ids.push(props.ariaDescribedby)
-    if (props.loading) ids.push(`${buttonId.value}-loading`)
-    return ids.length > 0 ? ids.join(' ') : undefined
-  }
+  const getDescribedBy = () => props.ariaDescribedby || undefined
 
   // Computed para icon aria-label
   const iconAriaLabel = computed(() => {
@@ -265,7 +253,7 @@
       sizeClasses[props.size] || sizeClasses.md,
       variantClasses[props.variant] || variantClasses.primary,
       props.fullWidth ? 'w-full' : '',
-      props.loading ? 'cursor-wait relative overflow-hidden' : '',
+      props.loading ? 'cursor-wait' : '',
       props.disabled ? 'cursor-not-allowed' : '',
       ...dynamicClasses,
     ]
@@ -365,37 +353,15 @@
     // Animaciones personalizadas si es necesario
   })
 
-  // Computed para el color del spinner basado en el botón
-  const getSpinnerColorForButton = ():
-    | 'primary'
-    | 'secondary'
-    | 'success'
-    | 'warning'
-    | 'error'
-    | 'info'
-    | 'neutral'
-    | 'white'
-    | 'auto' => {
-    // Para botones con fondo oscuro, usar colores claros con mejor contraste
-    if (
-      ['primary', 'secondary', 'success', 'warning', 'error', 'info'].includes(
-        props.variant,
-      )
-    ) {
-      return 'white' // Usar blanco sólido en lugar de 'auto' para mejor visibilidad
-    }
-
-    // Para botones ghost/outline, usar colores del tema
-    if (props.variant === 'ghost') {
-      return 'neutral'
-    }
-
-    if (props.variant === 'outline') {
-      return 'neutral'
-    }
-
-    // Fallback
-    return 'primary'
+  const getSpinnerSize = (): 'xs' | 'sm' | 'md' | 'lg' | 'xl' => {
+    const spinnerSizeMap = {
+      xs: 'xs',
+      sm: 'xs',
+      md: 'sm',
+      lg: 'sm',
+      xl: 'md',
+    } as const
+    return spinnerSizeMap[props.size] ?? 'sm'
   }
 
   // Validar props con manejo de errores mejorado
@@ -407,6 +373,7 @@
     'error',
     'ghost',
     'outline',
+    'minimal',
     'info',
   ]
   const validSizes = ['xs', 'sm', 'md', 'lg', 'xl']
@@ -470,7 +437,6 @@
     :aria-pressed="pressed"
     :aria-expanded="expanded"
     :aria-describedby="getDescribedBy()"
-    :aria-live="loading ? 'polite' : 'off'"
     :aria-controls="ariaControls"
     :aria-haspopup="ariaHasPopup"
     :tabindex="clickable ? '0' : undefined"
@@ -487,29 +453,18 @@
     @focus="handleButtonFocus"
     @blur="handleButtonBlur"
   >
-    <!-- Loading spinner with better accessibility -->
-    <div
-      v-if="loading"
-      :id="`${buttonId}-loading`"
-      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10"
-      :aria-hidden="true"
-    >
+    <span class="inline-flex items-center justify-center" :class="{ 'gap-2': loading && !iconOnly }">
       <BaseSpinner
-        size="sm"
+        v-if="loading"
+        :size="getSpinnerSize()"
         :variant="loadingVariant"
-        :color="getSpinnerColorForButton()"
+        color="current"
         data-testid="base-spinner"
+        aria-hidden="true"
       />
-    </div>
 
-    <!-- Content container with loading opacity -->
-    <div
-      class="flex items-center justify-center transition-opacity duration-200"
-      :class="[loading ? 'opacity-0' : 'opacity-100']"
-    >
-      <!-- Left icon with better accessibility -->
       <BaseIcon
-        v-if="icon && !iconRight && !iconOnly"
+        v-if="icon && !iconRight && !iconOnly && !loading"
         :icon="icon"
         :size="getIconSize()"
         color="current"
@@ -519,9 +474,8 @@
         data-testid="base-icon"
       />
 
-      <!-- Icon-only button (centered) -->
       <BaseIcon
-        v-if="icon && iconOnly"
+        v-if="icon && iconOnly && !loading"
         :icon="icon"
         :size="getIconSize()"
         color="current"
@@ -530,18 +484,16 @@
         data-testid="base-icon"
       />
 
-      <!-- Button content -->
       <span
-        :class="{ 'sr-only': icon && !$slots.default }"
+        :class="{ 'sr-only': (icon && !$slots.default) || (loading && iconOnly) }"
         :data-content="!!$slots.default"
         :id="`${buttonId}-content`"
       >
         <slot />
       </span>
 
-      <!-- Right icon -->
       <BaseIcon
-        v-if="icon && iconRight && !iconOnly"
+        v-if="icon && iconRight && !iconOnly && !loading"
         :icon="icon"
         :size="getIconSize()"
         color="current"
@@ -550,11 +502,10 @@
         role="img"
         data-testid="base-icon"
       />
-    </div>
+    </span>
 
-    <!-- Screen reader only loading text -->
-    <span v-if="loading" class="sr-only" aria-live="polite">
-      {{ t('button.loading') }}
+    <span v-if="loading && iconOnly" class="sr-only">
+      {{ loadingText || t('button.loading') }}
     </span>
   </button>
 </template>

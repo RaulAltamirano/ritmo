@@ -9,7 +9,7 @@ const meta: Meta<typeof BaseSpinner> = {
     docs: {
       description: {
         component:
-          'Componente de spinner versátil con múltiples variantes, tamaños y colores. Incluye spinner orbital elegante, animaciones fluidas y accesibilidad completa. Compatible con WCAG 2.1 AA.',
+          'Componente de spinner versátil con anillo circular (sin glow) y variante de puntos. Compatible con currentColor para botones y WCAG 2.1 AA.',
       },
     },
   },
@@ -34,6 +34,8 @@ const meta: Meta<typeof BaseSpinner> = {
         'error',
         'info',
         'neutral',
+        'white',
+        'current',
         'auto',
       ],
       description: 'Color del spinner',
@@ -92,8 +94,8 @@ export const Dots: Story = {
   },
 }
 
-// Spinner orbital mejorado
-export const OrbitalSpinner: Story = {
+// Spinner anillo (canonical inline loader)
+export const RingSpinner: Story = {
   render: args => ({
     components: { BaseSpinner },
     setup() {
@@ -108,7 +110,7 @@ export const OrbitalSpinner: Story = {
   },
 }
 
-export const OrbitalSpinnerColors: Story = {
+export const RingSpinnerColors: Story = {
   render: () => ({
     components: { BaseSpinner },
     template: `

@@ -210,7 +210,6 @@
         'hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-white/5':
           hoverable && variant !== 'glassmorphism',
         'cursor-pointer': clickable,
-        'animate-pulse': loading,
         'backdrop-blur-xl': variant === 'glassmorphism',
       },
     ]"

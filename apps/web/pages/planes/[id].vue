@@ -117,7 +117,7 @@
                 variant="primary"
                 type="submit"
                 class="flex-1"
-                :disabled="creating"
+                :loading="creating"
               >
                 {{ creating ? 'Creating…' : 'Create task' }}
               </BaseButton>

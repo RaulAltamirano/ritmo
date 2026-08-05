@@ -142,7 +142,7 @@ describe('BaseButton', () => {
 
       expect(wrapper.classes()).toContain('px-8')
       expect(wrapper.classes()).toContain('py-4')
-      expect(wrapper.classes()).toContain('text-base')
+      expect(wrapper.classes()).toContain('text-lg')
     })
   })
 
@@ -154,7 +154,7 @@ describe('BaseButton', () => {
       })
 
       expect(wrapper.attributes('disabled')).toBeDefined()
-      expect(wrapper.classes()).toContain('opacity-50')
+      expect(wrapper.classes()).toContain('disabled:opacity-50')
       expect(wrapper.classes()).toContain('cursor-not-allowed')
     })
 
@@ -165,9 +165,43 @@ describe('BaseButton', () => {
       })
 
       expect(wrapper.classes()).toContain('cursor-wait')
-      expect(wrapper.classes()).toContain('relative')
-      expect(wrapper.classes()).toContain('overflow-hidden')
       expect(wrapper.find('[data-testid="base-spinner"]').exists()).toBe(true)
+    })
+
+    it('keeps loading label visible next to the spinner', () => {
+      const wrapper = mount(BaseButton, {
+        props: { loading: true },
+        slots: { default: 'Signing in...' },
+      })
+
+      expect(wrapper.text()).toContain('Signing in...')
+      expect(wrapper.find('.spinner-ring').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="base-spinner"]').attributes('style') ?? '').not.toMatch(
+        /opacity:\s*0/,
+      )
+    })
+
+    it('uses currentColor spinner so contrast follows the button text', () => {
+      const wrapper = mount(BaseButton, {
+        props: { loading: true, variant: 'secondary' },
+        slots: { default: 'Try Again' },
+      })
+
+      expect(wrapper.find('.spinner-ring').attributes('style')).toMatch(
+        /--spinner-color:\s*currentColor/,
+      )
+    })
+
+    it('mounts when matchMedia is unavailable', () => {
+      const original = window.matchMedia
+      // @ts-expect-error jsdom often has no matchMedia
+      delete window.matchMedia
+
+      expect(() =>
+        mount(BaseButton, { slots: { default: 'Safe Button' } }),
+      ).not.toThrow()
+
+      window.matchMedia = original
     })
 
     it('renders pressed state', () => {
@@ -198,7 +232,7 @@ describe('BaseButton', () => {
 
       const icon = wrapper.find('[data-testid="base-icon"]')
       expect(icon.exists()).toBe(true)
-      expect(icon.classes()).toContain('mr-2')
+      expect(icon.classes()).toContain('mr-1.5')
     })
 
     it('renders with right icon', () => {
@@ -209,7 +243,7 @@ describe('BaseButton', () => {
 
       const icon = wrapper.find('[data-testid="base-icon"]')
       expect(icon.exists()).toBe(true)
-      expect(icon.classes()).toContain('ml-2')
+      expect(icon.classes()).toContain('ml-1.5')
     })
 
     it('hides text when only icon is provided', () => {
@@ -302,12 +336,12 @@ describe('BaseButton', () => {
       expect(wrapper.attributes('aria-expanded')).toBe('true')
     })
 
-    it('has proper role attribute', () => {
+    it('renders a native button element', () => {
       const wrapper = mount(BaseButton, {
         slots: { default: 'Role Button' },
       })
 
-      expect(wrapper.attributes('role')).toBe('button')
+      expect(wrapper.element.tagName).toBe('BUTTON')
     })
 
     it('has proper tabindex when clickable', () => {
@@ -357,7 +391,7 @@ describe('BaseButton', () => {
       })
 
       expect(wrapper.classes()).toContain('dark:bg-gray-700')
-      expect(wrapper.classes()).toContain('dark:text-gray-100')
+      expect(wrapper.classes()).toContain('dark:text-gray-200')
       expect(wrapper.classes()).toContain('dark:hover:bg-gray-600')
     })
 

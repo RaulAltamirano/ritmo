@@ -31,7 +31,13 @@
           <polyline points="9,4 13,8 9,12" />
         </svg>
       </button>
-      <div v-else-if="isLoading" class="qi-spinner border-outline"></div>
+      <BaseSpinner
+        v-else-if="isLoading"
+        size="sm"
+        color="current"
+        class="text-[color:var(--ph,#0ea5e9)]"
+        aria-label="Creando tarea"
+      />
     </div>
     <p class="mt-2 pl-1 text-xs text-gray-300 dark:text-gray-700">
       25 min · prioridad media por defecto · Enter para crear
@@ -40,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+  import BaseSpinner from '@ritmo/ui/components/atoms/display/BaseSpinner.vue'
   import { ref } from 'vue'
 
   interface Props {
@@ -128,22 +135,5 @@
   .qi-btn svg {
     width: 14px;
     height: 14px;
-  }
-
-  .qi-spinner {
-    width: 1.25rem;
-    height: 1.25rem;
-    border-width: 2px;
-    border-style: solid;
-    border-top-color: var(--ph, #0ea5e9);
-    border-radius: 50%;
-    animation: qi-spin 0.65s linear infinite;
-    flex-shrink: 0;
-  }
-
-  @keyframes qi-spin {
-    to {
-      transform: rotate(360deg);
-    }
   }
 </style>

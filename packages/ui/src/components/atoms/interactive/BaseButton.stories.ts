@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
+import { AlertTriangle, Check, Heart, Settings, Star } from 'lucide-vue-next'
 import BaseButton from './BaseButton.vue'
 
 const meta: Meta<typeof BaseButton> = {
@@ -24,6 +25,8 @@ const meta: Meta<typeof BaseButton> = {
         'error',
         'ghost',
         'outline',
+        'minimal',
+        'info',
       ],
       description: 'Variante visual del botón',
     },
