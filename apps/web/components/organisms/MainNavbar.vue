@@ -2,9 +2,9 @@
   <BaseNavbar aria-label="Account">
     <template #logo>
       <NuxtLink
-        :to="ROUTES.DASHBOARD"
+        :to="ROUTES.TODAY"
         class="text-gray-900 transition-opacity duration-200 hover:opacity-80 dark:text-white"
-        aria-label="Go to Dashboard"
+        aria-label="Go to Today"
       >
         <RitmoLogo
           :size="28"
@@ -17,9 +17,9 @@
 
     <template #brand>
       <NuxtLink
-        :to="ROUTES.DASHBOARD"
+        :to="ROUTES.TODAY"
         class="transition-opacity duration-200 hover:opacity-80"
-        aria-label="Go to Dashboard"
+        aria-label="Go to Today"
       >
         <h1
           class="text-[15px] font-semibold tracking-tight text-secondary-900 dark:text-secondary-50"

@@ -7,6 +7,7 @@
 
 export const ROUTES = {
   // Main navigation routes
+  /** Legacy path; page redirects to Today. Prefer TODAY for new links. */
   DASHBOARD: '/dashboard',
   TODAY: '/today',
   /** Listado y detalle de planes (estudio, hábitos, metas). Antes `/projects`, `/proyectos` y `/planes`. */

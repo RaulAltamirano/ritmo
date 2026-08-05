@@ -119,7 +119,7 @@
       if (redirectUrl && redirectUrl !== '/auth/login') {
         await navigateTo(redirectUrl, { replace: true })
       } else {
-        await navigateTo('/dashboard', { replace: true })
+        await navigateTo('/today', { replace: true })
       }
     } catch (err: any) {
       // Handle authentication errors with error boundary

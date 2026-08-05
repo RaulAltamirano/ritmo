@@ -107,7 +107,7 @@
       })
 
       // Navigate to dashboard on success
-      await navigateTo('/dashboard', { replace: true })
+      await navigateTo('/today', { replace: true })
     } catch (err: any) {
       // Handle registration errors with error boundary
       authError.value = err?.message ?? 'Registration failed. Please try again.'

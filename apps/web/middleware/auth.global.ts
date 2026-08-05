@@ -53,7 +53,7 @@ export default defineNuxtRouteMiddleware(async (to: any) => {
     isAuthenticated.value &&
     (to.path === '/auth/login' || to.path === '/auth/register')
   ) {
-    return navigateTo('/dashboard')
+    return navigateTo('/today')
   }
 
   // Allow access to public routes
