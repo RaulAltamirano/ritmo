@@ -169,6 +169,7 @@
                           :variant="isUserActive ? 'success' : 'error'"
                           :content="isUserActive ? 'Active' : 'Inactive'"
                           :left-icon="isUserActive ? 'check' : 'alert'"
+                          size="sm"
                         />
                         <template #fallback>
                           <span
@@ -200,9 +201,9 @@
                       >
                       <ClientOnly>
                         <BaseBadge
-                          variant="info"
+                          variant="subtle"
                           :content="userTheme"
-                          left-icon="info"
+                          size="sm"
                         />
                         <template #fallback>
                           <span

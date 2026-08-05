@@ -4,6 +4,11 @@
 import { computed, ref, readonly } from 'vue'
 import type { Component } from 'vue'
 import type { BadgeVariant, BadgeSize, BadgeIconPosition } from '../types/badge'
+import {
+  formatBadgeCount,
+  getBadgeCountClasses,
+  getBadgeVariantClasses,
+} from '../types/badge'
 
 export interface BadgeOptions {
   variant: BadgeVariant
@@ -60,44 +65,21 @@ export function useBadge(options: BadgeOptions) {
       })[size],
   )
 
-  // Clases de variante
   const variantClasses = computed(() => {
-    const baseClasses =
-      'inline-flex items-center justify-center gap-1.5 rounded-full border font-medium transition-all'
-
-    const variantMap = {
-      primary: 'bg-primary-500 text-white border-primary-300 hover:bg-primary-600',
-      secondary: 'bg-neutral-100 text-gray-800 border-neutral-300 hover:bg-neutral-200',
-      success: 'bg-success-500 text-white border-success-300 hover:bg-success-600',
-      warning: 'bg-warning-500 text-gray-900 border-warning-300 hover:bg-warning-600',
-      error: 'bg-error-500 text-white border-error-300 hover:bg-error-600',
-      info: 'bg-info-500 text-white border-info-300 hover:bg-info-600',
-      neutral: 'bg-neutral-100 text-gray-800 border-neutral-300 hover:bg-neutral-200',
-    }
-
-    return `${baseClasses} ${variantMap[variant]}`
+    const base =
+      'inline-flex items-center justify-center gap-1.5 rounded-full font-medium transition-all'
+    const soft = getBadgeVariantClasses(variant, 'soft').join(' ')
+    return `${base} ${soft}`
   })
 
-  // Clases del contador
-  const countClasses = computed(
-    () =>
-      ({
-        primary: 'bg-primary-600 text-white',
-        secondary: 'bg-neutral-200 text-gray-800',
-        success: 'bg-success-600 text-white',
-        warning: 'bg-warning-600 text-gray-900',
-        error: 'bg-error-600 text-white',
-        info: 'bg-info-600 text-white',
-        neutral: 'bg-neutral-200 text-gray-800',
-      })[variant],
-  )
+  const countClasses = computed(() => getBadgeCountClasses(variant, 'soft'))
 
   // Rol ARIA computado
   const computedRole = computed(() => {
     if (role) return role
     if (clickable) return 'button'
     if (loading) return 'status'
-    return 'generic'
+    return undefined
   })
 
   // Label ARIA computado
@@ -128,7 +110,7 @@ export function useBadge(options: BadgeOptions) {
 
   // Color del icono
   const getIconColor = (badgeVariant: BadgeVariant) => {
-    const colorMap = {
+    const colorMap: Record<BadgeVariant, string> = {
       primary: 'current',
       secondary: 'muted',
       success: 'success',
@@ -136,19 +118,14 @@ export function useBadge(options: BadgeOptions) {
       error: 'error',
       info: 'info',
       neutral: 'muted',
+      subtle: 'muted',
     }
     return colorMap[badgeVariant]
   }
 
   // Formatear contador
-  const formatCount = (countValue: number): string => {
-    if (countValue >= 1000) {
-      return countValue >= 1000000
-        ? `${(countValue / 1000000).toFixed(1)}M`
-        : `${(countValue / 1000).toFixed(1)}K`
-    }
-    return countValue.toString()
-  }
+  const formatCount = (countValue: number): string =>
+    formatBadgeCount(countValue)
 
   // Tipografía del badge
   const getBadgeTypography = () => {

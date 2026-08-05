@@ -1,5 +1,4 @@
-// Tipos simplificados para BaseBadge 2025
-// Enfoque minimalista y eficiente
+// Badge design tokens — soft tint is the product default
 
 export type BadgeVariant =
   | 'primary'
@@ -11,273 +10,257 @@ export type BadgeVariant =
   | 'neutral'
   | 'subtle'
 
+export type BadgeAppearance = 'soft' | 'solid'
 export type BadgeSize = 'xs' | 'sm' | 'md' | 'lg'
 export type BadgeTag = 'span' | 'button' | 'div'
-
 export type BadgeIconPosition = 'left' | 'right'
 
 export interface BaseBadgeProps {
-  /** Variante visual del badge */
   variant?: BadgeVariant
-  /** Tamaño del badge */
+  appearance?: BadgeAppearance
   size?: BadgeSize
-  /** Contenido del badge */
   content?: string
-  /** Contador numérico */
   count?: number
-  /** Máximo valor del contador (por defecto 99) */
   maxCount?: number
-  /** Icono izquierdo */
   leftIcon?: string | object
-  /** Icono derecho */
   rightIcon?: string | object
-  /** Estado de carga */
   loading?: boolean
-  /** Hacer el badge clickeable */
   clickable?: boolean
-  /** Deshabilitar el badge */
   disabled?: boolean
-  /** Elemento HTML base */
   tag?: BadgeTag
-  /** Label ARIA */
   ariaLabel?: string
 }
 
-/** Alias del tipo público del badge */
 export type BadgeProps = BaseBadgeProps
 
 export interface BaseBadgeEmits {
-  /** Evento de click */
   click: [event: MouseEvent | KeyboardEvent]
 }
 
 export interface BaseBadgeExpose {
-  /** Método para enfocar el badge */
   focus: () => void
 }
 
-// Tipos para variantes de color (internos)
-export interface BadgeColorTokens {
-  background: string
-  text: string
-  hover: string
-  focus: string
-  disabled: string
-  count: string
+export const badgeSizeMap: Record<BadgeSize, string> = {
+  xs: 'px-2 py-0.5 text-xs h-5 min-w-[1.25rem]',
+  sm: 'px-2.5 py-1 text-xs h-6 min-w-[1.5rem]',
+  md: 'px-3 py-1 text-sm h-7 min-w-[1.75rem]',
+  lg: 'px-3.5 py-1.5 text-sm h-8 min-w-[2rem]',
 }
 
-// Mapa de colores para cada variante
-export const badgeColorMap: Record<BadgeVariant, BadgeColorTokens> = {
-  primary: {
-    background: 'bg-blue-600',
-    text: 'text-white',
-    hover: 'hover:bg-blue-700',
-    focus: 'focus:ring-blue-500',
-    disabled: 'disabled:bg-blue-300',
-    count: 'bg-blue-700',
-  },
-  secondary: {
-    background: 'bg-gray-100',
-    text: 'text-gray-700',
-    hover: 'hover:bg-gray-200',
-    focus: 'focus:ring-gray-500',
-    disabled: 'disabled:bg-gray-50',
-    count: 'bg-gray-200',
-  },
-  success: {
-    background: 'bg-green-600',
-    text: 'text-white',
-    hover: 'hover:bg-green-700',
-    focus: 'focus:ring-green-500',
-    disabled: 'disabled:bg-green-300',
-    count: 'bg-green-700',
-  },
-  warning: {
-    background: 'bg-amber-500',
-    text: 'text-white',
-    hover: 'hover:bg-amber-600',
-    focus: 'focus:ring-amber-400',
-    disabled: 'disabled:bg-amber-300',
-    count: 'bg-amber-600',
-  },
-  error: {
-    background: 'bg-red-600',
-    text: 'text-white',
-    hover: 'hover:bg-red-700',
-    focus: 'focus:ring-red-500',
-    disabled: 'disabled:bg-red-300',
-    count: 'bg-red-700',
-  },
-  info: {
-    background: 'bg-cyan-600',
-    text: 'text-white',
-    hover: 'hover:bg-cyan-700',
-    focus: 'focus:ring-cyan-500',
-    disabled: 'disabled:bg-cyan-300',
-    count: 'bg-cyan-700',
-  },
-  neutral: {
-    background: 'bg-gray-600',
-    text: 'text-white',
-    hover: 'hover:bg-gray-700',
-    focus: 'focus:ring-gray-500',
-    disabled: 'disabled:bg-gray-400',
-    count: 'bg-gray-700',
-  },
-  subtle: {
-    background: 'bg-gray-50',
-    text: 'text-gray-600',
-    hover: 'hover:bg-gray-100',
-    focus: 'focus:ring-gray-400',
-    disabled: 'disabled:bg-gray-25',
-    count: 'bg-gray-200',
-  },
+/** Soft tint — default status/metadata chrome */
+export const badgeSoftVariantMap: Record<BadgeVariant, string[]> = {
+  primary: [
+    'bg-blue-100 text-blue-700 border border-blue-200',
+    'dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800',
+    'hover:bg-blue-200/80 dark:hover:bg-blue-900',
+    'focus:ring-blue-500 dark:focus:ring-blue-400',
+  ],
+  secondary: [
+    'bg-gray-100 text-gray-700 border border-gray-200',
+    'dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600',
+    'hover:bg-gray-200 dark:hover:bg-gray-700',
+    'focus:ring-gray-500 dark:focus:ring-gray-400',
+  ],
+  success: [
+    'bg-emerald-100 text-emerald-700 border border-emerald-200',
+    'dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800',
+    'hover:bg-emerald-200/80 dark:hover:bg-emerald-900',
+    'focus:ring-emerald-500 dark:focus:ring-emerald-400',
+  ],
+  warning: [
+    'bg-amber-100 text-amber-800 border border-amber-200',
+    'dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800',
+    'hover:bg-amber-200/80 dark:hover:bg-amber-900',
+    'focus:ring-amber-500 dark:focus:ring-amber-400',
+  ],
+  error: [
+    'bg-red-100 text-red-700 border border-red-200',
+    'dark:bg-red-950 dark:text-red-300 dark:border-red-800',
+    'hover:bg-red-200/80 dark:hover:bg-red-900',
+    'focus:ring-red-500 dark:focus:ring-red-400',
+  ],
+  info: [
+    'bg-cyan-100 text-cyan-700 border border-cyan-200',
+    'dark:bg-cyan-950 dark:text-cyan-300 dark:border-cyan-800',
+    'hover:bg-cyan-200/80 dark:hover:bg-cyan-900',
+    'focus:ring-cyan-500 dark:focus:ring-cyan-400',
+  ],
+  neutral: [
+    'bg-slate-100 text-slate-700 border border-slate-200',
+    'dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
+    'hover:bg-slate-200 dark:hover:bg-slate-700',
+    'focus:ring-slate-500 dark:focus:ring-slate-400',
+  ],
+  subtle: [
+    'bg-gray-50 text-gray-600 border border-gray-200',
+    'dark:bg-gray-800/80 dark:text-gray-400 dark:border-gray-700',
+    'hover:bg-gray-100 dark:hover:bg-gray-800',
+    'focus:ring-gray-400 dark:focus:ring-gray-500',
+  ],
 }
 
-// Mapa de tamaños
-export const badgeSizeMap: Record<
-  BadgeSize,
-  {
-    padding: string
-    text: string
-    height: string
-    minWidth: string
-    borderRadius: string
-  }
-> = {
-  xs: {
-    padding: 'px-2 py-0.5',
-    text: 'text-xs',
-    height: 'h-5',
-    minWidth: 'min-w-[1.25rem]',
-    borderRadius: 'rounded-md',
-  },
-  sm: {
-    padding: 'px-2.5 py-1',
-    text: 'text-sm',
-    height: 'h-6',
-    minWidth: 'min-w-[1.5rem]',
-    borderRadius: 'rounded-lg',
-  },
-  md: {
-    padding: 'px-3 py-1.5',
-    text: 'text-sm',
-    height: 'h-7',
-    minWidth: 'min-w-[1.75rem]',
-    borderRadius: 'rounded-lg',
-  },
-  lg: {
-    padding: 'px-4 py-2',
-    text: 'text-base',
-    height: 'h-8',
-    minWidth: 'min-w-[2rem]',
-    borderRadius: 'rounded-xl',
-  },
+/** Solid fill — high-emphasis only */
+export const badgeSolidVariantMap: Record<BadgeVariant, string[]> = {
+  primary: [
+    'bg-blue-600 text-white dark:bg-blue-500',
+    'hover:bg-blue-700 dark:hover:bg-blue-600',
+    'focus:ring-blue-500 dark:focus:ring-blue-400',
+  ],
+  secondary: [
+    'bg-gray-100 text-gray-700 border border-gray-200',
+    'dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600',
+    'hover:bg-gray-200 dark:hover:bg-gray-700',
+    'focus:ring-gray-500',
+  ],
+  success: [
+    'bg-emerald-600 text-white dark:bg-emerald-500',
+    'hover:bg-emerald-700 dark:hover:bg-emerald-600',
+    'focus:ring-emerald-500',
+  ],
+  warning: [
+    'bg-amber-500 text-white',
+    'hover:bg-amber-600',
+    'focus:ring-amber-400',
+  ],
+  error: [
+    'bg-red-600 text-white dark:bg-red-500',
+    'hover:bg-red-700 dark:hover:bg-red-600',
+    'focus:ring-red-500',
+  ],
+  info: [
+    'bg-cyan-600 text-white dark:bg-cyan-500',
+    'hover:bg-cyan-700 dark:hover:bg-cyan-600',
+    'focus:ring-cyan-500',
+  ],
+  neutral: [
+    'bg-gray-600 text-white dark:bg-gray-500',
+    'hover:bg-gray-700 dark:hover:bg-gray-600',
+    'focus:ring-gray-500',
+  ],
+  subtle: [
+    'bg-gray-50 text-gray-600 border border-gray-200',
+    'dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600',
+    'hover:bg-gray-100 dark:hover:bg-gray-700',
+    'focus:ring-gray-400',
+  ],
 }
 
-// Función helper para formatear contadores
+export const badgeSoftCountMap: Record<BadgeVariant, string> = {
+  primary: 'bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  secondary: 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-200',
+  success: 'bg-emerald-200 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+  warning: 'bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200',
+  error: 'bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200',
+  info: 'bg-cyan-200 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
+  neutral: 'bg-slate-200 text-slate-800 dark:bg-slate-600 dark:text-slate-200',
+  subtle: 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200',
+}
+
+export const badgeSolidCountMap: Record<BadgeVariant, string> = {
+  primary: 'bg-blue-700 text-white dark:bg-blue-600',
+  secondary: 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-200',
+  success: 'bg-emerald-700 text-white dark:bg-emerald-600',
+  warning: 'bg-amber-600 text-white',
+  error: 'bg-red-700 text-white dark:bg-red-600',
+  info: 'bg-cyan-700 text-white dark:bg-cyan-600',
+  neutral: 'bg-gray-700 text-white dark:bg-gray-600',
+  subtle: 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200',
+}
+
+const COUNT_THOUSAND = 1000
+const COUNT_MILLION = 1_000_000
+
 export function formatBadgeCount(count: number, maxCount = 99): string {
-  if (count > maxCount) {
-    return `${maxCount}+`
-  }
-
-  if (count >= 1000) {
-    return count >= 1000000
-      ? `${(count / 1000000).toFixed(1)}M`
-      : `${(count / 1000).toFixed(1)}K`
-  }
-
+  if (count > maxCount) return `${maxCount}+`
+  if (count >= COUNT_MILLION) return `${(count / COUNT_MILLION).toFixed(1)}M`
+  if (count >= COUNT_THOUSAND) return `${(count / COUNT_THOUSAND).toFixed(1)}K`
   return count.toString()
 }
 
-// Función helper para validar props
+export function getBadgeVariantClasses(
+  variant: BadgeVariant,
+  appearance: BadgeAppearance = 'soft',
+): string[] {
+  const map = appearance === 'solid' ? badgeSolidVariantMap : badgeSoftVariantMap
+  return map[variant]
+}
+
+export function getBadgeCountClasses(
+  variant: BadgeVariant,
+  appearance: BadgeAppearance = 'soft',
+): string {
+  const map = appearance === 'solid' ? badgeSolidCountMap : badgeSoftCountMap
+  return map[variant]
+}
+
+/** @deprecated use badgeSoftVariantMap / getBadgeVariantClasses */
+export const badgeColorMap = badgeSoftVariantMap
+
 export function validateBadgeProps(props: Partial<BaseBadgeProps>): {
   isValid: boolean
   errors: string[]
 } {
   const errors: string[] = []
+  const variants = Object.keys(badgeSoftVariantMap)
+  const sizes = Object.keys(badgeSizeMap)
 
-  // Validar variant
-  if (props.variant && !Object.keys(badgeColorMap).includes(props.variant)) {
+  if (props.variant && !variants.includes(props.variant)) {
     errors.push(`Invalid variant: ${props.variant}`)
   }
-
-  // Validar size
-  if (props.size && !Object.keys(badgeSizeMap).includes(props.size)) {
+  if (props.size && !sizes.includes(props.size)) {
     errors.push(`Invalid size: ${props.size}`)
   }
+  pushCountErrors(props, errors)
 
-  // Validar count
-  if (
-    props.count !== undefined &&
-    (typeof props.count !== 'number' || props.count < 0)
-  ) {
+  return { isValid: errors.length === 0, errors }
+}
+
+function pushCountErrors(
+  props: Partial<BaseBadgeProps>,
+  errors: string[],
+): void {
+  if (props.count !== undefined && (typeof props.count !== 'number' || props.count < 0)) {
     errors.push('Count must be a non-negative number')
   }
-
-  // Validar maxCount
   if (
     props.maxCount !== undefined &&
     (typeof props.maxCount !== 'number' || props.maxCount < 1)
   ) {
     errors.push('MaxCount must be a positive number')
   }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
-  }
 }
 
-// Función helper para crear clases CSS
 export function getBadgeClasses(
   variant: BadgeVariant,
   size: BadgeSize,
   options: {
+    appearance?: BadgeAppearance
     clickable?: boolean
     disabled?: boolean
-    loading?: boolean
   } = {},
 ): string[] {
-  const classes: string[] = [
+  const appearance = options.appearance ?? 'soft'
+  const classes = [
     'inline-flex',
     'items-center',
     'justify-center',
-    'gap-1.5',
+    'gap-1',
     'font-medium',
+    'rounded-full',
     'transition-all',
     'duration-200',
     'ease-out',
     'focus:outline-none',
     'focus:ring-2',
     'focus:ring-offset-1',
+    badgeSizeMap[size],
+    ...getBadgeVariantClasses(variant, appearance),
   ]
 
-  // Agregar clases de tamaño
-  const sizeClasses = badgeSizeMap[size]
-  classes.push(
-    sizeClasses.padding,
-    sizeClasses.text,
-    sizeClasses.height,
-    sizeClasses.minWidth,
-    sizeClasses.borderRadius,
-  )
-
-  // Agregar clases de variante
-  const colorClasses = badgeColorMap[variant]
-  classes.push(
-    colorClasses.background,
-    colorClasses.text,
-    colorClasses.hover,
-    colorClasses.focus,
-    colorClasses.disabled,
-  )
-
-  // Agregar clases de estado
   if (options.clickable && !options.disabled) {
     classes.push('cursor-pointer', 'active:scale-95')
   }
-
   if (options.disabled) {
     classes.push('opacity-50', 'cursor-not-allowed')
   }

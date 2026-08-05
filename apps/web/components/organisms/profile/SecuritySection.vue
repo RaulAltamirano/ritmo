@@ -93,16 +93,14 @@
             <ClientOnly>
               <BaseBadge
                 v-if="sessionsLoaded && !loadingSessions"
-                variant="info"
+                variant="subtle"
                 :content="`${sessionCount} Active`"
-                left-icon="info"
                 size="sm"
               />
               <BaseBadge
                 v-else-if="!sessionsLoaded"
-                variant="info"
+                variant="subtle"
                 content="View Sessions"
-                left-icon="info"
                 size="sm"
               />
               <span

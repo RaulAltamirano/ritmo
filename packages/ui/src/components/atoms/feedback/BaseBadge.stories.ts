@@ -9,7 +9,7 @@ const meta: Meta<typeof BaseBadge> = {
     docs: {
       description: {
         component:
-          'Componente de badge moderno 2025 con diseño minimalista y eficiente. Incluye 8 variantes de color, 4 tamaños, soporte para iconos, contadores y estados interactivos. Optimizado para accesibilidad y rendimiento.',
+          'Badge soft-tint por defecto (pill) alineado al chrome de Ritmo. Usa appearance="solid" solo para énfasis alto. Variantes, tamaños, iconos, contadores y estados clickable/loading.',
       },
     },
   },
@@ -27,6 +27,11 @@ const meta: Meta<typeof BaseBadge> = {
         'subtle',
       ],
       description: 'Variante visual del badge',
+    },
+    appearance: {
+      control: { type: 'select' },
+      options: ['soft', 'solid'],
+      description: 'Soft tint (default) o solid fill de alto énfasis',
     },
     size: {
       control: { type: 'select' },
@@ -77,6 +82,7 @@ const meta: Meta<typeof BaseBadge> = {
   },
   args: {
     variant: 'primary',
+    appearance: 'soft',
     size: 'md',
     content: 'Badge',
     clickable: false,
@@ -122,10 +128,30 @@ export const Variants: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Todas las variantes de color disponibles en el sistema de diseño 2025.',
+        story: 'Soft tint por defecto — el look canónico en profile y cards.',
       },
     },
   },
+}
+
+export const SoftVsSolid: Story = {
+  render: () => ({
+    components: { BaseBadge },
+    template: `
+      <div class="space-y-4">
+        <div class="flex flex-wrap gap-3">
+          <BaseBadge variant="info" content="system" />
+          <BaseBadge variant="success" content="Active" left-icon="check" />
+          <BaseBadge variant="subtle" content="metadata" />
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <BaseBadge appearance="solid" variant="info" content="solid info" />
+          <BaseBadge appearance="solid" variant="success" content="solid success" />
+          <BaseBadge appearance="solid" variant="error" content="solid error" />
+        </div>
+      </div>
+    `,
+  }),
 }
 
 // Tamaños
