@@ -4,7 +4,9 @@
     data-testid="task-card"
     :class="[
       task.isRunning
-        ? 'bg-primary-50/70 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800/50'
+        ? task.isOnBreak
+          ? 'bg-emerald-50/70 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50'
+          : 'bg-primary-50/70 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800/50'
         : 'bg-white/70 dark:bg-gray-800/70 border-gray-200/80 dark:border-gray-700/45 hover:border-gray-300 dark:hover:border-gray-600/60',
       task.completed && 'opacity-60',
       isDragging && 'tcard--dragging',
@@ -63,6 +65,12 @@
           >
             {{ task.priority }}
           </span>
+          <span
+            v-if="task.isOnBreak"
+            class="meta-priority text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
+          >
+            Descanso
+          </span>
           <template v-if="task.totalTimeSpent">
             <span class="text-xs text-gray-300 dark:text-gray-600">·</span>
             <span class="text-xs text-gray-400 dark:text-gray-500"
@@ -74,7 +82,12 @@
 
       <div
         v-if="task.isRunning"
-        class="font-mono text-sm font-semibold text-primary-600 dark:text-primary-400 tracking-wide flex-shrink-0"
+        class="font-mono text-sm font-semibold tracking-wide flex-shrink-0"
+        :class="
+          task.isOnBreak
+            ? 'text-emerald-600 dark:text-emerald-400'
+            : 'text-primary-600 dark:text-primary-400'
+        "
       >
         {{ formatTime(task.timeRemaining ?? 0) }}
       </div>
@@ -203,6 +216,7 @@
 
   const accentColor = computed(() => {
     if (props.task.completed) return '#22c55e' // green-500
+    if (props.task.isRunning && props.task.isOnBreak) return '#10b981' // emerald-500
     if (props.task.isRunning) return '#0ea5e9' // primary-500
     return priorityAccentHex[props.task.priority ?? ''] ?? '#e2e8f0' // gray-200 fallback
   })

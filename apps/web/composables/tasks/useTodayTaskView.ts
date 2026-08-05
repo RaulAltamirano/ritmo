@@ -30,6 +30,7 @@ export function useTodayTaskView() {
       return {
         ...base,
         isRunning: isActive && timerStore.isRunning,
+        isOnBreak: isActive && timerStore.phase === 'break',
         timeRemaining: isActive
           ? (timerStore.activeTask?.timeLeft ?? 0)
           : base.timeRemaining,

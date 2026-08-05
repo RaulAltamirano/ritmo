@@ -63,6 +63,7 @@ export interface Task {
   apiPriority?: TaskPriority
   completed?: boolean
   isRunning?: boolean
+  isOnBreak?: boolean
   timeRemaining?: number
   totalTime?: number
   totalTimeSpent?: number
