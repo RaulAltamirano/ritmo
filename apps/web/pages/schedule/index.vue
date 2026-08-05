@@ -7,11 +7,7 @@
       actions
     >
       <template #actions>
-        <BaseButton
-          variant="primary"
-          class="flex items-center space-x-2"
-          @click="showQuickCreateModal = true"
-        >
+        <BaseButton variant="primary" @click="showQuickCreateModal = true">
           <Plus :size="16" />
           <span>New Event</span>
         </BaseButton>

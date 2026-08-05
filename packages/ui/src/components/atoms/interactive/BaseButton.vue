@@ -190,7 +190,7 @@
   // Clases del botón mejoradas con VueUse
   const buttonClasses = computed(() => {
     const baseClasses = [
-      'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2',
+      'inline-flex items-center justify-center whitespace-nowrap font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       'active:transform active:scale-95',
     ]
@@ -252,7 +252,7 @@
       ...baseClasses,
       sizeClasses[props.size] || sizeClasses.md,
       variantClasses[props.variant] || variantClasses.primary,
-      props.fullWidth ? 'w-full' : '',
+      props.fullWidth ? 'w-full' : 'shrink-0',
       props.loading ? 'cursor-wait' : '',
       props.disabled ? 'cursor-not-allowed' : '',
       ...dynamicClasses,
@@ -453,7 +453,10 @@
     @focus="handleButtonFocus"
     @blur="handleButtonBlur"
   >
-    <span class="inline-flex items-center justify-center" :class="{ 'gap-2': loading && !iconOnly }">
+    <span
+      class="inline-flex items-center justify-center gap-2"
+      :class="{ 'gap-0': iconOnly && !loading }"
+    >
       <BaseSpinner
         v-if="loading"
         :size="getSpinnerSize()"
@@ -468,7 +471,6 @@
         :icon="icon"
         :size="getIconSize()"
         color="current"
-        class="mr-1.5"
         :aria-label="`${iconAriaLabel} icono`"
         role="img"
         data-testid="base-icon"
@@ -485,6 +487,7 @@
       />
 
       <span
+        class="inline-flex items-center gap-2"
         :class="{ 'sr-only': (icon && !$slots.default) || (loading && iconOnly) }"
         :data-content="!!$slots.default"
         :id="`${buttonId}-content`"
@@ -497,7 +500,6 @@
         :icon="icon"
         :size="getIconSize()"
         color="current"
-        class="ml-1.5"
         :aria-label="`${iconAriaLabel} icono`"
         role="img"
         data-testid="base-icon"

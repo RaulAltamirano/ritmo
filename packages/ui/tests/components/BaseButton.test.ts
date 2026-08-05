@@ -224,7 +224,7 @@ describe('BaseButton', () => {
   })
 
   describe('Icons', () => {
-    it('renders with left icon', () => {
+    it('renders with left icon spaced via flex gap', () => {
       const wrapper = mount(BaseButton, {
         props: { icon: Heart },
         slots: { default: 'Icon Button' },
@@ -232,10 +232,10 @@ describe('BaseButton', () => {
 
       const icon = wrapper.find('[data-testid="base-icon"]')
       expect(icon.exists()).toBe(true)
-      expect(icon.classes()).toContain('mr-1.5')
+      expect(wrapper.find('.gap-2').exists()).toBe(true)
     })
 
-    it('renders with right icon', () => {
+    it('renders with right icon spaced via flex gap', () => {
       const wrapper = mount(BaseButton, {
         props: { icon: Heart, iconRight: true },
         slots: { default: 'Icon Button' },
@@ -243,7 +243,22 @@ describe('BaseButton', () => {
 
       const icon = wrapper.find('[data-testid="base-icon"]')
       expect(icon.exists()).toBe(true)
-      expect(icon.classes()).toContain('ml-1.5')
+      expect(wrapper.find('.gap-2').exists()).toBe(true)
+    })
+
+    it('keeps slot icon and label on one row', () => {
+      const wrapper = mount(BaseButton, {
+        slots: {
+          default: '<svg data-testid="slot-icon"></svg><span>Filters</span>',
+        },
+      })
+
+      expect(wrapper.classes()).toContain('whitespace-nowrap')
+      expect(wrapper.classes()).toContain('shrink-0')
+      const content = wrapper.find('[data-content="true"]')
+      expect(content.classes()).toContain('inline-flex')
+      expect(content.classes()).toContain('items-center')
+      expect(content.classes()).toContain('gap-2')
     })
 
     it('hides text when only icon is provided', () => {

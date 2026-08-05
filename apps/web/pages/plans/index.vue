@@ -7,11 +7,7 @@
       actions
     >
       <template #actions>
-        <BaseButton
-          variant="primary"
-          class="flex items-center gap-2"
-          @click="openNewProjectModal"
-        >
+        <BaseButton variant="primary" @click="openNewProjectModal">
           <Plus :size="16" />
           <span>New plan</span>
         </BaseButton>
@@ -104,7 +100,6 @@
             <BaseButton
               v-if="!hasActiveFilters"
               variant="primary"
-              class="inline-flex items-center gap-2"
               @click="openNewProjectModal"
             >
               <Plus :size="16" />
