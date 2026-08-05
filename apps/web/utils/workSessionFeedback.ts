@@ -3,7 +3,7 @@
  * Aligned with `useTimerStore.hydrateFromActiveRemoteSession` heuristics.
  */
 export function needsWorkSessionFeedback(args: {
-  state: 'running' | 'paused' | 'pending_feedback'
+  state: 'running' | 'paused' | 'on_break' | 'pending_feedback'
   timeLeftSec: number
 }): boolean {
   return (

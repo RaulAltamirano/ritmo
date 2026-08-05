@@ -39,7 +39,6 @@ describe('timer store — break cycle', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     patchWorkSessionMock.mockResolvedValue({ data: {} })
-    // @ts-expect-error mock minimal Nuxt `process.client`
     globalThis.process = { ...globalThis.process, client: true }
   })
 
