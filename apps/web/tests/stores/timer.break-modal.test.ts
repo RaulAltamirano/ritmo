@@ -100,6 +100,8 @@ describe('timer store — break modal flag', () => {
     seedFocusThenBreak(store)
     await store.finishBreak()
     expect(store.breakModalOpen).toBe(false)
+    store.openBreakModal()
+    expect(store.breakModalOpen).toBe(false)
   })
 
   it('hydrateFromActiveRemoteSession on_break opens modal when break still running', async () => {

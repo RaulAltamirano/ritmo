@@ -86,7 +86,7 @@
   const timerStore = useTimerStore()
   const fullPercentage = 100
   const ringRadius = 54
-  const ringCircumference = Math.PI * (ringRadius + ringRadius)
+  const ringCircumference = 2 * Math.PI * ringRadius
 
   const isOpen = computed(
     () => timerStore.breakModalOpen && timerStore.phase === 'break',

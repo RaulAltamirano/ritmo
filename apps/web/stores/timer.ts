@@ -514,6 +514,7 @@ export const useTimerStore = defineStore('timer', {
 
     openBreakModal() {
       if (this.phase !== 'break' || !this.activeTask) return
+      if (!this.isRunning && !this.isPaused) return
       this.breakModalOpen = true
     },
 

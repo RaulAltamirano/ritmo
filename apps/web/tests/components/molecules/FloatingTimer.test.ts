@@ -99,6 +99,11 @@ describe('FloatingTimer', () => {
 
     expect(wrapper.text()).toMatch(/Descanso/)
     expect(wrapper.find('button[aria-label="Saltar descanso"]').exists()).toBe(true)
+    const pill = wrapper.get('[role="button"]')
+    expect(pill.attributes('aria-label')).toBe(
+      'Descanso: 5:00 restante. Click para abrir el descanso',
+    )
+    expect(pill.attributes('aria-expanded')).toBeUndefined()
   })
 
   it('hides reset button when bound to a remote session', async () => {
@@ -142,7 +147,7 @@ describe('FloatingTimer', () => {
     store.breakModalOpen = false
     const wrapper = mountTimer(pinia)
     await flushPromises()
-    const pill = wrapper.get('[aria-expanded]')
+    const pill = wrapper.get('[role="button"]')
     await pill.trigger('click')
     expect(store.breakModalOpen).toBe(true)
   })

@@ -216,7 +216,7 @@
 
   const accentColor = computed(() => {
     if (props.task.completed) return '#22c55e' // green-500
-    if (props.task.isRunning && props.task.isOnBreak) return '#10b981' // emerald-500
+    if (props.task.isOnBreak) return '#10b981' // emerald-500
     if (props.task.isRunning) return '#0ea5e9' // primary-500
     return priorityAccentHex[props.task.priority ?? ''] ?? '#e2e8f0' // gray-200 fallback
   })

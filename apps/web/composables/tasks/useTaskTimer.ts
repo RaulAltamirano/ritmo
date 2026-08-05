@@ -139,7 +139,10 @@ export function useTaskTimer() {
       priority: task.priority ?? 'media',
       completed: task.completed ?? false,
       isRunning: isActive,
-      isOnBreak: isActive && timerStore.phase === 'break',
+      isOnBreak:
+        isActive &&
+        timerStore.phase === 'break' &&
+        (timerStore.isRunning || timerStore.isPaused),
       timeRemaining: isActive && activeTask ? activeTask.timeLeft : 0,
       totalTime: isActive && activeTask ? activeTask.totalTime : 0,
       totalTimeSpent: task.totalTimeSpent ?? 0,

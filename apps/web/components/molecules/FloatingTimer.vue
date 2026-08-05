@@ -12,8 +12,12 @@
         class="cursor-pointer outline-none rounded-2xl"
         tabindex="0"
         role="button"
-        :aria-expanded="showDetails"
-        :aria-label="`Timer ${activeTask?.name}: ${formatTime(timeLeft)} restante. Click para ${showDetails ? 'ocultar' : 'mostrar'} detalles`"
+        :aria-expanded="isBreak ? undefined : showDetails"
+        :aria-label="
+          isBreak
+            ? `Descanso: ${formatTime(timeLeft)} restante. Click para abrir el descanso`
+            : `Timer ${activeTask?.name}: ${formatTime(timeLeft)} restante. Click para ${showDetails ? 'ocultar' : 'mostrar'} detalles`
+        "
         @click="toggleDetails"
         @keydown.enter="toggleDetails"
         @keydown.space.prevent="toggleDetails"
