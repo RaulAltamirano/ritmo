@@ -110,6 +110,9 @@ export const useTimerStore = defineStore('timer', {
 
     /** Presets mostrados en TaskItem / ajustes; sincronizados con GET /users/preferences. */
     timerModes: [...DEFAULT_TIMER_PRESETS] as TimerMode[],
+
+    /** Modal de descanso visible (UI); el descanso sigue en FloatingTimer al cerrar. */
+    breakModalOpen: false,
   }),
 
   getters: {
@@ -220,6 +223,7 @@ export const useTimerStore = defineStore('timer', {
         this.breakDurationSec = mode.breakSec ?? null
         this.breakStartedAt = null
         this.breakPausedDurationSec = 0
+        this.breakModalOpen = false
         this.isPaused = false
         this.isRunning = true
         this.startTimerInterval()
@@ -306,7 +310,8 @@ export const useTimerStore = defineStore('timer', {
 
     /**
      * Restaura el timer flotante desde `GET /work-sessions/active`.
-     * No abre modales; el caller debe abrir reflexión si `state === pending_feedback`.
+     * Reflexión sigue siendo responsabilidad del caller si `state === pending_feedback`.
+     * El flag `breakModalOpen` puede abrirse en hidratación `on_break`.
      */
     hydrateFromActiveRemoteSession(payload: {
       id: string
@@ -414,6 +419,10 @@ export const useTimerStore = defineStore('timer', {
         this.startTimerInterval()
       }
 
+      if (isBreak && this.isRunning && timeLeft > 0) {
+        this.breakModalOpen = true
+      }
+
       this.bindRemoteWorkSession(payload.id)
     },
 
@@ -500,6 +509,16 @@ export const useTimerStore = defineStore('timer', {
       this.breakDurationSec = null
       this.breakStartedAt = null
       this.breakPausedDurationSec = 0
+      this.breakModalOpen = false
+    },
+
+    openBreakModal() {
+      if (this.phase !== 'break' || !this.activeTask) return
+      this.breakModalOpen = true
+    },
+
+    dismissBreakModal() {
+      this.breakModalOpen = false
     },
 
     // Pausar timer
@@ -560,6 +579,7 @@ export const useTimerStore = defineStore('timer', {
       this.breakDurationSec = null
       this.breakStartedAt = null
       this.breakPausedDurationSec = 0
+      this.breakModalOpen = false
       this.isPaused = false
       this.isRunning = false
       this.clearRemoteWorkSession()
@@ -577,6 +597,7 @@ export const useTimerStore = defineStore('timer', {
       this.activeTask.timeLeft = breakDurationSec
       this.isPaused = false
       this.isRunning = true
+      this.breakModalOpen = true
       const minutes = Math.round(breakDurationSec / 60)
       this.showNotification('Descanso', `${minutes} min de descanso`, 'info')
       this.startTimerInterval()
@@ -593,6 +614,7 @@ export const useTimerStore = defineStore('timer', {
      */
     async finishBreak() {
       this.stopTimerInterval()
+      this.breakModalOpen = false
       this.isRunning = false
       if (this.remoteWorkSessionId) {
         const sid = this.remoteWorkSessionId
