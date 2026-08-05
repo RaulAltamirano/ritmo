@@ -136,4 +136,14 @@ describe('FloatingTimer', () => {
       expect.objectContaining({ state: 'pending_feedback' }),
     )
   })
+
+  it('opens break modal when clicking pill during break', async () => {
+    const { pinia, store } = prepareStore({ phase: 'break', timeLeft: 200 })
+    store.breakModalOpen = false
+    const wrapper = mountTimer(pinia)
+    await flushPromises()
+    const pill = wrapper.get('[aria-expanded]')
+    await pill.trigger('click')
+    expect(store.breakModalOpen).toBe(true)
+  })
 })

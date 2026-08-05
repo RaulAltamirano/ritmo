@@ -441,6 +441,11 @@
   }
 
   const toggleDetails = () => {
+    if (isBreak.value) {
+      timerStore.openBreakModal()
+      showDetails.value = false
+      return
+    }
     showDetails.value = !showDetails.value
   }
   const handlePause = () => {
