@@ -11,6 +11,7 @@
     </div>
 
     <FloatingTimer />
+    <BreakTimerModal />
     <DailyCheckinModal />
     <WorkBlockFeedbackModal />
     <TaskSwitchPresetModal />
@@ -20,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+  import BreakTimerModal from '@/components/molecules/BreakTimerModal.vue'
   import DailyCheckinModal from '@/components/molecules/DailyCheckinModal.vue'
   import FloatingTimer from '@/components/molecules/FloatingTimer.vue'
   import TaskSwitchPresetModal from '@/components/molecules/TaskSwitchPresetModal.vue'
