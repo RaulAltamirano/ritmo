@@ -513,6 +513,7 @@ export const useTimerStore = defineStore('timer', {
       this.breakStartedAt = null
       this.breakPausedDurationSec = 0
       this.breakModalOpen = false
+      this.breakFinishInFlight = false
     },
 
     openBreakModal() {
