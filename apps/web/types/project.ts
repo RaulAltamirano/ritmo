@@ -48,9 +48,12 @@ export interface ProjectModalProps {
   project?: Project | null
 }
 
-export interface ProjectCardProps {
+export interface PlanListRowProps {
   project: Project
 }
+
+/** @deprecated use PlanListRowProps */
+export type ProjectCardProps = PlanListRowProps
 
 const API_STATUS_TO_UI: Record<ApiPlanStatus, ProjectStatus> = {
   planned: 'planificado',

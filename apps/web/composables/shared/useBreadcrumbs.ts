@@ -15,7 +15,7 @@ const ROUTE_METADATA = {
   '/': { label: 'Home', parent: null },
   '/dashboard': { label: 'Dashboard', parent: '/' },
   '/today': { label: 'Today', parent: '/' },
-  '/planes': { label: 'Plans', parent: '/' },
+  '/plans': { label: 'Plans', parent: '/' },
   '/schedule': { label: 'Schedule', parent: '/' },
   '/training': { label: 'Training', parent: '/' },
   '/study-plan': { label: 'Study Plan', parent: '/' },

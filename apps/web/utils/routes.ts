@@ -9,8 +9,8 @@ export const ROUTES = {
   // Main navigation routes
   DASHBOARD: '/dashboard',
   TODAY: '/today',
-  /** Listado y detalle de planes (estudio, hábitos, metas). Antes `/projects` y `/proyectos`. */
-  PROJECTS: '/planes',
+  /** Listado y detalle de planes (estudio, hábitos, metas). Antes `/projects`, `/proyectos` y `/planes`. */
+  PROJECTS: '/plans',
 
   // Secondary navigation routes
   SCHEDULE: '/schedule',

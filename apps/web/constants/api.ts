@@ -40,7 +40,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/tasks/${id}`,
   },
 
-  // Plan management endpoints (goal containers; UI route /planes)
+  // Plan management endpoints (goal containers; UI route /plans)
   PLANS: {
     LIST: '/plans',
     CREATE: '/plans',

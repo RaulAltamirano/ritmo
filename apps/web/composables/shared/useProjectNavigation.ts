@@ -4,13 +4,13 @@ export const useProjectNavigation = () => {
       throw new Error('Project ID is required')
     }
 
-    const url = `/planes/${projectId}`
+    const url = `/plans/${projectId}`
     const result = await navigateTo(url)
     return result
   }
 
   const navigateToProjectList = async () => {
-    const result = await navigateTo('/planes')
+    const result = await navigateTo('/plans')
     return result
   }
 

@@ -8,7 +8,7 @@
     <BaseCard v-else-if="loadError" variant="simple" size="md" :hoverable="false">
       <p class="text-base text-red-600 dark:text-red-400">{{ loadError }}</p>
       <div class="mt-4 flex gap-3">
-        <BaseButton variant="outline" @click="navigateTo('/planes')">
+        <BaseButton variant="outline" @click="navigateTo('/plans')">
           Back to plans
         </BaseButton>
         <BaseButton variant="primary" @click="loadPlanDetail"> Retry </BaseButton>
@@ -19,7 +19,7 @@
       <PageHeader
         :title="project.name"
         :subtitle="project.description || 'No description'"
-        :breadcrumbs="[{ label: 'My plans', to: '/planes' }, { label: project.name }]"
+        :breadcrumbs="[{ label: 'Plans', to: '/plans' }, { label: project.name }]"
         :badges="[{ id: 'status', label: statusLabel, variant: 'info' }]"
         actions
       >

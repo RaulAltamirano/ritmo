@@ -1,7 +1,7 @@
 <script setup lang="ts">
   const route = useRoute()
   const id = route.params.id as string
-  await navigateTo(`/planes/${encodeURIComponent(id)}`, { replace: true })
+  await navigateTo(`/plans/${encodeURIComponent(id)}`, { replace: true })
 </script>
 
 <template>

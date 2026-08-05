@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  await navigateTo('/planes', { replace: true })
+  await navigateTo('/plans', { replace: true })
 </script>
 
 <template>
