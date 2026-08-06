@@ -159,7 +159,11 @@
         weekStart.value,
       )
     }
-    return combined
+    return combined.map(t =>
+      mockCompleted.value[t.id] !== undefined
+        ? { ...t, completed: mockCompleted.value[t.id] }
+        : t,
+    )
   })
   const scheduledTasks = computed(
     () => splitPlanTasks(projectTasks.value).scheduled,
@@ -217,11 +221,7 @@
   }
 
   function handleApplyWeekDraft(draft: WeekDraft) {
-    const real = projectsStore.getTasksByProjectId(projectId.value)
-    const mocks = buildMockPlanTimelineTasks(projectId.value, new Date())
-    const mockIds = new Set(mocks.map(t => t.id))
-    const base = [...real.filter(t => !mockIds.has(t.id)), ...mocks]
-    if (weekHasScheduledTasks(base, weekStart.value)) {
+    if (weekHasScheduledTasks(projectTasks.value, weekStart.value)) {
       const ok = window.confirm(
         "Replace this week’s scheduled sessions with the AI draft?",
       )
@@ -244,7 +244,8 @@
     const [hh, mm] = time.split(':').map(Number)
     const [yy, mo, dd] = taskForm.value.date.split('-').map(Number)
     if (!yy || !mo || !dd) return undefined
-    return new Date(yy, mo - 1, dd, hh ?? 9, mm ?? 0, 0, 0)
+    if (!Number.isFinite(hh) || !Number.isFinite(mm)) return undefined
+    return new Date(yy, mo - 1, dd, hh, mm, 0, 0)
   }
 
   async function createTask() {
@@ -273,7 +274,10 @@
   }
 
   async function handleToggleComplete(task: Task, completed: boolean) {
-    if (task.id.startsWith('mock-plan-')) {
+    if (
+      task.id.startsWith('mock-plan-') ||
+      task.id.startsWith('ai-week-')
+    ) {
       mockCompleted.value = { ...mockCompleted.value, [task.id]: completed }
       return
     }

@@ -41,6 +41,11 @@
 
         <div
           class="h-1.5 overflow-hidden rounded-full bg-primary-100 dark:bg-primary-950/40"
+          role="progressbar"
+          :aria-valuenow="progressPercent"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :aria-label="`Step ${currentStep} of 2`"
         >
           <div
             class="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-300 dark:from-primary-400 dark:to-primary-500"

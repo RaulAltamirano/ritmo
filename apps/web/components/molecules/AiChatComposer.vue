@@ -5,6 +5,7 @@
       rows="2"
       class="min-h-[44px] flex-1 resize-none rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
       placeholder="Type your answer…"
+      aria-label="Message to AI"
       :disabled="disabled"
       @keydown="onKeydown"
     />

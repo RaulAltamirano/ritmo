@@ -15,7 +15,7 @@ export type GenerateWeekChatPhase =
 const CORE_SLOTS = ['level', 'friction', 'avoid'] as const
 type CoreSlot = (typeof CORE_SLOTS)[number]
 
-const FORCE_READY = /\b(generate|ready|listo)\b/i
+const FORCE_READY = /^(generate|ready|listo)!?$/i
 
 const PROMPTS: Record<CoreSlot, string> = {
   level: 'What is your current level or experience with this goal?',
@@ -54,13 +54,62 @@ function coreSlotsFilled(slots: GenerateWeekIntakeSlots): boolean {
   return CORE_SLOTS.every(key => Boolean(slots[key]?.trim()))
 }
 
-function applyAnswer(
+function splitAnswerParts(text: string): string[] {
+  return text
+    .split(/\n+|\s*;\s*/)
+    .map(part => part.replace(/^\d+[.)]\s*/, '').trim())
+    .filter(Boolean)
+}
+
+function applyKeywordSlots(
   slots: GenerateWeekIntakeSlots,
   text: string,
 ): GenerateWeekIntakeSlots {
   const next = { ...slots }
+  const level = text.match(
+    /\b(?:level|nivel)\s*[:=]?\s*(beginner|intermediate|advanced|básico|basico|intermedio|avanzado)\b/i,
+  )
+  const friction = text.match(
+    /\b(?:hardest|friction|cuesta|struggle[s]?)\s*[:=]?\s*([^.;]+)/i,
+  )
+  const avoid = text.match(
+    /\b(?:avoid|dislike|evitar|no\s+me\s+gusta)\s*[:=]?\s*([^.;]+)/i,
+  )
+  if (!next.level?.trim() && level?.[1]) next.level = level[1].trim()
+  if (!next.friction?.trim() && friction?.[1]) next.friction = friction[1].trim()
+  if (!next.avoid?.trim() && avoid?.[1]) next.avoid = avoid[1].trim()
+  return next
+}
+
+function applyAnswer(
+  slots: GenerateWeekIntakeSlots,
+  text: string,
+): GenerateWeekIntakeSlots {
+  const trimmed = text.trim()
+  const parts = splitAnswerParts(trimmed)
+
+  if (parts.length > 1) {
+    const next = { ...slots }
+    for (const part of parts) {
+      const empty = nextEmptyCoreSlot(next)
+      if (!empty) break
+      next[empty] = part
+    }
+    return next
+  }
+
+  const withKeywords = applyKeywordSlots(slots, trimmed)
+  if (
+    withKeywords.level !== slots.level ||
+    withKeywords.friction !== slots.friction ||
+    withKeywords.avoid !== slots.avoid
+  ) {
+    return withKeywords
+  }
+
+  const next = { ...slots }
   const empty = nextEmptyCoreSlot(next)
-  if (empty) next[empty] = text.trim()
+  if (empty) next[empty] = trimmed
   return next
 }
 

@@ -36,6 +36,27 @@ describe('useGenerateWeekChat', () => {
     expect(chat.readyToPreview.value).toBe(true)
   })
 
+  it('does not force-ready on not ready', () => {
+    const chat = useGenerateWeekChat({
+      planName: 'Japanese B2',
+      weekStart: '2026-08-03',
+    })
+    chat.sendUserMessage('not ready')
+    expect(chat.readyToPreview.value).toBe(false)
+  })
+
+  it('fills multiple slots from a delimited message', () => {
+    const chat = useGenerateWeekChat({
+      planName: 'Japanese B2',
+      weekStart: '2026-08-03',
+    })
+    chat.sendUserMessage('intermediate; speaking; grammar drills')
+    expect(chat.slots.value.level).toBe('intermediate')
+    expect(chat.slots.value.friction).toBe('speaking')
+    expect(chat.slots.value.avoid).toBe('grammar drills')
+    expect(chat.readyToPreview.value).toBe(true)
+  })
+
   it('generatePreview builds a draft and moves to preview', async () => {
     const chat = useGenerateWeekChat({
       planName: 'Japanese B2',
