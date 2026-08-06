@@ -80,13 +80,14 @@ export const useTasksStore = defineStore('tasks', () => {
     payload: UpdateTaskPayload,
   ): Promise<ActionResult<FrontendTask>> => {
     const index = tasks.value.findIndex(t => t.id === id)
-    if (index === -1) return { success: false, error: `Task ${id} not found` }
     loading.value = true
     error.value = null
     try {
       const response = await http.put<FrontendTask>(`/tasks/${id}`, payload)
       if (response.success && response.data) {
-        tasks.value[index] = response.data
+        if (index !== -1) {
+          tasks.value[index] = response.data
+        }
         return { success: true, data: response.data }
       }
       throw new Error('Failed to update task')
