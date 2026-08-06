@@ -24,6 +24,8 @@ export const useSessionGateStore = defineStore('sessionGate', {
       canContinueRemaining: boolean
       fromTaskName: string
     },
+    /** Modal de resumen del día (End Day, solo lectura). */
+    showEndDaySummary: false,
   }),
   actions: {
     requestDailyCheckinForPendingStart() {
@@ -60,6 +62,12 @@ export const useSessionGateStore = defineStore('sessionGate', {
     },
     closeTaskSwitchPrompt() {
       this.taskSwitchPrompt = null
+    },
+    openEndDaySummary() {
+      this.showEndDaySummary = true
+    },
+    closeEndDaySummary() {
+      this.showEndDaySummary = false
     },
   },
 })

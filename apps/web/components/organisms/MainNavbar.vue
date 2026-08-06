@@ -66,6 +66,7 @@
   import NavbarProfileMenu from '@/components/molecules/NavbarProfileMenu.vue'
   import { useAuth } from '@/composables/auth'
   import { useUserData } from '@/composables/shared'
+  import { useSessionGateStore } from '@/stores/sessionGate'
   import { useTimerStore } from '@/stores/timer'
   import { ROUTES } from '@/utils/routes'
   import RitmoLogo from '@ritmo/ui/components/atoms/display/RitmoLogo.vue'
@@ -77,6 +78,7 @@
   const nuxtApp = useNuxtApp()
   const theme = nuxtApp.$theme
   const timerStore = useTimerStore()
+  const sessionGate = useSessionGateStore()
   const { logout } = useAuth()
   const {
     userDisplayName,
@@ -148,7 +150,7 @@
   }
 
   const handleEndDay = () => {
-    timerStore?.endDay?.()
+    sessionGate.openEndDaySummary()
     closeProfileMenu()
   }
 

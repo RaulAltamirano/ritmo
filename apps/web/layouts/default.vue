@@ -15,6 +15,7 @@
     <DailyCheckinModal />
     <WorkBlockFeedbackModal />
     <TaskSwitchPresetModal />
+    <EndDaySummaryModal />
 
     <BaseToast position="top-right" :max-toasts="5" />
   </div>
@@ -23,6 +24,7 @@
 <script setup lang="ts">
   import BreakTimerModal from '@/components/molecules/BreakTimerModal.vue'
   import DailyCheckinModal from '@/components/molecules/DailyCheckinModal.vue'
+  import EndDaySummaryModal from '@/components/molecules/EndDaySummaryModal.vue'
   import FloatingTimer from '@/components/molecules/FloatingTimer.vue'
   import TaskSwitchPresetModal from '@/components/molecules/TaskSwitchPresetModal.vue'
   import WorkBlockFeedbackModal from '@/components/molecules/WorkBlockFeedbackModal.vue'
