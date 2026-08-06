@@ -64,7 +64,9 @@ function applyAnswer(
   return next
 }
 
-export function useGenerateWeekChat(options: UseGenerateWeekChatOptions): {
+export function useGenerateWeekChat(
+  options: UseGenerateWeekChatOptions | (() => UseGenerateWeekChatOptions),
+): {
   messages: Ref<AiChatMessage[]>
   slots: Ref<GenerateWeekIntakeSlots>
   readyToPreview: Ref<boolean>
@@ -75,6 +77,9 @@ export function useGenerateWeekChat(options: UseGenerateWeekChatOptions): {
   generatePreview: () => Promise<void>
   reset: () => void
 } {
+  const resolveOptions = (): UseGenerateWeekChatOptions =>
+    typeof options === 'function' ? options() : options
+
   const messages = ref<AiChatMessage[]>([])
   const slots = ref<GenerateWeekIntakeSlots>({})
   const readyToPreview = ref(false)
@@ -142,12 +147,13 @@ export function useGenerateWeekChat(options: UseGenerateWeekChatOptions): {
       await new Promise<void>(resolve => {
         setTimeout(resolve, 150)
       })
+      const opts = resolveOptions()
       draft.value = buildWeekDraft({
-        planName: options.planName,
-        weekStart: options.weekStart,
+        planName: opts.planName,
+        weekStart: opts.weekStart,
         slots: slots.value,
-        minutesPerSession: options.minutesPerSession,
-        daysPerWeek: options.daysPerWeek,
+        minutesPerSession: opts.minutesPerSession,
+        daysPerWeek: opts.daysPerWeek,
       })
       phase.value = 'preview'
     } catch {
