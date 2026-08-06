@@ -27,104 +27,46 @@
           <BaseButton variant="primary" @click="openCreateTaskModal">
             New task
           </BaseButton>
+          <PlanAiWeekGenerator @open="showGenerateWeekModal = true" />
         </template>
       </PageHeader>
 
-      <ProjectBoard
-        :tasks="projectTasks"
-        :projectInfo="projectBoardInfo"
-        @move-task="handleMoveTask"
+      <div class="mt-6 space-y-6">
+        <PlanWeekStrip
+          v-model:week-start="weekStart"
+          v-model:selected-day="selectedDay"
+          :scheduled-tasks="scheduledTasks"
+        />
+
+        <PlanUnscheduledList
+          :tasks="unscheduledTasks"
+          @toggle-complete="handleToggleComplete"
+        />
+
+        <PlanDayTimeline
+          :tasks="dayTasks"
+          @toggle-complete="handleToggleComplete"
+        />
+      </div>
+
+      <PlanCreateTaskModal
+        v-if="showCreateTaskModal"
+        v-model="taskForm"
+        :loading="creating"
+        :error="createError"
+        @close="showCreateTaskModal = false"
+        @submit="createTask"
       />
 
-      <div
-        v-if="showCreateTaskModal"
-        class="fixed inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        @click="showCreateTaskModal = false"
-      >
-        <div
-          class="w-full max-w-md bg-surface rounded-xl shadow-2xl border border-outline"
-          @click.stop
-        >
-          <div class="p-6 border-b border-outline">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-              New task
-            </h3>
-          </div>
-          <form @submit.prevent="createTask" class="p-6 space-y-4">
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Title
-              </label>
-              <input
-                v-model="taskForm.title"
-                type="text"
-                required
-                class="w-full px-3 py-2 border border-outline-strong rounded-lg bg-surface text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Task name"
-              />
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Category
-              </label>
-              <select
-                v-model="taskForm.category"
-                class="w-full px-3 py-2 border border-outline-strong rounded-lg bg-surface text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="">No category</option>
-                <option value="Work">Work</option>
-                <option value="Study">Study</option>
-                <option value="Personal">Personal</option>
-              </select>
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Priority
-              </label>
-              <select
-                v-model="taskForm.priority"
-                class="w-full px-3 py-2 border border-outline-strong rounded-lg bg-surface text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="baja">Low</option>
-                <option value="media">Medium</option>
-                <option value="alta">High</option>
-              </select>
-            </div>
-            <p
-              v-if="createError"
-              class="text-sm text-red-600 dark:text-red-400"
-              role="alert"
-            >
-              {{ createError }}
-            </p>
-            <div class="flex items-center gap-3 pt-4">
-              <BaseButton
-                variant="outline"
-                type="button"
-                :disabled="creating"
-                @click="showCreateTaskModal = false"
-                class="flex-1"
-              >
-                Cancel
-              </BaseButton>
-              <BaseButton
-                variant="primary"
-                type="submit"
-                class="flex-1"
-                :loading="creating"
-              >
-                {{ creating ? 'Creating…' : 'Create task' }}
-              </BaseButton>
-            </div>
-          </form>
-        </div>
-      </div>
+      <GenerateWeekModal
+        :is-open="showGenerateWeekModal"
+        :plan-id="project.id"
+        :plan-name="project.name"
+        :week-start="weekStart"
+        @update:is-open="showGenerateWeekModal = $event"
+        @close="showGenerateWeekModal = false"
+        @apply="handleApplyWeekDraft"
+      />
     </template>
   </div>
 </template>
@@ -135,9 +77,37 @@
   import BaseSpinner from '@ritmo/ui/components/atoms/display/BaseSpinner.vue'
   import { computed, onMounted, ref, watch } from 'vue'
   import PageHeader from '@/components/molecules/PageHeader.vue'
-  import ProjectBoard from '@/components/molecules/ProjectBoard.vue'
+  import PlanAiWeekGenerator from '@/components/molecules/PlanAiWeekGenerator.vue'
+  import PlanCreateTaskModal from '@/components/molecules/PlanCreateTaskModal.vue'
+  import PlanWeekStrip from '@/components/molecules/PlanWeekStrip.vue'
+  import GenerateWeekModal from '@/components/organisms/GenerateWeekModal.vue'
+  import PlanDayTimeline from '@/components/organisms/PlanDayTimeline.vue'
+  import PlanUnscheduledList from '@/components/organisms/PlanUnscheduledList.vue'
   import { useProjectsStore } from '@/stores/projects'
   import { useTasksStore } from '@/stores/tasks'
+  import type { WeekDraft } from '@/types/generateWeek'
+  import type { Task } from '@/types/task'
+  import {
+    mergeWeekDraftTasks,
+    weekDraftToTasks,
+    weekHasScheduledTasks,
+  } from '@/utils/applyWeekDraft'
+  import {
+    calendarDayKey,
+    defaultSelectedDay,
+    splitPlanTasks,
+    startOfWeekMonday,
+    tasksForDay,
+  } from '@/utils/planWeek'
+  import { buildMockPlanTimelineTasks } from '@/data/mockPlanTimelineTasks'
+
+  interface PlanCreateTaskForm {
+    title: string
+    category: string
+    priority: 'alta' | 'media' | 'baja'
+    date: string
+    time: string
+  }
 
   const route = useRoute()
   const projectsStore = useProjectsStore()
@@ -148,11 +118,57 @@
   const loadError = ref<string | null>(null)
   const creating = ref(false)
   const createError = ref<string | null>(null)
+  const completingId = ref<string | null>(null)
+  const showCreateTaskModal = ref(false)
+  const showGenerateWeekModal = ref(false)
+  const mockCompleted = ref<Record<string, boolean>>({})
+  const aiOverlayTasks = ref<Task[] | null>(null)
+  const aiOverlayWeekKey = ref<string | null>(null)
+
+  const weekStart = ref(startOfWeekMonday(new Date()))
+  const selectedDay = ref(defaultSelectedDay(weekStart.value))
+
+  const emptyForm = (): PlanCreateTaskForm => ({
+    title: '',
+    category: '',
+    priority: 'media',
+    date: '',
+    time: '',
+  })
+  const taskForm = ref(emptyForm())
 
   const project = computed(() => projectsStore.getProjectById(projectId.value))
 
-  const projectTasks = computed(() =>
-    projectsStore.getTasksByProjectId(projectId.value),
+  /** Demo tasks for today + unscheduled inbox (UI preview only). */
+  const projectTasks = computed(() => {
+    const real = projectsStore.getTasksByProjectId(projectId.value)
+    const mocks = buildMockPlanTimelineTasks(projectId.value, new Date()).map(
+      t => ({
+        ...t,
+        completed: mockCompleted.value[t.id] ?? t.completed,
+      }),
+    )
+    const mockIds = new Set(mocks.map(t => t.id))
+    let combined = [...real.filter(t => !mockIds.has(t.id)), ...mocks]
+
+    const key = calendarDayKey(weekStart.value)
+    if (aiOverlayTasks.value && aiOverlayWeekKey.value === key) {
+      combined = mergeWeekDraftTasks(
+        combined,
+        aiOverlayTasks.value,
+        weekStart.value,
+      )
+    }
+    return combined
+  })
+  const scheduledTasks = computed(
+    () => splitPlanTasks(projectTasks.value).scheduled,
+  )
+  const unscheduledTasks = computed(
+    () => splitPlanTasks(projectTasks.value).unscheduled,
+  )
+  const dayTasks = computed(() =>
+    tasksForDay(scheduledTasks.value, selectedDay.value),
   )
 
   const statusLabels: Record<string, string> = {
@@ -162,16 +178,12 @@
     pausado: 'Paused',
     completado: 'Completed',
   }
-
   const statusLabel = computed(
     () => statusLabels[project.value?.status ?? ''] ?? 'Unknown',
   )
 
-  const showCreateTaskModal = ref(false)
-  const taskForm = ref({
-    title: '',
-    category: '',
-    priority: 'media' as 'alta' | 'media' | 'baja',
+  watch(weekStart, start => {
+    selectedDay.value = defaultSelectedDay(start)
   })
 
   async function loadPlanDetail() {
@@ -200,7 +212,24 @@
 
   function openCreateTaskModal() {
     createError.value = null
+    taskForm.value = emptyForm()
     showCreateTaskModal.value = true
+  }
+
+  function handleApplyWeekDraft(draft: WeekDraft) {
+    const real = projectsStore.getTasksByProjectId(projectId.value)
+    const mocks = buildMockPlanTimelineTasks(projectId.value, new Date())
+    const mockIds = new Set(mocks.map(t => t.id))
+    const base = [...real.filter(t => !mockIds.has(t.id)), ...mocks]
+    if (weekHasScheduledTasks(base, weekStart.value)) {
+      const ok = window.confirm(
+        "Replace this week’s scheduled sessions with the AI draft?",
+      )
+      if (!ok) return
+    }
+    aiOverlayTasks.value = weekDraftToTasks(draft, projectId.value)
+    aiOverlayWeekKey.value = draft.weekStart
+    showGenerateWeekModal.value = false
   }
 
   const priorityToApi: Record<'alta' | 'media' | 'baja', 'HIGH' | 'MEDIUM' | 'LOW'> = {
@@ -209,16 +238,27 @@
     baja: 'LOW',
   }
 
+  function buildStartTime(): Date | undefined {
+    if (!taskForm.value.date) return undefined
+    const time = taskForm.value.time || '09:00'
+    const [hh, mm] = time.split(':').map(Number)
+    const [yy, mo, dd] = taskForm.value.date.split('-').map(Number)
+    if (!yy || !mo || !dd) return undefined
+    return new Date(yy, mo - 1, dd, hh ?? 9, mm ?? 0, 0, 0)
+  }
+
   async function createTask() {
     if (!taskForm.value.title.trim()) return
     creating.value = true
     createError.value = null
     try {
+      const startTime = buildStartTime()
       const result = await tasksStore.create({
         title: taskForm.value.title.trim(),
         category: taskForm.value.category || undefined,
         priority: priorityToApi[taskForm.value.priority],
         planId: projectId.value,
+        ...(startTime ? { startTime, estimatedDuration: 30 } : {}),
       })
       if (!result.success) {
         createError.value = result.error
@@ -226,43 +266,28 @@
       }
       await projectsStore.fetchPlanTasks(projectId.value)
       showCreateTaskModal.value = false
-      taskForm.value = { title: '', category: '', priority: 'media' }
+      taskForm.value = emptyForm()
     } finally {
       creating.value = false
     }
   }
 
-  const projectBoardInfo = computed(() => ({
-    status: project.value?.status,
-    progress: project.value?.progress,
-    createdAt: project.value?.createdAt,
-    columns: [
-      { status: 'pendiente', label: 'To do' },
-      { status: 'en_progreso', label: 'In progress' },
-      { status: 'completado', label: 'Completed' },
-    ],
-  }))
-
-  function handleMoveTask({
-    fromStatus,
-    fromIdx,
-    toStatus,
-    toIdx,
-  }: {
-    fromStatus: string
-    fromIdx: number
-    toStatus: string
-    toIdx: number
-  }) {
-    const allTasks = [...projectTasks.value]
-    const fromTasks = allTasks.filter(t => (t.status ?? 'pendiente') === fromStatus)
-    const task = fromTasks[fromIdx]
-    if (!task) return
-    task.status = toStatus
-    const toTasks = allTasks.filter(
-      t => (t.status ?? 'pendiente') === toStatus && t.id !== task.id,
-    )
-    toTasks.splice(toIdx, 0, task)
-    projectsStore.updateTask(task)
+  async function handleToggleComplete(task: Task, completed: boolean) {
+    if (task.id.startsWith('mock-plan-')) {
+      mockCompleted.value = { ...mockCompleted.value, [task.id]: completed }
+      return
+    }
+    if (completingId.value === task.id) return
+    completingId.value = task.id
+    const previous = task.completed
+    projectsStore.updateTask({ ...task, completed })
+    try {
+      const result = await tasksStore.markCompleted(task.id, completed)
+      if (!result.success) {
+        projectsStore.updateTask({ ...task, completed: previous })
+      }
+    } finally {
+      completingId.value = null
+    }
   }
 </script>

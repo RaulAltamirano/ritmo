@@ -203,6 +203,9 @@
     () => Boolean(draft.value && draft.value.sessions.length > 0),
   )
 
+  // Reserved for future provider context / telemetry.
+  void props.planId
+
   watch(
     () => props.isOpen,
     open => {
