@@ -18,14 +18,15 @@ function baseTask(overrides: Partial<Task> = {}): Task {
 }
 
 describe('TaskCard break state', () => {
-  it('shows Descanso and break accent when isOnBreak', () => {
+  it('shows moon break badge and violet accent when isOnBreak', () => {
     const wrapper = mount(TaskCard, {
       props: { task: baseTask() },
     })
 
-    expect(wrapper.text()).toContain('Descanso')
+    expect(wrapper.text()).not.toContain('Descanso')
+    expect(wrapper.get('[aria-label="Descanso"]').exists()).toBe(true)
     expect(wrapper.get('.tcard-accent').attributes('style')).toContain(
-      'rgb(16, 185, 129)',
+      'rgb(139, 92, 246)',
     )
   })
 
@@ -34,21 +35,21 @@ describe('TaskCard break state', () => {
       props: { task: baseTask({ isOnBreak: false }) },
     })
 
-    expect(wrapper.text()).not.toContain('Descanso')
+    expect(wrapper.find('[aria-label="Descanso"]').exists()).toBe(false)
     expect(wrapper.get('.tcard-accent').attributes('style')).toContain(
       'rgb(14, 165, 233)',
     )
   })
 
-  it('shows Descanso countdown when paused on break', () => {
+  it('shows violet countdown when paused on break', () => {
     const wrapper = mount(TaskCard, {
       props: {
         task: baseTask({ isRunning: false, isOnBreak: true, timeRemaining: 120 }),
       },
     })
 
-    expect(wrapper.text()).toContain('Descanso')
+    expect(wrapper.get('[aria-label="Descanso"]').exists()).toBe(true)
     expect(wrapper.text()).toMatch(/02:00/)
-    expect(wrapper.classes().join(' ')).toMatch(/emerald/)
+    expect(wrapper.classes().join(' ')).toMatch(/violet/)
   })
 })

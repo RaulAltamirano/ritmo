@@ -53,7 +53,7 @@ describe('FloatingTimer', () => {
       name: 'T',
       timeLeft: opts.timeLeft ?? 300,
       totalTime: opts.phase === 'break' ? 300 : 1500,
-      type: opts.phase === 'break' ? 'Descanso' : 'Pomodoro',
+      type: 'Pomodoro',
       totalPausedTime: 0,
       startedAt: new Date(),
     }
@@ -92,18 +92,18 @@ describe('FloatingTimer', () => {
     })
   }
 
-  it('renders break phase label and skip control', async () => {
+  it('renders break phase moon icon and skip control', async () => {
     const { pinia } = prepareStore({ phase: 'break' })
     const wrapper = mountTimer(pinia)
     await flushPromises()
 
-    expect(wrapper.text()).toMatch(/Descanso/)
     expect(wrapper.find('button[aria-label="Saltar descanso"]').exists()).toBe(true)
     const pill = wrapper.get('[role="button"]')
     expect(pill.attributes('aria-label')).toBe(
       'Descanso: 5:00 restante. Click para abrir el descanso',
     )
     expect(pill.attributes('aria-expanded')).toBeUndefined()
+    expect(wrapper.html()).toMatch(/lucide-moon|class="[^"]*lucide[^"]*moon/i)
   })
 
   it('hides reset button when bound to a remote session', async () => {

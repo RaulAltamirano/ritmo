@@ -5,7 +5,7 @@
     :class="[
       task.isRunning || task.isOnBreak
         ? task.isOnBreak
-          ? 'bg-emerald-50/70 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50'
+          ? 'bg-violet-50/70 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800/50'
           : 'bg-primary-50/70 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800/50'
         : 'bg-white/70 dark:bg-gray-800/70 border-gray-200/80 dark:border-gray-700/45 hover:border-gray-300 dark:hover:border-gray-600/60',
       task.completed && 'opacity-60',
@@ -67,9 +67,11 @@
           </span>
           <span
             v-if="task.isOnBreak"
-            class="meta-priority text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
+            class="meta-priority inline-flex items-center justify-center text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20"
+            aria-label="Descanso"
+            title="Descanso"
           >
-            Descanso
+            <Moon class="h-3.5 w-3.5" aria-hidden="true" />
           </span>
           <template v-if="task.totalTimeSpent">
             <span class="text-xs text-gray-300 dark:text-gray-600">·</span>
@@ -85,7 +87,7 @@
         class="font-mono text-sm font-semibold tracking-wide flex-shrink-0"
         :class="
           task.isOnBreak
-            ? 'text-emerald-600 dark:text-emerald-400'
+            ? 'text-violet-600 dark:text-violet-400'
             : 'text-primary-600 dark:text-primary-400'
         "
       >
@@ -97,14 +99,20 @@
           v-if="!task.completed"
           class="tcard-btn"
           :class="[
-            task.isRunning
-              ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-900/60'
+            task.isRunning || task.isOnBreak
+              ? task.isOnBreak
+                ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900/60'
+                : 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-900/60'
               : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50',
           ]"
-          :aria-label="task.isRunning ? 'Pausar tarea' : 'Iniciar tarea'"
+          :aria-label="task.isRunning || task.isOnBreak ? 'Pausar tarea' : 'Iniciar tarea'"
           @click.stop="$emit('start-timer')"
         >
-          <svg v-if="task.isRunning" viewBox="0 0 16 16" fill="currentColor">
+          <svg
+            v-if="task.isRunning || task.isOnBreak"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+          >
             <rect x="3" y="2" width="4" height="12" rx="1" />
             <rect x="9" y="2" width="4" height="12" rx="1" />
           </svg>
@@ -176,7 +184,7 @@
    * Emits: start-timer, request-complete, open-edit, delete-task.
    */
   import { computed } from 'vue'
-  import { GripVertical } from 'lucide-vue-next'
+  import { GripVertical, Moon } from 'lucide-vue-next'
   import type { Task } from '../../types/task'
 
   interface TaskCardProps {
@@ -216,7 +224,7 @@
 
   const accentColor = computed(() => {
     if (props.task.completed) return '#22c55e' // green-500
-    if (props.task.isOnBreak) return '#10b981' // emerald-500
+    if (props.task.isOnBreak) return '#8b5cf6' // violet-500 break
     if (props.task.isRunning) return '#0ea5e9' // primary-500
     return priorityAccentHex[props.task.priority ?? ''] ?? '#e2e8f0' // gray-200 fallback
   })

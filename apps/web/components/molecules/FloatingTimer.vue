@@ -21,8 +21,6 @@
         @click="toggleDetails"
         @keydown.enter="toggleDetails"
         @keydown.space.prevent="toggleDetails"
-        @mouseenter="isHovered = true"
-        @mouseleave="isHovered = false"
       >
         <div
           class="flex items-center gap-2.5 pl-3.5 pr-2 min-h-[56px] rounded-2xl border backdrop-blur-md shadow-lg transition-all duration-200"
@@ -36,7 +34,14 @@
                 <span class="ft-ring ft-ring--2" />
               </span>
             </Transition>
+            <Moon
+              v-if="isBreak"
+              :size="18"
+              class="ft-clock-icon transition-colors duration-200"
+              :class="[iconClasses, { 'ft-clock-icon--critical': isCritical }]"
+            />
             <Clock
+              v-else
               :size="18"
               class="ft-clock-icon transition-colors duration-200"
               :class="[iconClasses, { 'ft-clock-icon--critical': isCritical }]"
@@ -100,43 +105,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Hover tooltip -->
-      <Transition name="ft-fade">
-        <div
-          v-if="isHovered && !showDetails"
-          class="absolute bottom-[calc(100%+10px)] right-0 bg-gray-900 dark:bg-gray-800 text-gray-100 text-[13px] rounded-[10px] px-3 py-2 whitespace-nowrap shadow-lg border border-gray-700/80 dark:border-gray-600/60 pointer-events-none z-10"
-          role="tooltip"
-        >
-          <div class="flex items-center gap-1.5 font-medium">
-            <Clock :size="11" aria-hidden="true" />
-            <span>{{ getTimeStatus() }} · {{ timerStore.workBlockStatusLabel }}</span>
-          </div>
-          <p class="mt-0.5 text-xs text-gray-400">{{ getProgressText() }}</p>
-          <p
-            v-if="sessionMode"
-            class="mt-0.5 text-xs text-gray-400 flex items-center gap-1"
-          >
-            <span>Modo:</span>
-            <component
-              v-if="sessionModeIcon"
-              :is="sessionModeIcon"
-              :size="11"
-              aria-hidden="true"
-            />
-            <span>{{ sessionMode }}</span>
-          </p>
-          <p v-if="sessionCategory" class="mt-0.5 text-xs text-gray-400">
-            Categoría: {{ sessionCategory }}
-          </p>
-          <p v-if="remoteIdPreview" class="mt-0.5 text-xs text-gray-500 font-mono">
-            Bloque: {{ remoteIdPreview }}
-          </p>
-          <p class="mt-0.5 text-xs text-gray-400">
-            {{ isBreak ? 'Click para abrir el descanso' : 'Click para detalles' }}
-          </p>
-        </div>
-      </Transition>
 
       <!-- Details panel -->
       <Transition name="ft-panel">
@@ -237,7 +205,7 @@
             </button>
             <button
               v-if="isBreak"
-              class="px-4 h-11 rounded-[10px] text-sm font-medium border-0 cursor-pointer touch-manipulation bg-emerald-500 text-white transition-colors duration-150 hover:bg-emerald-600 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+              class="px-4 h-11 rounded-[10px] text-sm font-medium border-0 cursor-pointer touch-manipulation bg-violet-500 text-white transition-colors duration-150 hover:bg-violet-600 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
               @click="handleSkipBreak"
             >
               Saltar descanso
@@ -260,6 +228,7 @@
   import { computed, ref, type Component } from 'vue'
   import {
     Clock,
+    Moon,
     Pause,
     Play,
     RotateCcw,
@@ -287,7 +256,6 @@
   const sessionGate = useSessionGateStore()
 
   const showDetails = ref(false)
-  const isHovered = ref(false)
 
   const activeTask = computed(() => timerStore.activeTask)
   const timeLeft = computed(() => timerStore.activeTask?.timeLeft ?? 0)
@@ -338,14 +306,16 @@
   const remoteIdPreview = computed(() => timerStore.remoteWorkSessionIdPreview)
 
   const pillSubtitle = computed(() => {
+    if (isBreak.value) {
+      return sessionMode.value || 'Descanso'
+    }
     const parts = [timerStore.workBlockStatusLabel, sessionMode.value].filter(Boolean)
     return parts.join(' · ') || getTimeStatus()
   })
 
   const pillSubtitleFull = computed(() => {
-    const base = [getTimeStatus(), timerStore.workBlockStatusLabel, sessionMode.value]
-      .filter(Boolean)
-      .join(' · ')
+    const status = isBreak.value ? 'Descanso' : timerStore.workBlockStatusLabel
+    const base = [getTimeStatus(), status, sessionMode.value].filter(Boolean).join(' · ')
     const extra = [
       sessionCategory.value && `Categoría: ${sessionCategory.value}`,
       remoteIdPreview.value && `WorkSession: ${remoteIdPreview.value}`,
@@ -375,7 +345,7 @@
   /* State-driven Tailwind classes */
   const pillClasses = computed(() => {
     if (isBreak.value)
-      return 'bg-emerald-50/95 dark:bg-emerald-950/20 border-emerald-300/40 dark:border-emerald-500/35'
+      return 'bg-violet-50/95 dark:bg-violet-950/20 border-violet-300/40 dark:border-violet-500/35'
     if (isCritical.value)
       return 'bg-error-50/95 dark:bg-error-950/20 border-error-300/40 dark:border-error-500/35 critical-pulse'
     if (isWarning.value)
@@ -384,28 +354,28 @@
   })
 
   const iconClasses = computed(() => {
-    if (isBreak.value) return 'text-emerald-500 dark:text-emerald-400'
+    if (isBreak.value) return 'text-violet-500 dark:text-violet-400'
     if (isCritical.value) return 'text-error-500 dark:text-error-400'
     if (isWarning.value) return 'text-warning-500 dark:text-warning-400'
     return 'text-primary-500 dark:text-primary-400'
   })
 
   const timeClasses = computed(() => {
-    if (isBreak.value) return 'text-emerald-700 dark:text-emerald-400'
+    if (isBreak.value) return 'text-violet-700 dark:text-violet-400'
     if (isCritical.value) return 'text-error-700 dark:text-error-400'
     if (isWarning.value) return 'text-warning-700 dark:text-warning-400'
     return 'text-gray-900 dark:text-gray-100'
   })
 
   const fillColor = computed(() => {
-    if (isBreak.value) return '#10b981' // emerald-500
+    if (isBreak.value) return '#8b5cf6' // violet-500
     if (isCritical.value) return '#ef4444' // error-500
     if (isWarning.value) return '#f97316' // warning-500
     return '#0ea5e9' // primary-500
   })
 
   const dotClasses = computed(() => {
-    if (isBreak.value) return 'bg-emerald-500'
+    if (isBreak.value) return 'bg-violet-500'
     if (isCritical.value) return 'bg-error-500'
     if (isWarning.value) return 'bg-warning-500'
     return 'bg-primary-500'
@@ -413,7 +383,7 @@
 
   const pauseBtnClasses = computed(() => {
     if (isBreak.value)
-      return 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
+      return 'text-violet-600 dark:text-violet-400 hover:bg-violet-500/10'
     if (isCritical.value) return 'text-error-500 hover:bg-error-500/10'
     if (isWarning.value) return 'text-warning-500 hover:bg-warning-500/10'
     return 'text-primary-600 dark:text-primary-400 hover:bg-primary-500/10'
@@ -439,11 +409,6 @@
     if (isCritical.value) return 'Crítico'
     if (isWarning.value) return 'Atención'
     return 'Normal'
-  }
-
-  const getProgressText = (): string => {
-    if (!totalTime.value) return 'Timer en progreso'
-    return `${progressPercent.value}% completado`
   }
 
   const toggleDetails = () => {
@@ -595,18 +560,6 @@
   }
 
   /* Vue Transition classes */
-  .ft-fade-enter-active,
-  .ft-fade-leave-active {
-    transition:
-      opacity 0.15s ease,
-      transform 0.15s ease;
-  }
-  .ft-fade-enter-from,
-  .ft-fade-leave-to {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-
   .ft-panel-enter-active {
     transition:
       opacity 0.18s ease,
@@ -641,8 +594,6 @@
       display: none;
     }
 
-    .ft-fade-enter-active,
-    .ft-fade-leave-active,
     .ft-panel-enter-active,
     .ft-panel-leave-active,
     .ft-halo-enter-active,
