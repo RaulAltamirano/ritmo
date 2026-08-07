@@ -15,13 +15,14 @@ import { computed, ref } from 'vue'
 import { useAuthAPI } from './useAuthAPI'
 import { getGlobalRefreshState, runSingleFlightRefresh } from './useGlobalRefreshState'
 
+const lastRefreshAttempt = ref<Date | null>(null)
+const lastFailureAttempt = ref<Date | null>(null)
+
 export const useTokenManager = () => {
   const authStore = useAuthStore()
   const authAPI = useAuthAPI()
 
   // Reactive state
-  const lastRefreshAttempt = ref<Date | null>(null)
-  const lastFailureAttempt = ref<Date | null>(null)
   const refreshInterval = ref<NodeJS.Timeout | null>(null)
 
   // Computed properties

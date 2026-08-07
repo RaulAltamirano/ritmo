@@ -120,6 +120,8 @@ describe('🔐 Token Refresh System', () => {
       '../composables/auth/useGlobalRefreshState'
     )
     resetGlobalRefreshState()
+    const { useTokenManager } = await import('../composables/auth/useTokenManager')
+    useTokenManager().clearTokens()
   })
 
   afterEach(() => {
@@ -256,6 +258,22 @@ describe('🔐 Token Refresh System', () => {
       mockAuthAPI.refreshToken.mockResolvedValue({ success: true })
       await expect(tokenManager.silentRefresh()).resolves.toBe(true)
       expect(tokenManager.getTokenInfo().lastRefreshAttempt).toEqual(new Date())
+    })
+
+    it('shares failure backoff across token manager instances', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-08-06T12:00:00Z'))
+      mockAuthAPI.refreshToken.mockResolvedValue({ success: false })
+
+      const { useTokenManager } = await import('../composables/auth/useTokenManager')
+      const firstManager = useTokenManager()
+      const secondManager = useTokenManager()
+
+      await expect(firstManager.silentRefresh()).resolves.toBe(false)
+
+      expect(secondManager.shouldRefreshToken()).toBe(false)
+      vi.advanceTimersByTime(TOKEN_REFRESH_CONFIG.timing.failureBackoffMs + 1)
+      expect(secondManager.shouldRefreshToken()).toBe(true)
     })
   })
 

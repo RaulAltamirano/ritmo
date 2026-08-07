@@ -9,6 +9,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 class MockBroadcastChannel extends EventTarget {
   static channels = new Map<string, Set<MockBroadcastChannel>>()
+  static deliveryDelay:
+    | ((
+        sender: MockBroadcastChannel,
+        receiver: MockBroadcastChannel,
+        data: unknown,
+      ) => number)
+    | null = null
 
   constructor(private readonly channelName: string) {
     super()
@@ -20,9 +27,14 @@ class MockBroadcastChannel extends EventTarget {
   postMessage(data: unknown) {
     for (const channel of MockBroadcastChannel.channels.get(this.channelName) ?? []) {
       if (channel !== this) {
-        queueMicrotask(() =>
-          channel.dispatchEvent(new MessageEvent('message', { data })),
-        )
+        const deliver = () =>
+          channel.dispatchEvent(new MessageEvent('message', { data }))
+        const delay = MockBroadcastChannel.deliveryDelay?.(this, channel, data) ?? 0
+        if (delay > 0) {
+          setTimeout(deliver, delay)
+        } else {
+          queueMicrotask(deliver)
+        }
       }
     }
   }
@@ -33,6 +45,7 @@ class MockBroadcastChannel extends EventTarget {
 
   static reset() {
     MockBroadcastChannel.channels.clear()
+    MockBroadcastChannel.deliveryDelay = null
   }
 }
 
@@ -125,6 +138,34 @@ describe('runSingleFlightRefresh', () => {
     const second = coordinateRefresh(doRefresh)
 
     await expect(Promise.all([first, second])).resolves.toEqual([true, true])
+    expect(doRefresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('settles delayed asymmetric claims before starting a refresh', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-06T12:00:00Z'))
+    globalThis.BroadcastChannel =
+      MockBroadcastChannel as unknown as typeof BroadcastChannel
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.1).mockReturnValueOnce(0.9)
+    MockBroadcastChannel.deliveryDelay = (_sender, _receiver, data) => {
+      const message = data as { owner?: string }
+      return message.owner?.endsWith('-0.1') ? 60 : 0
+    }
+    const doRefresh = vi.fn().mockResolvedValue(true)
+
+    const result = Promise.all([
+      coordinateRefresh(doRefresh),
+      coordinateRefresh(doRefresh),
+    ])
+    await vi.advanceTimersByTimeAsync(500)
+
+    await expect(result).resolves.toEqual([true, true])
     expect(doRefresh).toHaveBeenCalledTimes(1)
   })
 

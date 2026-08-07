@@ -2,6 +2,8 @@ const CHANNEL_NAME = 'ritmo-auth-refresh'
 const LOCK_KEY = 'ritmo-auth-refresh-lock'
 const REFRESH_TIMEOUT_MS = 10_000
 const CLAIM_WINDOW_MS = 25
+const CLAIM_SETTLE_MS = 125
+const LEADER_CONFIRM_MS = 25
 
 interface RefreshLock {
   owner: string
@@ -11,14 +13,20 @@ interface RefreshLock {
 }
 
 interface RefreshMessage {
-  type: 'claim' | 'leader' | 'done'
+  type: 'claim' | 'leader' | 'leader-conflict' | 'done'
   owner: string
   success?: boolean
 }
 
-const getStorage = (): Storage | null => {
+interface StorageSnapshot {
+  storage: Storage
+  lock: RefreshLock | null
+}
+
+const getStorageSnapshot = (): StorageSnapshot | null => {
   try {
-    return typeof localStorage === 'undefined' ? null : localStorage
+    if (typeof localStorage === 'undefined') return null
+    return { storage: localStorage, lock: parseLock(localStorage.getItem(LOCK_KEY)) }
   } catch {
     return null
   }
@@ -84,6 +92,15 @@ const createObserver = (
       }
     } else if (message.type === 'leader') {
       leaders.add(message.owner)
+      const lowestClaim = [...claims].sort()[0]
+      if (lowestClaim && lowestClaim < message.owner) {
+        channel?.postMessage({
+          type: 'leader-conflict',
+          owner: lowestClaim,
+        } satisfies RefreshMessage)
+      }
+    } else if (message.type === 'leader-conflict') {
+      claims.add(message.owner)
     } else if (message.type === 'done') {
       notifyResult(message.owner, message.success === true)
     }
@@ -134,10 +151,12 @@ const createObserver = (
   }
 }
 
-const acquireLock = (storage: Storage | null, owner: string): boolean => {
-  if (!storage) return true
+const acquireLock = (
+  storage: Storage,
+  owner: string,
+): 'acquired' | 'contended' | 'unavailable' => {
   const existingLock = readLock(storage)
-  if (isActiveLock(existingLock)) return false
+  if (isActiveLock(existingLock)) return 'contended'
 
   try {
     storage.setItem(
@@ -148,9 +167,9 @@ const acquireLock = (storage: Storage | null, owner: string): boolean => {
         status: 'refreshing',
       } satisfies RefreshLock),
     )
-    return readLock(storage)?.owner === owner
+    return readLock(storage)?.owner === owner ? 'acquired' : 'contended'
   } catch {
-    return true
+    return 'unavailable'
   }
 }
 
@@ -184,25 +203,49 @@ const electChannelLeader = async (
   owner: string,
 ): Promise<string> => {
   channel.postMessage({ type: 'claim', owner } satisfies RefreshMessage)
-  await delay(CLAIM_WINDOW_MS)
-  const existingLeader = [...observer.leaders].sort()[0]
-  return existingLeader ?? [...observer.claims].sort()[0] ?? owner
+  await delay(CLAIM_SETTLE_MS)
+  return [...observer.claims, ...observer.leaders].sort()[0] ?? owner
+}
+
+const confirmChannelLeadership = async (
+  channel: BroadcastChannel,
+  observer: ReturnType<typeof createObserver>,
+  owner: string,
+): Promise<string> => {
+  channel.postMessage({ type: 'leader', owner } satisfies RefreshMessage)
+  await delay(LEADER_CONFIRM_MS)
+  return [...observer.claims, ...observer.leaders].sort()[0] ?? owner
 }
 
 export const coordinateRefresh = async (
   doRefresh: () => Promise<boolean>,
 ): Promise<boolean> => {
   const channel = createChannel()
-  const storage = getStorage()
+  const storageSnapshot = getStorageSnapshot()
+  let storage = storageSnapshot?.storage ?? null
   const owner = `${Date.now()}-${Math.random()}`
   const observer = createObserver(channel, storage, owner)
-  const existingLock = storage ? readLock(storage) : null
+  const existingLock = storageSnapshot?.lock ?? null
 
   if (isActiveLock(existingLock)) {
     const result = await observer.waitForResult(existingLock.owner)
     observer.close()
     channel?.close()
     return result
+  }
+
+  if (storage) {
+    const lockResult = acquireLock(storage, owner)
+    if (lockResult === 'contended') {
+      const lockOwner = readLock(storage)?.owner
+      const result = lockOwner ? await observer.waitForResult(lockOwner) : false
+      observer.close()
+      channel?.close()
+      return result
+    }
+    if (lockResult === 'unavailable') {
+      storage = null
+    }
   }
 
   if (channel) {
@@ -213,18 +256,16 @@ export const coordinateRefresh = async (
       channel.close()
       return result
     }
-  }
-
-  if (!acquireLock(storage, owner)) {
-    const lockOwner = storage ? readLock(storage)?.owner : null
-    const result = lockOwner ? await observer.waitForResult(lockOwner) : false
-    observer.close()
-    channel?.close()
-    return result
+    const confirmedOwner = await confirmChannelLeadership(channel, observer, owner)
+    if (confirmedOwner !== owner) {
+      const result = await observer.waitForResult(confirmedOwner)
+      observer.close()
+      channel.close()
+      return result
+    }
   }
 
   observer.markLeader()
-  channel?.postMessage({ type: 'leader', owner } satisfies RefreshMessage)
   let success = false
   try {
     success = await doRefresh()
