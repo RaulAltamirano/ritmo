@@ -179,6 +179,7 @@ export const authValidationSchemas = {
     lastName: baseValidationSchemas.lastName,
     timezone: baseValidationSchemas.timezone,
     language: baseValidationSchemas.language,
+    deviceInfo: deviceInfoSchema,
   }),
 
   // Password reset request

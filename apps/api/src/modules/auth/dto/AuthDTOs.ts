@@ -13,6 +13,15 @@ export interface RegisterDTO {
   lastName?: string
   timezone?: string
   language?: string
+  deviceInfo?: {
+    deviceId?: string
+    deviceName?: string
+    deviceType?: string
+    browser?: string
+    os?: string
+    ipAddress?: string
+    userAgent?: string
+  }
 }
 
 export interface LoginDTO {

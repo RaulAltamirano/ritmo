@@ -184,6 +184,44 @@ describe('AuthService.refreshToken', () => {
     })
     expect(extendSessionOnRefresh).not.toHaveBeenCalled()
   })
+
+  it('revokes the new refresh family when extend fails after rotation', async () => {
+    const service = new AuthService()
+    const isSessionActive = vi.fn().mockResolvedValue(true)
+    const extendSessionOnRefresh = vi.fn().mockResolvedValue(false)
+    const revokeRotatedRefreshFamily = vi.fn().mockResolvedValue(undefined)
+    const internals = service as unknown as {
+      getTokenInfo: () => Promise<{ userId: string; sessionId: string }>
+      sessionService: {
+        isSessionActive: typeof isSessionActive
+        extendSessionOnRefresh: typeof extendSessionOnRefresh
+      }
+      revokeRotatedRefreshFamily: typeof revokeRotatedRefreshFamily
+    }
+    internals.getTokenInfo = vi
+      .fn()
+      .mockResolvedValue({ userId: 'user-id', sessionId: 'public-session-id' })
+    internals.sessionService = { isSessionActive, extendSessionOnRefresh }
+    internals.revokeRotatedRefreshFamily = revokeRotatedRefreshFamily
+    service.tokenRotationService = {
+      rotateRefreshToken: vi.fn().mockResolvedValue({
+        success: true,
+        newAccessToken: 'new-access',
+        newRefreshToken: 'new-refresh',
+      }),
+    } as never
+
+    await expect(
+      service.refreshToken('refresh-token', {
+        ipAddress: '127.0.0.1',
+        userAgent: 'vitest',
+      }),
+    ).resolves.toEqual({
+      success: false,
+      error: 'Session is invalid or expired',
+    })
+    expect(revokeRotatedRefreshFamily).toHaveBeenCalledWith('new-refresh')
+  })
 })
 
 describe('AuthController.refresh', () => {

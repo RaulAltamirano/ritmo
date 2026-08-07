@@ -18,7 +18,7 @@ describe('🔐 Session Management Tests', () => {
     expressApp = await app()
   })
 
-  // Cookie auth requires a `user_sessions` row; register alone does not create it.
+  // Cookie auth requires a `user_sessions` row (register/login create it via SessionService).
   const createTestUser = async () => {
     const { user, accessToken } = await createAuthedUser()
     const row = await workerPrisma.userSession.findFirstOrThrow({

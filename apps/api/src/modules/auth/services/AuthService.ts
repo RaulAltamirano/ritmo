@@ -81,11 +81,21 @@ export class AuthService {
       sessionId,
     )
 
+    // Mirror login: persist UserSession so cookies pass session pre-checks
+    const deviceInfo = this.resolveDeviceInfo(validatedData.deviceInfo)
+    const deviceTrust = await this.establishUserSession(
+      user.id,
+      sessionId,
+      deviceInfo,
+      'User registered successfully',
+    )
+
     return {
       user: this.toUserDTO(user),
       accessToken,
       refreshToken,
       sessionId,
+      ...(deviceTrust ? { deviceTrust } : {}),
     }
   }
 
@@ -137,16 +147,7 @@ export class AuthService {
       sessionId,
     )
 
-    // Create or update session using SessionService
-    const deviceInfo = {
-      deviceId: validatedData.deviceInfo?.deviceId ?? this.generateDeviceId(),
-      deviceName: validatedData.deviceInfo?.deviceName ?? 'Unknown Device',
-      deviceType: validatedData.deviceInfo?.deviceType ?? 'desktop',
-      browser: validatedData.deviceInfo?.browser ?? 'Unknown',
-      os: validatedData.deviceInfo?.os ?? 'Unknown',
-      ipAddress: validatedData.deviceInfo?.ipAddress ?? '::1',
-      userAgent: validatedData.deviceInfo?.userAgent ?? '',
-    }
+    const deviceInfo = this.resolveDeviceInfo(validatedData.deviceInfo)
 
     // Debug: Log what we're receiving
     console.log('🔍 DEBUG - Device info received:', {
@@ -169,55 +170,19 @@ export class AuthService {
       )
     }
 
-    try {
-      const sessionResult = await this.sessionService.intelligentLogin(
-        user.id,
-        deviceInfo,
-        sessionId,
-        deviceInfo.ipAddress,
-      )
+    const deviceTrust = await this.establishUserSession(
+      user.id,
+      sessionId,
+      deviceInfo,
+      'User logged in successfully',
+    )
 
-      // Log successful login
-      await this.loggingService.logAuthEvent(
-        'login_success',
-        user.id,
-        sessionId,
-        deviceInfo.ipAddress,
-        deviceInfo.userAgent,
-        'User logged in successfully',
-        'low',
-        { deviceTrust: sessionResult.deviceTrust },
-      )
-
-      return {
-        user: this.toUserDTO(user),
-        accessToken,
-        refreshToken,
-        sessionId,
-        deviceTrust: sessionResult.deviceTrust,
-      }
-    } catch (sessionError) {
-      // If session creation fails, still return tokens but log the error
-      console.error('Session creation failed:', sessionError)
-
-      // Log session creation failure
-      await this.loggingService.logAuthEvent(
-        'login_success',
-        user.id,
-        sessionId,
-        deviceInfo.ipAddress,
-        deviceInfo.userAgent,
-        'Login successful but session creation failed',
-        'medium',
-        { sessionError: (sessionError as Error).message },
-      )
-
-      return {
-        user: this.toUserDTO(user),
-        accessToken,
-        refreshToken,
-        sessionId,
-      }
+    return {
+      user: this.toUserDTO(user),
+      accessToken,
+      refreshToken,
+      sessionId,
+      ...(deviceTrust ? { deviceTrust } : {}),
     }
   }
 
@@ -263,6 +228,9 @@ export class AuthService {
         tokenInfo.sessionId,
       )
       if (!extended) {
+        // Rotation already revoked the old refresh — revoke the new family so
+        // the client cannot keep using an orphaned rotated refresh cookie.
+        await this.revokeRotatedRefreshFamily(rotationResult.newRefreshToken)
         return { success: false, error: 'Session is invalid or expired' }
       }
 
@@ -296,6 +264,80 @@ export class AuthService {
         updatedAt: new Date(),
       },
     })
+  }
+
+  private resolveDeviceInfo(deviceInfo?: RegisterDTO['deviceInfo']) {
+    return {
+      deviceId: deviceInfo?.deviceId ?? this.generateDeviceId(),
+      deviceName: deviceInfo?.deviceName ?? 'Unknown Device',
+      deviceType: deviceInfo?.deviceType ?? 'desktop',
+      browser: deviceInfo?.browser ?? 'Unknown',
+      os: deviceInfo?.os ?? 'Unknown',
+      ipAddress: deviceInfo?.ipAddress ?? '::1',
+      userAgent: deviceInfo?.userAgent ?? '',
+    }
+  }
+
+  private async establishUserSession(
+    userId: string,
+    sessionId: string,
+    deviceInfo: ReturnType<AuthService['resolveDeviceInfo']>,
+    successDescription: string,
+  ): Promise<'high' | 'medium' | 'low' | undefined> {
+    try {
+      const sessionResult = await this.sessionService.intelligentLogin(
+        userId,
+        deviceInfo,
+        sessionId,
+        deviceInfo.ipAddress,
+      )
+
+      await this.loggingService.logAuthEvent(
+        'login_success',
+        userId,
+        sessionId,
+        deviceInfo.ipAddress,
+        deviceInfo.userAgent,
+        successDescription,
+        'low',
+        { deviceTrust: sessionResult.deviceTrust },
+      )
+
+      return sessionResult.deviceTrust
+    } catch (sessionError) {
+      console.error('Session creation failed:', sessionError)
+
+      await this.loggingService.logAuthEvent(
+        'login_success',
+        userId,
+        sessionId,
+        deviceInfo.ipAddress,
+        deviceInfo.userAgent,
+        'Auth successful but session creation failed',
+        'medium',
+        { sessionError: (sessionError as Error).message },
+      )
+
+      return undefined
+    }
+  }
+
+  private async revokeRotatedRefreshFamily(
+    newRefreshToken?: string,
+  ): Promise<void> {
+    if (!newRefreshToken) return
+
+    const tokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex')
+    const tokenRecord = await prisma.refreshToken.findFirst({
+      where: { tokenHash },
+      select: { familyId: true },
+    })
+    if (!tokenRecord) return
+
+    await this.tokenRotationService.revokeTokenFamily(
+      tokenRecord.familyId,
+      'session_extend_failed',
+    )
   }
 
   private async getTokenInfo(
