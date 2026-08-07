@@ -44,20 +44,6 @@ export const useAuthAPI = () => {
       )
       const deviceFingerprint = await getCurrentDeviceFingerprint()
 
-      // Debug: Log what we're sending
-      console.log('🔍 FRONTEND DEBUG - Device fingerprint:', {
-        deviceId: deviceFingerprint.deviceId,
-        deviceName: deviceFingerprint.deviceInfo?.deviceName,
-        deviceType: deviceFingerprint.deviceInfo?.deviceType,
-        browser: deviceFingerprint.deviceInfo?.browser,
-        os: deviceFingerprint.deviceInfo?.os,
-        userAgent: deviceFingerprint.deviceInfo?.userAgent,
-        screenResolution: deviceFingerprint.deviceInfo?.screenResolution,
-        hardwareConcurrency: deviceFingerprint.deviceInfo?.hardwareConcurrency,
-        timezone: deviceFingerprint.deviceInfo?.timezone,
-        language: deviceFingerprint.deviceInfo?.language,
-      })
-
       // Prepare login data with device info
       const loginData = {
         ...credentials,
@@ -108,20 +94,6 @@ export const useAuthAPI = () => {
         '../../utils/deviceFingerprint'
       )
       const deviceFingerprint = await getCurrentDeviceFingerprint()
-
-      // Debug: Log what we're sending
-      console.log('🔍 FRONTEND DEBUG - Device fingerprint (register):', {
-        deviceId: deviceFingerprint.deviceId,
-        deviceName: deviceFingerprint.deviceInfo?.deviceName,
-        deviceType: deviceFingerprint.deviceInfo?.deviceType,
-        browser: deviceFingerprint.deviceInfo?.browser,
-        os: deviceFingerprint.deviceInfo?.os,
-        userAgent: deviceFingerprint.deviceInfo?.userAgent,
-        screenResolution: deviceFingerprint.deviceInfo?.screenResolution,
-        hardwareConcurrency: deviceFingerprint.deviceInfo?.hardwareConcurrency,
-        timezone: deviceFingerprint.deviceInfo?.timezone,
-        language: deviceFingerprint.deviceInfo?.language,
-      })
 
       // Prepare registration data with device info
       const registrationData = {

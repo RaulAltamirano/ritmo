@@ -43,10 +43,9 @@ export const useTokenManager = () => {
         if (success) {
           lastRefreshAttempt.value = new Date()
           lastFailureAttempt.value = null
-          console.log('✅ Silent refresh successful - tokens refreshed proactively')
         } else {
           lastFailureAttempt.value = new Date()
-          console.warn('⚠️ Silent refresh failed - response indicates failure')
+          console.warn('Silent refresh failed')
         }
 
         return success

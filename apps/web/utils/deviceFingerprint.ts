@@ -53,14 +53,6 @@ function collectDeviceComponents(): DeviceFingerprintComponents {
   const os = detectOS(userAgent)
   const deviceType = detectDeviceType(userAgent)
 
-  // Debug: Log detection results
-  console.log('🔍 FRONTEND DEBUG - Detection results:', {
-    userAgent: `${userAgent.substring(0, 50)}...`,
-    browser,
-    os,
-    deviceType,
-  })
-
   return {
     deviceType,
     os: os.name,

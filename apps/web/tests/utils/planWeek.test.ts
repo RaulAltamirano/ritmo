@@ -25,7 +25,7 @@ describe('planWeek', () => {
     expect(start.getDate()).toBe(3)
   })
 
-  it('treats tasks without end/duration as unscheduled', () => {
+  it('treats tasks without startTime as unscheduled', () => {
     const scheduled = task({
       id: '1',
       name: 'Study',
@@ -35,7 +35,8 @@ describe('planWeek', () => {
     const unscheduled = task({
       id: '2',
       name: 'Inbox',
-      startTime: new Date(2026, 7, 5, 10, 0),
+      duration: '25m',
+      estimatedTime: '25',
     })
     expect(isTaskScheduled(scheduled)).toBe(true)
     expect(isTaskScheduled(unscheduled)).toBe(false)

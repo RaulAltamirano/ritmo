@@ -10,6 +10,7 @@
       <MainBottomNav />
     </div>
 
+    <!-- Client-only: timer/modals depend on restored session state that SSR cannot know. -->
     <ClientOnly>
       <FloatingTimer />
       <BreakTimerModal />
@@ -19,7 +20,9 @@
       <EndDaySummaryModal />
     </ClientOnly>
 
-    <BaseToast position="top-right" :max-toasts="5" />
+    <ClientOnly>
+      <BaseToast position="top-right" :max-toasts="5" />
+    </ClientOnly>
   </div>
 </template>
 

@@ -33,10 +33,7 @@ export default defineNuxtPlugin(nuxtApp => {
 
         const { useTimerStore } = await import('~/stores/timer')
         await useTimerStore().syncTimerPresetsFromApi()
-
-        console.log('🚀 Authentication initialized successfully')
       } else {
-        console.log('⚠️ Authentication initialization failed')
         // Clear token manager state on auth failure
         tokenManager.clearTokens()
       }

@@ -16,18 +16,27 @@ function isInWeek(date: Date, weekStart: Date): boolean {
 export function weekDraftToTasks(draft: WeekDraft, planId: string): Task[] {
   const weekStart = parseWeekStart(draft.weekStart)
   const now = Date.now()
+  const byDay = new Map<number, number>()
 
   return draft.sessions.map((session, index) => {
     const day = addDays(weekStart, session.dayOffset)
+    const dayCursor = byDay.get(session.dayOffset) ?? 9 * 60
+    const startHour = Math.floor(dayCursor / 60)
+    const startMin = dayCursor % 60
     const startTime = new Date(
       day.getFullYear(),
       day.getMonth(),
       day.getDate(),
-      9,
-      0,
+      startHour,
+      startMin,
       0,
       0,
     )
+    const endTime = new Date(
+      startTime.getTime() + session.durationMin * 60_000,
+    )
+    byDay.set(session.dayOffset, dayCursor + session.durationMin + 15)
+
     return {
       id: `ai-week-${planId}-${draft.weekStart}-${index}`,
       name: session.title,
@@ -38,6 +47,7 @@ export function weekDraftToTasks(draft: WeekDraft, planId: string): Task[] {
       priority: 'media' as const,
       completed: false,
       startTime,
+      endTime,
       duration: `${session.durationMin}m`,
       estimatedTime: String(session.durationMin),
       description: session.notes,
