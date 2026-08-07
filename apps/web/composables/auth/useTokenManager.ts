@@ -10,14 +10,10 @@
  */
 
 import { useAuthStore } from '@/stores/auth'
+import { TOKEN_REFRESH_CONFIG } from '@/config/tokenRefresh'
 import { computed, ref } from 'vue'
 import { useAuthAPI } from './useAuthAPI'
-import {
-  getGlobalRefreshState,
-  getRefreshPromise,
-  setRefreshPromise,
-  updateGlobalRefreshState,
-} from './useGlobalRefreshState'
+import { getGlobalRefreshState, runSingleFlightRefresh } from './useGlobalRefreshState'
 
 export const useTokenManager = () => {
   const authStore = useAuthStore()
@@ -25,6 +21,7 @@ export const useTokenManager = () => {
 
   // Reactive state
   const lastRefreshAttempt = ref<Date | null>(null)
+  const lastFailureAttempt = ref<Date | null>(null)
   const refreshInterval = ref<NodeJS.Timeout | null>(null)
 
   // Computed properties
@@ -37,59 +34,27 @@ export const useTokenManager = () => {
    * Silent refresh attempt
    */
   const silentRefresh = async (): Promise<boolean> => {
-    const refreshState = getGlobalRefreshState()
-    const existingPromise = getRefreshPromise()
-
-    // If already refreshing, return the existing promise result
-    if (refreshState.isRefreshing && existingPromise) {
-      return existingPromise
-    }
-
-    // If already refreshing but no promise, return false
-    if (refreshState.isRefreshing) {
-      return false
-    }
-
-    // Set refreshing state
-    updateGlobalRefreshState({
-      isRefreshing: true,
-      hasRefreshPromise: true,
-      queueLength: 0,
-    })
-
-    // Create refresh promise
-    const refreshPromiseValue = (async () => {
+    return runSingleFlightRefresh(async () => {
       try {
-        lastRefreshAttempt.value = new Date()
-
         const response = await authAPI.refreshToken()
         const success = response?.success ?? false
 
         if (success) {
+          lastRefreshAttempt.value = new Date()
+          lastFailureAttempt.value = null
           console.log('✅ Silent refresh successful - tokens refreshed proactively')
         } else {
+          lastFailureAttempt.value = new Date()
           console.warn('⚠️ Silent refresh failed - response indicates failure')
         }
 
         return success
       } catch (error) {
+        lastFailureAttempt.value = new Date()
         console.warn('Silent refresh error:', error)
         return false
-      } finally {
-        // Clear refreshing state
-        updateGlobalRefreshState({
-          isRefreshing: false,
-          hasRefreshPromise: false,
-          queueLength: 0,
-        })
-        setRefreshPromise(null)
       }
-    })()
-
-    // Set the promise globally
-    setRefreshPromise(refreshPromiseValue)
-
-    return refreshPromiseValue
+    })
   }
 
   /**
@@ -102,10 +67,17 @@ export const useTokenManager = () => {
       return false
     }
 
-    // Don't refresh too frequently (minimum 5 minutes between attempts)
+    if (lastFailureAttempt.value) {
+      const timeSinceLastFailure = Date.now() - lastFailureAttempt.value.getTime()
+      if (timeSinceLastFailure < TOKEN_REFRESH_CONFIG.timing.failureBackoffMs) {
+        return false
+      }
+    }
+
+    // Don't refresh too frequently after a successful refresh
     if (lastRefreshAttempt.value) {
       const timeSinceLastAttempt = Date.now() - lastRefreshAttempt.value.getTime()
-      if (timeSinceLastAttempt < 5 * 60 * 1000) {
+      if (timeSinceLastAttempt < TOKEN_REFRESH_CONFIG.timing.minRefreshInterval) {
         return false
       }
     }
@@ -155,6 +127,7 @@ export const useTokenManager = () => {
   const clearTokens = () => {
     stopProactiveRefresh()
     lastRefreshAttempt.value = null
+    lastFailureAttempt.value = null
   }
 
   /**

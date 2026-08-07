@@ -8,6 +8,8 @@
  * - Proper singleton pattern for test isolation
  */
 
+import { coordinateRefresh } from './refreshCoordinator'
+
 // Global state for refresh management
 let globalRefreshState = {
   isRefreshing: false,
@@ -47,6 +49,35 @@ export const setRefreshPromise = (promise: Promise<boolean> | null) => {
 export const getRefreshPromise = () => refreshPromise
 
 /**
+ * Run a refresh once per tab and coordinate it with other open tabs.
+ */
+export const runSingleFlightRefresh = (
+  doRefresh: () => Promise<boolean>,
+): Promise<boolean> => {
+  const existingPromise = getRefreshPromise()
+  if (existingPromise) {
+    return existingPromise
+  }
+
+  updateGlobalRefreshState({
+    isRefreshing: true,
+    hasRefreshPromise: true,
+    queueLength: 0,
+  })
+
+  const currentPromise = coordinateRefresh(doRefresh).finally(() => {
+    setRefreshPromise(null)
+    updateGlobalRefreshState({
+      isRefreshing: false,
+      hasRefreshPromise: false,
+      queueLength: 0,
+    })
+  })
+  setRefreshPromise(currentPromise)
+  return currentPromise
+}
+
+/**
  * Reset global state (useful for tests)
  */
 export const resetGlobalRefreshState = () => {
@@ -67,6 +98,7 @@ export const useGlobalRefreshState = () => {
     updateRefreshState: updateGlobalRefreshState,
     setRefreshPromise,
     getRefreshPromise,
+    runSingleFlightRefresh,
     resetGlobalRefreshState,
   }
 }

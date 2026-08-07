@@ -77,6 +77,26 @@ vi.mock('../composables/auth/useGlobalRefreshState', () => ({
     mockRefreshPromise = promise
   }),
   getRefreshPromise: vi.fn(() => mockRefreshPromise),
+  runSingleFlightRefresh: vi.fn(async doRefresh => {
+    if (mockRefreshPromise) {
+      return mockRefreshPromise
+    }
+
+    mockGlobalState = {
+      isRefreshing: true,
+      hasRefreshPromise: true,
+      queueLength: 0,
+    }
+    mockRefreshPromise = Promise.resolve(doRefresh()).finally(() => {
+      mockGlobalState = {
+        isRefreshing: false,
+        hasRefreshPromise: false,
+        queueLength: 0,
+      }
+      mockRefreshPromise = null
+    })
+    return mockRefreshPromise
+  }),
   resetGlobalRefreshState: vi.fn(() => {
     mockGlobalState = {
       isRefreshing: false,
@@ -104,6 +124,7 @@ describe('🔐 Token Refresh System', () => {
 
   afterEach(() => {
     vi.clearAllTimers()
+    vi.useRealTimers()
   })
 
   describe('Configuration', () => {
@@ -111,6 +132,7 @@ describe('🔐 Token Refresh System', () => {
       const { timing } = TOKEN_REFRESH_CONFIG
 
       expect(timing.minRefreshInterval).toBe(5 * 60 * 1000) // 5 minutes
+      expect(timing.failureBackoffMs).toBe(30 * 1000)
       expect(timing.proactiveCheckInterval).toBe(60 * 1000) // 1 minute
       expect(timing.maxRefreshAttempts).toBe(10)
       expect(timing.expirationBuffer).toBe(2 * 60 * 1000) // 2 minutes
@@ -214,6 +236,26 @@ describe('🔐 Token Refresh System', () => {
       // Immediate second refresh should be blocked
       const result = tokenManager.shouldRefreshToken()
       expect(result).toBe(false)
+    })
+
+    it('stamps successful refreshes but only backs failures off for 30 seconds', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-08-06T12:00:00Z'))
+      mockAuthAPI.refreshToken.mockResolvedValue({ success: false })
+
+      const { useTokenManager } = await import('../composables/auth/useTokenManager')
+      const tokenManager = useTokenManager()
+
+      await expect(tokenManager.silentRefresh()).resolves.toBe(false)
+      expect(tokenManager.getTokenInfo().lastRefreshAttempt).toBeNull()
+      expect(tokenManager.shouldRefreshToken()).toBe(false)
+
+      vi.advanceTimersByTime(TOKEN_REFRESH_CONFIG.timing.failureBackoffMs + 1)
+      expect(tokenManager.shouldRefreshToken()).toBe(true)
+
+      mockAuthAPI.refreshToken.mockResolvedValue({ success: true })
+      await expect(tokenManager.silentRefresh()).resolves.toBe(true)
+      expect(tokenManager.getTokenInfo().lastRefreshAttempt).toEqual(new Date())
     })
   })
 
