@@ -2,62 +2,54 @@
   <div ref="rootEl" class="relative">
     <button
       type="button"
-      class="inline-flex min-h-[40px] max-w-full cursor-pointer items-center gap-2 rounded-full border border-outline bg-surface px-3 py-1.5 text-left text-sm text-content shadow-sm transition-colors duration-200 hover:border-outline-strong hover:bg-surface-raised focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 dark:bg-surface-raised"
+      class="inline-flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
       aria-label="Choose AI model"
       :aria-expanded="open"
       aria-haspopup="listbox"
       @click="open = !open"
     >
-      <span
-        class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500/15 text-primary-600 dark:text-primary-300"
-        aria-hidden="true"
-      >
-        <Sparkles :size="12" />
-      </span>
-      <span class="min-w-0 truncate">
-        <span class="font-medium">{{ selected?.name ?? 'Select model' }}</span>
+      <span class="truncate">
+        {{ selected?.name ?? 'Select model' }}
         <span
           v-if="selected"
-          class="ml-1.5 text-content-muted"
+          class="ml-1 text-gray-400 dark:text-gray-500"
         >
           {{ selected.tag }}
         </span>
       </span>
-      <ChevronDown
-        class="h-3.5 w-3.5 shrink-0 text-content-muted transition-transform duration-200"
-        :class="open ? 'rotate-180' : ''"
-        aria-hidden="true"
-      />
+      <ChevronDown class="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
     </button>
 
     <div
       v-if="open"
-      class="absolute left-0 top-[calc(100%+0.5rem)] z-20 w-[min(100vw-3rem,18rem)] rounded-2xl border border-outline bg-surface p-2 shadow-lg dark:bg-surface-raised"
+      class="absolute left-0 right-0 z-20 mt-2 rounded-xl border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-900"
     >
       <input
         v-model="query"
         type="search"
         placeholder="Search models"
         aria-label="Search models"
-        class="mb-2 w-full rounded-xl border border-outline bg-canvas px-3 py-2 text-sm text-content placeholder:text-content-muted focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+        class="mb-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-950 dark:text-white"
       />
       <ul class="max-h-56 space-y-0.5 overflow-y-auto" role="listbox">
         <li v-for="model in filtered" :key="model.id" role="presentation">
           <button
             type="button"
-            class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-content transition-colors duration-150 hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary-500"
+            class="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-800"
             :aria-label="`Select ${model.name}`"
             role="option"
             :aria-selected="model.id === modelValue"
             @click="choose(model.id)"
           >
-            <span class="min-w-0">
-              <span class="font-medium">{{ model.name }}</span>
-              <span class="ml-1.5 text-content-muted">{{ model.tag }}</span>
+            <span>
+              {{ model.name }}
+              <span class="ml-1 text-gray-400 dark:text-gray-500">{{
+                model.tag
+              }}</span>
             </span>
             <Check
               v-if="model.id === modelValue"
-              class="h-4 w-4 shrink-0 text-primary-500"
+              class="h-4 w-4 text-primary-500"
               aria-hidden="true"
             />
           </button>
@@ -68,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-  import { Check, ChevronDown, Sparkles } from 'lucide-vue-next'
+  import { Check, ChevronDown } from 'lucide-vue-next'
   import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
   import { STUB_AI_MODELS } from '@/types/generateWeek'
 
