@@ -124,26 +124,43 @@ export const useAuthenticatedHttpClient = () => {
   }
 
   /**
-   * Handle unauthorized requests with shared single-flight refresh
+   * Handle unauthorized requests without double-refreshing.
+   * Global $fetch may already have rotated cookies (and rethrown for
+   * non-idempotent methods) — retry once first, then refresh + retry.
    */
   const handleUnauthorizedRequest = async (
     endpoint: string,
     options: RequestOptions,
   ): Promise<any> => {
-    console.log('🔄 Starting token refresh process...')
+    console.log('🔄 Auth error — retrying once (cookies may already be fresh)...')
 
     try {
-      const refreshSuccess = await runSingleFlightRefresh(attemptTokenRefresh)
-
-      if (refreshSuccess) {
-        console.log('✅ Token refresh successful, retrying original request...')
-        return await retryWithBackoff(() => httpClient.fetch(endpoint, options))
+      return await httpClient.fetch(endpoint, options)
+    } catch (retryError) {
+      if (!isAuthenticationError(retryError)) {
+        throw retryError
       }
+    }
 
-      console.log('❌ Token refresh failed, clearing auth...')
-      return await handleAuthFailure()
+    console.log('🔄 Retry still unauthorized — running single-flight refresh...')
+
+    let refreshSuccess = false
+    try {
+      refreshSuccess = await runSingleFlightRefresh(attemptTokenRefresh)
     } catch (error) {
       console.log('❌ Token refresh error:', error)
+      refreshSuccess = false
+    }
+
+    if (!refreshSuccess) {
+      console.log('❌ Token refresh failed, clearing auth...')
+      return await handleAuthFailure()
+    }
+
+    console.log('✅ Token refresh successful, retrying original request...')
+    try {
+      return await httpClient.fetch(endpoint, options)
+    } catch {
       return await handleAuthFailure()
     }
   }
