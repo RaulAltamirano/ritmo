@@ -7,6 +7,7 @@
 
 import { NextFunction, Request, Response } from 'express'
 import { ApiResponses } from '../../../core/utils/apiResponse.js'
+import { setAuthCookies } from '../../../core/utils/authCookies.js'
 import {
   AccountLockedException,
   AuthenticationException,
@@ -59,19 +60,9 @@ export class AuthController {
 
       const result = await this.authService.login(loginData)
 
-      // Set HttpOnly cookies for security
-      res.cookie('access_token', result.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 5 * 60 * 1000, // 5 minutes
-      })
-
-      res.cookie('refresh_token', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      setAuthCookies(res, {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
       })
 
       ApiResponses.ok(result, 'Login successful').send(res)
@@ -108,19 +99,9 @@ export class AuthController {
         return
       }
 
-      // Set HttpOnly cookies for security
-      res.cookie('access_token', result.newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 5 * 60 * 1000, // 5 minutes
-      })
-
-      res.cookie('refresh_token', result.newRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      setAuthCookies(res, {
+        accessToken: result.newAccessToken!,
+        refreshToken: result.newRefreshToken!,
       })
 
       ApiResponses.ok(

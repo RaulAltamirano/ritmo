@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { AUTH_TTL } from '@ritmo/config'
 import crypto from 'crypto'
 import { generateAccessToken } from '../../core/utils/jwtUtils.js'
 
@@ -198,7 +199,7 @@ export class TokenRotationService {
         tokenHash: newRefreshTokenHash,
         sessionId,
         familyId,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        expiresAt: new Date(Date.now() + AUTH_TTL.refreshTokenMs),
         isRevoked: false,
       },
     })
@@ -230,7 +231,7 @@ export class TokenRotationService {
         tokenHash: initialRefreshTokenHash,
         sessionId,
         familyId,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        expiresAt: new Date(Date.now() + AUTH_TTL.refreshTokenMs),
         isRevoked: false,
       },
     })

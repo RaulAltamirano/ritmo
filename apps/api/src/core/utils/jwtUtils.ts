@@ -7,7 +7,7 @@
  * - Token refresh (refresh endpoint)
  */
 
-import { secretManager } from '@ritmo/config'
+import { AUTH_TTL, secretManager } from '@ritmo/config'
 import jwt from 'jsonwebtoken'
 
 export interface JWTPayload {
@@ -39,7 +39,7 @@ export const generateAccessToken = (userId: string, sessionId: string): string =
   const secret = getJWTAccessSecret()
 
   return jwt.sign({ userId, sessionId, type: 'access' } as JWTPayload, secret, {
-    expiresIn: '15m', // 15 minutes
+    expiresIn: AUTH_TTL.accessTokenExpiry,
     issuer: 'ritmo-api',
     audience: 'ritmo-web',
   })
