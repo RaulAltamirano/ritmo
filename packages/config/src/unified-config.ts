@@ -314,8 +314,8 @@ export class UnifiedConfig {
         jwt: {
           secret: this.secrets.get('JWT_SECRET')!,
           refreshSecret: this.secrets.get('JWT_REFRESH_SECRET')!,
-          accessTokenExpiry: process.env.JWT_ACCESS_EXPIRY ?? '5m',
-          refreshTokenExpiry: process.env.JWT_REFRESH_EXPIRY ?? '24h',
+          accessTokenExpiry: process.env.JWT_ACCESS_EXPIRY ?? '15m',
+          refreshTokenExpiry: process.env.JWT_REFRESH_EXPIRY ?? '7d',
         },
         session: {
           secret: this.secrets.get('SESSION_SECRET')!,

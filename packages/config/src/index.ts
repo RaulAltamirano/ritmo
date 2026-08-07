@@ -5,7 +5,7 @@
  * Consolidated from multiple files into one clean, maintainable solution
  */
 
-// Re-export everything from the unified configuration
+export * from './auth-ttl.js';
 export * from './unified-config.js';
 
 // For backward compatibility, also export the types
