@@ -26,11 +26,18 @@ export default defineNuxtRouteMiddleware(async (to: any) => {
   // Get authentication state
   const { isAuthenticated, initAuth } = useAuth()
 
-  // Initialize auth only once with promise caching
+  // Initialize auth once on success or definitive unauthenticated failure.
+  // Transient failures leave authInitialized false so the next navigation retries.
   if (!authInitialized) {
     authInitPromise ??= initAuth()
-    await authInitPromise
-    authInitialized = true
+    const result = await authInitPromise
+    if (result.success) {
+      authInitialized = true
+    } else if (result.shouldRedirect) {
+      authInitialized = true
+    } else {
+      authInitPromise = null
+    }
   }
 
   // Check route requirements

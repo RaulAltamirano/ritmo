@@ -11,6 +11,7 @@
 
 import { useAuthAPI } from '@/composables/auth'
 import type { AuthUser, LoginCredentials, RegisterCredentials } from '@/types/auth.d'
+import { isAuthenticationError } from '@/utils/authError'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
@@ -197,6 +198,7 @@ export const useAuthStore = defineStore('auth', () => {
     success: boolean
     user?: AuthUser
     error?: string
+    shouldRedirect?: boolean
   }> => {
     try {
       // Use the auth API for /users/me endpoint
@@ -211,12 +213,18 @@ export const useAuthStore = defineStore('auth', () => {
         return { success: true, user: userData }
       }
       setUser(null)
-      return { success: false, error: 'Failed to refresh user data' }
+      return {
+        success: false,
+        error: 'Failed to refresh user data',
+        shouldRedirect: true,
+      }
     } catch (error: any) {
-      // Check if this is an authentication error that requires token refresh
-      if (error?.code === 'UNAUTHORIZED' || error?.status === 401) {
+      const errorMessage =
+        error?.userMessage ?? error?.message ?? 'Failed to refresh user data'
+
+      // Definitive auth failure path: try silent refresh, then clear only if still failing
+      if (isAuthenticationError(error)) {
         try {
-          // Attempt token refresh
           const { useTokenManager } = await import(
             '../composables/auth/useTokenManager'
           )
@@ -224,7 +232,6 @@ export const useAuthStore = defineStore('auth', () => {
           const refreshSuccess = await tokenManager.silentRefresh()
 
           if (refreshSuccess) {
-            // Retry the verification after successful refresh
             const retryResponse = await authAPI.verifyAuthentication()
             if (retryResponse.success && retryResponse.data) {
               const userData = retryResponse.data.user ?? retryResponse.data
@@ -235,13 +242,13 @@ export const useAuthStore = defineStore('auth', () => {
         } catch (refreshError) {
           console.warn('Token refresh failed:', refreshError)
         }
+
+        setUser(null)
+        return { success: false, error: errorMessage, shouldRedirect: true }
       }
 
-      // If we get here, the refresh failed or it wasn't an auth error
-      setUser(null)
-      const errorMessage =
-        error?.userMessage ?? error?.message ?? 'Failed to refresh user data'
-      return { success: false, error: errorMessage }
+      // Network / transient errors: keep existing user and allow retry
+      return { success: false, error: errorMessage, shouldRedirect: false }
     }
   }
 
@@ -256,7 +263,10 @@ export const useAuthStore = defineStore('auth', () => {
       if (result.success) {
         return { success: true }
       }
-      return { success: false, shouldRedirect: true }
+      return {
+        success: false,
+        shouldRedirect: result.shouldRedirect ?? true,
+      }
     } catch {
       return { success: false, shouldRedirect: false }
     }

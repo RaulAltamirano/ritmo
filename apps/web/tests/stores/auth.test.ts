@@ -15,6 +15,7 @@ const mockRegister = vi.fn()
 const mockLogout = vi.fn()
 const mockVerifyAuthentication = vi.fn()
 const mockUpdateProfile = vi.fn()
+const mockSilentRefresh = vi.fn()
 
 // Mock the auth API
 vi.mock('@/composables/auth/useAuthAPI', () => ({
@@ -24,6 +25,12 @@ vi.mock('@/composables/auth/useAuthAPI', () => ({
     logout: mockLogout,
     verifyAuthentication: mockVerifyAuthentication,
     updateProfile: mockUpdateProfile,
+  }),
+}))
+
+vi.mock('@/composables/auth/useTokenManager', () => ({
+  useTokenManager: () => ({
+    silentRefresh: mockSilentRefresh,
   }),
 }))
 
@@ -336,6 +343,55 @@ describe('🔐 Auth Store', () => {
       expect(result.error).toBe('Authentication failed')
       expect(store.user).toBeNull()
       expect(store.isAuthenticated).toBe(false)
+    })
+
+    it('does not clear the current user on a network error', async () => {
+      const store = useAuthStore()
+      const currentUser = {
+        id: '1',
+        email: 'test@example.com',
+        username: 'testuser',
+        isActive: true,
+        isEmailVerified: true,
+      }
+      store.setUser(currentUser)
+      mockVerifyAuthentication.mockRejectedValue(new Error('Network Error'))
+
+      const result = await store.refreshUserData()
+
+      expect(result.success).toBe(false)
+      expect(result.error).toBe('Network Error')
+      expect(result.shouldRedirect).toBe(false)
+      expect(store.user).toEqual(currentUser)
+      expect(mockSilentRefresh).not.toHaveBeenCalled()
+    })
+
+    it('clears the current user only after refresh cannot recover an auth error', async () => {
+      const store = useAuthStore()
+      store.setUser({
+        id: '1',
+        email: 'test@example.com',
+        username: 'testuser',
+        isActive: true,
+        isEmailVerified: true,
+      })
+      mockVerifyAuthentication.mockRejectedValue({ status: 401 })
+      mockSilentRefresh.mockResolvedValue(false)
+
+      const result = await store.refreshUserData()
+
+      expect(result.success).toBe(false)
+      expect(store.user).toBeNull()
+      expect(mockSilentRefresh).toHaveBeenCalledOnce()
+    })
+
+    it('marks transient initialization failures as retryable', async () => {
+      const store = useAuthStore()
+      mockVerifyAuthentication.mockRejectedValue(new Error('Network Error'))
+
+      const result = await store.initAuth()
+
+      expect(result).toEqual({ success: false, shouldRedirect: false })
     })
   })
 

@@ -5,42 +5,22 @@
  * - HttpOnly cookie-based authentication
  * - Automatic refresh on 401 responses
  * - Exponential backoff retry mechanism
- * - Request deduplication during refresh
+ * - Single-flight refresh via shared runner
  * - Comprehensive error handling
  */
 
-import { navigateTo } from '#app'
+import { isAuthenticationError } from '@/utils/authError'
 import type { RequestOptions } from '../shared/useHttpClient'
 import { useHttpClient } from '../shared/useHttpClient'
 import { useAuthAPI } from './useAuthAPI'
-import { updateGlobalRefreshState } from './useGlobalRefreshState'
-
-// Global state for refresh management
-let isRefreshing = false
-let refreshPromise: Promise<boolean> | null = null
-let failedQueue: Array<{
-  resolve: (value: any) => void
-  reject: (error: any) => void
-}> = []
+import {
+  getGlobalRefreshState,
+  runSingleFlightRefresh,
+} from './useGlobalRefreshState'
 
 export const useAuthenticatedHttpClient = () => {
   const httpClient = useHttpClient()
   const authAPI = useAuthAPI()
-
-  /**
-   * Process queue of failed requests after refresh
-   */
-  const processQueue = (error: any, token: string | null = null) => {
-    failedQueue.forEach(({ resolve, reject }) => {
-      if (error) {
-        reject(error)
-      } else {
-        resolve(token)
-      }
-    })
-
-    failedQueue = []
-  }
 
   /**
    * Attempt token refresh with exponential backoff
@@ -62,18 +42,6 @@ export const useAuthenticatedHttpClient = () => {
       console.warn('❌ Token refresh failed with error:', error)
       return false
     }
-  }
-
-  /**
-   * Check if error is an authentication error
-   */
-  const isAuthenticationError = (error: any): boolean => {
-    return (
-      error?.status === 401 ||
-      error?.statusCode === 401 ||
-      error?.error?.code === 'UNAUTHORIZED' ||
-      (error?.data && error.data.error?.code === 'UNAUTHORIZED')
-    )
   }
 
   /**
@@ -156,71 +124,27 @@ export const useAuthenticatedHttpClient = () => {
   }
 
   /**
-   * Handle unauthorized requests with refresh attempt
+   * Handle unauthorized requests with shared single-flight refresh
    */
   const handleUnauthorizedRequest = async (
     endpoint: string,
     options: RequestOptions,
   ): Promise<any> => {
-    // If already refreshing, queue this request
-    if (isRefreshing) {
-      console.log('🔄 Already refreshing, queuing request...')
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject })
-      })
-        .then(() => {
-          return httpClient.fetch(endpoint, options)
-        })
-        .catch(error => {
-          throw error
-        })
-    }
-
     console.log('🔄 Starting token refresh process...')
-    isRefreshing = true
-    refreshPromise = attemptTokenRefresh()
-
-    // Update global state
-    updateGlobalRefreshState({
-      isRefreshing: true,
-      hasRefreshPromise: true,
-      queueLength: failedQueue.length,
-    })
 
     try {
-      const refreshSuccess = await refreshPromise
+      const refreshSuccess = await runSingleFlightRefresh(attemptTokenRefresh)
 
       if (refreshSuccess) {
         console.log('✅ Token refresh successful, retrying original request...')
-        // Process queued requests
-        processQueue(null, null)
-
-        // Retry the original request
         return await retryWithBackoff(() => httpClient.fetch(endpoint, options))
       }
-      console.log('❌ Token refresh failed, clearing auth...')
-      // Refresh failed, process queue with error
-      processQueue(new Error('Token refresh failed'))
 
-      // Clear authentication state and redirect
+      console.log('❌ Token refresh failed, clearing auth...')
       return await handleAuthFailure()
     } catch (error) {
       console.log('❌ Token refresh error:', error)
-      // Refresh failed, process queue with error
-      processQueue(error)
-
-      // Clear authentication state and redirect
       return await handleAuthFailure()
-    } finally {
-      isRefreshing = false
-      refreshPromise = null
-
-      // Update global state
-      updateGlobalRefreshState({
-        isRefreshing: false,
-        hasRefreshPromise: false,
-        queueLength: failedQueue.length,
-      })
     }
   }
 
@@ -309,22 +233,21 @@ export const useAuthenticatedHttpClient = () => {
   }
 
   /**
-   * Get refresh status
+   * Get refresh status from the shared global runner
    */
-  const getRefreshStatus = () => ({
-    isRefreshing,
-    hasRefreshPromise: !!refreshPromise,
-    queueLength: failedQueue.length,
-  })
+  const getRefreshStatus = () => {
+    const state = getGlobalRefreshState()
+    return {
+      isRefreshing: state.isRefreshing,
+      hasRefreshPromise: state.hasRefreshPromise,
+      queueLength: state.queueLength,
+    }
+  }
 
   /**
    * Get refresh status for external access
    */
-  const getGlobalRefreshStatus = () => ({
-    isRefreshing,
-    hasRefreshPromise: !!refreshPromise,
-    queueLength: failedQueue.length,
-  })
+  const getGlobalRefreshStatus = () => getRefreshStatus()
 
   return {
     // Core authenticated methods
