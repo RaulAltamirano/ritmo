@@ -1,7 +1,15 @@
 import { loadConfig } from '@/config/environment'
+import { newIdempotencyKey } from '@/utils/idempotency'
 
 function base() {
   return `${loadConfig().api.baseUrl}/work-sessions`
+}
+
+function withIdempotency(headers?: HeadersInit): HeadersInit {
+  return {
+    ...Object.fromEntries(new Headers(headers).entries()),
+    'Idempotency-Key': newIdempotencyKey(),
+  }
 }
 
 export async function getActiveWorkSession() {
@@ -18,6 +26,7 @@ export async function createWorkSession(body: {
   return $fetch(base(), {
     method: 'POST',
     credentials: 'include',
+    headers: withIdempotency(),
     body,
   })
 }
@@ -34,6 +43,7 @@ export async function patchWorkSession(
   return $fetch(`${base()}/${sessionId}`, {
     method: 'PATCH',
     credentials: 'include',
+    headers: withIdempotency(),
     body,
   })
 }
@@ -55,6 +65,7 @@ export async function abandonWorkSession(sessionId: string) {
   return $fetch(`${base()}/${sessionId}/abandon`, {
     method: 'POST',
     credentials: 'include',
+    headers: withIdempotency(),
   })
 }
 

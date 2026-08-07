@@ -1,12 +1,5 @@
 /**
- * 🚀 RITMO AUTHENTICATED HTTP CLIENT - 2025 BEST PRACTICES
- *
- * Enhanced HTTP client with automatic token refresh:
- * - HttpOnly cookie-based authentication
- * - Automatic refresh on 401 responses
- * - Exponential backoff retry mechanism
- * - Single-flight refresh via shared runner
- * - Comprehensive error handling
+ * Authenticated HTTP client with cookie auth and single-flight refresh.
  */
 
 import { isAuthenticationError } from '@/utils/authError'
@@ -42,42 +35,6 @@ export const useAuthenticatedHttpClient = () => {
       console.warn('❌ Token refresh failed with error:', error)
       return false
     }
-  }
-
-  /**
-   * Retry mechanism with exponential backoff
-   */
-  const retryWithBackoff = async <T>(
-    fn: () => Promise<T>,
-    maxRetries = 3,
-    baseDelay = 1000,
-  ): Promise<T> => {
-    let lastError: any
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        return await fn()
-      } catch (error) {
-        lastError = error
-
-        // Don't retry on authentication errors
-        if (isAuthenticationError(error)) {
-          throw error
-        }
-
-        // Check if we've reached max retries
-        if (attempt >= maxRetries) {
-          throw error
-        }
-
-        // Calculate delay with exponential backoff and jitter
-        const delay = Math.min(baseDelay * Math.pow(2, attempt - 1), 8000)
-        const jitter = Math.random() * 500
-        await new Promise(resolve => setTimeout(resolve, delay + jitter))
-      }
-    }
-
-    throw lastError!
   }
 
   /**
@@ -160,8 +117,11 @@ export const useAuthenticatedHttpClient = () => {
     console.log('✅ Token refresh successful, retrying original request...')
     try {
       return await httpClient.fetch(endpoint, options)
-    } catch {
-      return await handleAuthFailure()
+    } catch (retryError) {
+      if (isAuthenticationError(retryError)) {
+        return await handleAuthFailure()
+      }
+      throw retryError
     }
   }
 
@@ -281,6 +241,5 @@ export const useAuthenticatedHttpClient = () => {
 
     // Refresh management
     attemptTokenRefresh,
-    retryWithBackoff,
   }
 }

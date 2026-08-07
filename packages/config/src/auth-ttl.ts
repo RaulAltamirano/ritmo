@@ -10,16 +10,21 @@ export function parseDurationToMs(input: string): number {
   return value * 24 * 60 * 60 * 1000
 }
 
+/** Shared auth TTLs — reads JWT_*_EXPIRY after dotenv (lazy getters). */
 export const AUTH_TTL = {
-  accessTokenExpiry: '15m',
-  refreshTokenExpiry: '7d',
-  get accessTokenMs() {
+  get accessTokenExpiry(): string {
+    return process.env.JWT_ACCESS_EXPIRY ?? '15m'
+  },
+  get refreshTokenExpiry(): string {
+    return process.env.JWT_REFRESH_EXPIRY ?? '7d'
+  },
+  get accessTokenMs(): number {
     return parseDurationToMs(this.accessTokenExpiry)
   },
-  get refreshTokenMs() {
+  get refreshTokenMs(): number {
     return parseDurationToMs(this.refreshTokenExpiry)
   },
-  get sessionMs() {
+  get sessionMs(): number {
     return this.refreshTokenMs
   },
-} as const
+}

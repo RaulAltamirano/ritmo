@@ -56,11 +56,14 @@ describe('runSingleFlightRefresh', () => {
     resetGlobalRefreshState()
     localStorage.clear()
     MockBroadcastChannel.reset()
+    globalThis.BroadcastChannel =
+      MockBroadcastChannel as unknown as typeof BroadcastChannel
   })
 
   afterEach(() => {
     vi.useRealTimers()
     globalThis.BroadcastChannel = originalBroadcastChannel
+    vi.unstubAllGlobals()
     vi.restoreAllMocks()
   })
 
@@ -124,8 +127,6 @@ describe('runSingleFlightRefresh', () => {
   })
 
   it('elects one BroadcastChannel leader when storage is unavailable', async () => {
-    globalThis.BroadcastChannel =
-      MockBroadcastChannel as unknown as typeof BroadcastChannel
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('storage unavailable')
     })
@@ -144,8 +145,6 @@ describe('runSingleFlightRefresh', () => {
   it('settles delayed asymmetric claims before starting a refresh', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-08-06T12:00:00Z'))
-    globalThis.BroadcastChannel =
-      MockBroadcastChannel as unknown as typeof BroadcastChannel
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('storage unavailable')
     })
@@ -193,6 +192,160 @@ describe('runSingleFlightRefresh', () => {
     await vi.advanceTimersByTimeAsync(100)
 
     await expect(refresh).resolves.toBe(true)
+    expect(doRefresh).not.toHaveBeenCalled()
+  })
+
+  it('elects one channel leader when storage is unavailable', async () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.9).mockReturnValueOnce(0.1)
+    const doRefresh = vi.fn().mockResolvedValue(true)
+
+    const [first, second] = await Promise.all([
+      coordinateRefresh(doRefresh),
+      coordinateRefresh(doRefresh),
+    ])
+
+    expect(first).toBe(true)
+    expect(second).toBe(true)
+    expect(doRefresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses Web Locks ifAvailable so only one tab runs doRefresh', async () => {
+    let held = false
+    const locks = {
+      request: vi.fn(
+        async (
+          _name: string,
+          _options: { ifAvailable?: boolean },
+          callback: (lock: { name: string } | null) => Promise<void>,
+        ) => {
+          if (held) {
+            await callback(null)
+            return
+          }
+          held = true
+          try {
+            await callback({ name: 'ritmo-auth-refresh-lock' })
+          } finally {
+            held = false
+          }
+        },
+      ),
+    }
+    vi.stubGlobal('navigator', { locks })
+    const doRefresh = vi.fn(async () => {
+      await new Promise(resolve => setTimeout(resolve, 30))
+      return true
+    })
+
+    const results = await Promise.all([
+      coordinateRefresh(doRefresh),
+      coordinateRefresh(doRefresh),
+    ])
+
+    expect(results).toEqual([true, true])
+    expect(doRefresh).toHaveBeenCalledTimes(1)
+    expect(locks.request).toHaveBeenCalled()
+  })
+
+  it('does not poison retries after a recent failed done lock', async () => {
+    localStorage.setItem(
+      'ritmo-auth-refresh-lock',
+      JSON.stringify({
+        owner: 'other-tab',
+        timestamp: Date.now(),
+        status: 'done',
+        success: false,
+      }),
+    )
+    const doRefresh = vi.fn().mockResolvedValue(true)
+
+    await expect(coordinateRefresh(doRefresh)).resolves.toBe(true)
+    expect(doRefresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('lets a Web Locks follower observe channel done without storage', async () => {
+    let held = false
+    const locks = {
+      request: vi.fn(
+        async (
+          _name: string,
+          _options: { ifAvailable?: boolean },
+          callback: (lock: { name: string } | null) => Promise<void>,
+        ) => {
+          if (held) {
+            await callback(null)
+            return
+          }
+          held = true
+          try {
+            await callback({ name: 'ritmo-auth-refresh-lock' })
+          } finally {
+            held = false
+          }
+        },
+      ),
+    }
+    vi.stubGlobal('navigator', { locks })
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    const doRefresh = vi.fn(async () => {
+      await new Promise(resolve => setTimeout(resolve, 20))
+      return true
+    })
+
+    const results = await Promise.all([
+      coordinateRefresh(doRefresh),
+      coordinateRefresh(doRefresh),
+    ])
+
+    expect(results).toEqual([true, true])
+    expect(doRefresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('skips doRefresh when a successful done appears after acquiring the Web Lock', async () => {
+    const locks = {
+      request: vi.fn(
+        async (
+          _name: string,
+          _options: { ifAvailable?: boolean },
+          callback: (lock: { name: string } | null) => Promise<void>,
+        ) => {
+          // Peer finished while we waited for the exclusive lock.
+          localStorage.setItem(
+            'ritmo-auth-refresh-lock',
+            JSON.stringify({
+              owner: 'other-tab',
+              timestamp: Date.now(),
+              status: 'done',
+              success: true,
+            }),
+          )
+          await callback({ name: 'ritmo-auth-refresh-lock' })
+        },
+      ),
+    }
+    vi.stubGlobal('navigator', { locks })
+    localStorage.setItem(
+      'ritmo-auth-refresh-lock',
+      JSON.stringify({
+        owner: 'other-tab',
+        timestamp: Date.now(),
+        status: 'refreshing',
+      }),
+    )
+    const doRefresh = vi.fn().mockResolvedValue(true)
+
+    await expect(coordinateRefresh(doRefresh)).resolves.toBe(true)
     expect(doRefresh).not.toHaveBeenCalled()
   })
 })

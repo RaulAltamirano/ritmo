@@ -88,6 +88,7 @@ export class AuthService {
       sessionId,
       deviceInfo,
       'User registered successfully',
+      'register',
     )
 
     return {
@@ -175,6 +176,7 @@ export class AuthService {
       sessionId,
       deviceInfo,
       'User logged in successfully',
+      'login_success',
     )
 
     return {
@@ -283,6 +285,7 @@ export class AuthService {
     sessionId: string,
     deviceInfo: ReturnType<AuthService['resolveDeviceInfo']>,
     successDescription: string,
+    eventType: 'login_success' | 'register',
   ): Promise<'high' | 'medium' | 'low' | undefined> {
     try {
       const sessionResult = await this.sessionService.intelligentLogin(
@@ -293,7 +296,7 @@ export class AuthService {
       )
 
       await this.loggingService.logAuthEvent(
-        'login_success',
+        eventType,
         userId,
         sessionId,
         deviceInfo.ipAddress,
@@ -308,7 +311,7 @@ export class AuthService {
       console.error('Session creation failed:', sessionError)
 
       await this.loggingService.logAuthEvent(
-        'login_success',
+        eventType,
         userId,
         sessionId,
         deviceInfo.ipAddress,

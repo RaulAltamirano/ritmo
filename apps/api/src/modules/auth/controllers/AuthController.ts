@@ -127,16 +127,15 @@ export class AuthController {
    * Cierra sesión del usuario actual
    */
   async logout(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const refreshToken = req.cookies?.refresh_token
-    if (refreshToken) {
-      try {
-        await this.authService.logoutWithRefreshToken(refreshToken)
-      } catch (error) {
-        console.error('Logout revoke failed:', error)
-      }
-    }
-
+    const refreshToken = req.cookies?.refresh_token as string | undefined
     clearAuthCookies(res)
     ApiResponses.ok(null, 'Logout successful').send(res)
+
+    if (!refreshToken) return
+    try {
+      await this.authService.logoutWithRefreshToken(refreshToken)
+    } catch (error) {
+      console.error('Logout revoke failed:', error)
+    }
   }
 }

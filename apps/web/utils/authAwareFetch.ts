@@ -7,6 +7,7 @@ export type AuthFetchRequest = string | URL | Request
 export interface AuthFetchOptions {
   method?: string
   headers?: HeadersInit
+  body?: unknown
   [key: string]: unknown
 }
 
@@ -30,6 +31,17 @@ function mergedHeaders(request: AuthFetchRequest, options: AuthFetchOptions): He
   return headers
 }
 
+function snapshotBody(body: unknown): { initial: unknown; retry: unknown } {
+  if (
+    typeof ReadableStream !== 'undefined' &&
+    body instanceof ReadableStream
+  ) {
+    const [initial, retry] = body.tee()
+    return { initial, retry }
+  }
+  return { initial: body, retry: body }
+}
+
 export function createAuthAwareFetch({
   baseFetch,
   runRefresh,
@@ -41,9 +53,13 @@ export function createAuthAwareFetch({
     options: AuthFetchOptions = {},
   ): Promise<T> {
     const requestForRetry = isRequest(request) ? request.clone() : request
+    const bodySnapshot =
+      options.body !== undefined ? snapshotBody(options.body) : null
+    const initialOptions =
+      bodySnapshot !== null ? { ...options, body: bodySnapshot.initial } : options
 
     try {
-      return await baseFetch(request, options)
+      return await baseFetch(request, initialOptions)
     } catch (error) {
       const headers = mergedHeaders(request, options)
       const requestUrl = isRequest(request) ? request.url : String(request)
@@ -64,7 +80,9 @@ export function createAuthAwareFetch({
       if (!canRetryAfterRefresh(method, headers)) throw error
 
       headers.set(SKIP_AUTH_REFRESH_HEADER, '1')
-      return await baseFetch(requestForRetry, { ...options, headers })
+      const retryOptions: AuthFetchOptions = { ...options, headers }
+      if (bodySnapshot !== null) retryOptions.body = bodySnapshot.retry
+      return await baseFetch(requestForRetry, retryOptions)
     }
   }
 }

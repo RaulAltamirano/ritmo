@@ -30,6 +30,12 @@ describe('shouldAttemptAuthRefresh', () => {
     expect(shouldAttemptAuthRefresh('/api/work-sessions', { status: 401 })).toBe(true)
   })
 
+  it('does not treat unrelated paths that merely contain an auth substring', () => {
+    expect(
+      shouldAttemptAuthRefresh('/api/users/auth/login-history', { status: 401 }),
+    ).toBe(true)
+  })
+
   it('does not refresh for non-authentication errors', () => {
     expect(shouldAttemptAuthRefresh('/api/work-sessions', { status: 500 })).toBe(false)
   })

@@ -108,4 +108,26 @@ describe('useAuthenticatedHttpClient', () => {
       '/auth/login?reason=authentication_required',
     )
   })
+
+  it('rethrows non-auth errors after a successful refresh without clearing auth', async () => {
+    mockFetch
+      .mockRejectedValueOnce({ status: 401 })
+      .mockRejectedValueOnce({ status: 401 })
+      .mockRejectedValueOnce({ status: 503 })
+    mockRefreshToken.mockResolvedValue({ success: true })
+    mockIsAuthenticationError.mockImplementation(
+      (error: { status?: number }) => error?.status === 401,
+    )
+    const { useAuthenticatedHttpClient } = await import(
+      '@/composables/auth/useAuthenticatedHttpClient'
+    )
+
+    await expect(useAuthenticatedHttpClient().get('/protected')).rejects.toEqual({
+      status: 503,
+    })
+
+    expect(mockRunSingleFlightRefresh).toHaveBeenCalledOnce()
+    expect(mockClearAuth).not.toHaveBeenCalled()
+    expect(mockNavigateTo).not.toHaveBeenCalled()
+  })
 })

@@ -94,6 +94,16 @@ describe('AuthService.register session', () => {
       expect.any(String),
       '127.0.0.1',
     )
+    expect(logAuthEvent).toHaveBeenCalledWith(
+      'register',
+      'user-id',
+      expect.any(String),
+      '127.0.0.1',
+      'vitest',
+      'User registered successfully',
+      'low',
+      { deviceTrust: 'medium' },
+    )
     expect(result).toEqual(
       expect.objectContaining({
         accessToken: 'access-token',

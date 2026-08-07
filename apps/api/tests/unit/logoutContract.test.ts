@@ -84,9 +84,15 @@ describe('AuthController register and logout cookies', () => {
 
     await controller.logout(request, response, vi.fn() as NextFunction)
 
+    expect(response.clearCookie).toHaveBeenCalledWith(
+      'access_token',
+      expect.objectContaining({ path: '/', sameSite: 'strict', httpOnly: true }),
+    )
+    expect(response.clearCookie).toHaveBeenCalledWith(
+      'refresh_token',
+      expect.objectContaining({ path: '/', sameSite: 'strict', httpOnly: true }),
+    )
     expect(logoutWithRefreshToken).toHaveBeenCalledWith('refresh-token')
-    expect(response.clearCookie).toHaveBeenCalledWith('access_token', { path: '/' })
-    expect(response.clearCookie).toHaveBeenCalledWith('refresh_token', { path: '/' })
   })
 
   it('still clears auth cookies when revocation fails', async () => {
@@ -105,8 +111,14 @@ describe('AuthController register and logout cookies', () => {
 
     await controller.logout(request, response, vi.fn() as NextFunction)
 
-    expect(response.clearCookie).toHaveBeenCalledWith('access_token', { path: '/' })
-    expect(response.clearCookie).toHaveBeenCalledWith('refresh_token', { path: '/' })
+    expect(response.clearCookie).toHaveBeenCalledWith(
+      'access_token',
+      expect.objectContaining({ path: '/', sameSite: 'strict' }),
+    )
+    expect(response.clearCookie).toHaveBeenCalledWith(
+      'refresh_token',
+      expect.objectContaining({ path: '/', sameSite: 'strict' }),
+    )
     expect(consoleError).toHaveBeenCalledWith(
       'Logout revoke failed:',
       expect.any(Error),

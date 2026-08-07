@@ -25,6 +25,7 @@ export function setAuthCookies(
 }
 
 export function clearAuthCookies(res: Response): void {
-  res.clearCookie('access_token', { path: '/' })
-  res.clearCookie('refresh_token', { path: '/' })
+  const options = base()
+  res.clearCookie('access_token', options)
+  res.clearCookie('refresh_token', options)
 }

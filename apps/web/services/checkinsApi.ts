@@ -1,4 +1,5 @@
 import { loadConfig } from '@/config/environment'
+import { newIdempotencyKey } from '@/utils/idempotency'
 
 export function checkinsDailyUrl(): string {
   return `${loadConfig().api.baseUrl}/checkins/daily`
@@ -16,6 +17,7 @@ export async function putDailyCheckin(body: { energy: number; stress: number }) 
   return $fetch(checkinsDailyUrl(), {
     method: 'PUT',
     credentials: 'include',
+    headers: { 'Idempotency-Key': newIdempotencyKey() },
     body,
   })
 }

@@ -8,6 +8,7 @@
 import { config as dotenvConfig } from 'dotenv';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { AUTH_TTL } from './auth-ttl.js';
 
 // Load environment variables from root .env ONLY
 const __filename = fileURLToPath(import.meta.url);
@@ -314,8 +315,8 @@ export class UnifiedConfig {
         jwt: {
           secret: this.secrets.get('JWT_SECRET')!,
           refreshSecret: this.secrets.get('JWT_REFRESH_SECRET')!,
-          accessTokenExpiry: process.env.JWT_ACCESS_EXPIRY ?? '15m',
-          refreshTokenExpiry: process.env.JWT_REFRESH_EXPIRY ?? '7d',
+          accessTokenExpiry: AUTH_TTL.accessTokenExpiry,
+          refreshTokenExpiry: AUTH_TTL.refreshTokenExpiry,
         },
         session: {
           secret: this.secrets.get('SESSION_SECRET')!,
