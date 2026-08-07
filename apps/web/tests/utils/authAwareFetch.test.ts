@@ -77,6 +77,36 @@ describe('createAuthAwareFetch', () => {
     expect(runRefresh).not.toHaveBeenCalled()
   })
 
+  it('retries idempotent POST Request with body after refresh', async () => {
+    const baseFetch = vi
+      .fn()
+      .mockImplementationOnce(async (req: Request) => {
+        await req.text()
+        throw authenticationError
+      })
+      .mockImplementationOnce(async (req: Request) => {
+        const body = await req.text()
+        return { ok: true, body }
+      })
+    const authFetch = createAuthAwareFetch({
+      baseFetch,
+      runRefresh: vi.fn().mockResolvedValue(true),
+      onAuthFailure: vi.fn(),
+    })
+    const payload = JSON.stringify({ title: 'Task' })
+    const request = new Request('http://localhost/api/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': 'idem-123',
+      },
+      body: payload,
+    })
+
+    await expect(authFetch(request)).resolves.toEqual({ ok: true, body: payload })
+    expect(baseFetch).toHaveBeenCalledTimes(2)
+  })
+
   it('merges Request and option headers into retry options', async () => {
     const baseFetch = vi
       .fn()

@@ -40,6 +40,8 @@ export function createAuthAwareFetch({
     request: AuthFetchRequest,
     options: AuthFetchOptions = {},
   ): Promise<T> {
+    const requestForRetry = isRequest(request) ? request.clone() : request
+
     try {
       return await baseFetch(request, options)
     } catch (error) {
@@ -62,7 +64,7 @@ export function createAuthAwareFetch({
       if (!canRetryAfterRefresh(method, headers)) throw error
 
       headers.set(SKIP_AUTH_REFRESH_HEADER, '1')
-      return await baseFetch(request, { ...options, headers })
+      return await baseFetch(requestForRetry, { ...options, headers })
     }
   }
 }
