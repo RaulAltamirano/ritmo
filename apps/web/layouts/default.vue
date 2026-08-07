@@ -10,12 +10,14 @@
       <MainBottomNav />
     </div>
 
-    <FloatingTimer />
-    <BreakTimerModal />
-    <DailyCheckinModal />
-    <WorkBlockFeedbackModal />
-    <TaskSwitchPresetModal />
-    <EndDaySummaryModal />
+    <ClientOnly>
+      <FloatingTimer />
+      <BreakTimerModal />
+      <DailyCheckinModal />
+      <WorkBlockFeedbackModal />
+      <TaskSwitchPresetModal />
+      <EndDaySummaryModal />
+    </ClientOnly>
 
     <BaseToast position="top-right" :max-toasts="5" />
   </div>

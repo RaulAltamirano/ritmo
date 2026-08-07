@@ -254,12 +254,17 @@ export const useTimerStore = defineStore('timer', {
       if (gate.taskSwitchPrompt) gate.closeTaskSwitchPrompt()
     },
 
-    bindRemoteWorkSession(sessionId: string) {
+    bindRemoteWorkSession(
+      sessionId: string,
+      { immediateHeartbeat = true }: { immediateHeartbeat?: boolean } = {},
+    ) {
       this.clearRemoteHeartbeat()
       this.remoteWorkSessionId = sessionId
       this.remoteHeartbeatFailures = 0
       setLastTrackedWorkSessionId(sessionId)
-      void this.patchRemoteHeartbeat()
+      if (immediateHeartbeat) {
+        void this.patchRemoteHeartbeat()
+      }
       const scheduleNext = () => {
         const ms = 55_000 + Math.floor(Math.random() * 10_000)
         this.remoteHeartbeatTimer = setTimeout(() => {
@@ -451,7 +456,6 @@ export const useTimerStore = defineStore('timer', {
         this.remoteHeartbeatFailures = 0
       } catch (e: unknown) {
         const { status } = parseFetchError(e)
-        // Sesión inexistente / terminal / conflicto: dejar de hacer heartbeat
         if (status === 404 || status === 410 || status === 409) {
           this.clearRemoteWorkSession()
           this.showNotification(
@@ -461,6 +465,7 @@ export const useTimerStore = defineStore('timer', {
           )
           return
         }
+        if (status === 429) return
         this.remoteHeartbeatFailures += 1
         if (this.remoteHeartbeatFailures >= 3) {
           this.clearRemoteWorkSession()

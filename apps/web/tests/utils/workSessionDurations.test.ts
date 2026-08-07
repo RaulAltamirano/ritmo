@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   breakElapsedSec,
   focusBillableSec,
+  formatDurationMinutes,
   formatDurationSec,
 } from '@/utils/workSessionDurations'
 
@@ -80,5 +81,19 @@ describe('formatDurationSec', () => {
 
   it('formats seconds under a minute', () => {
     expect(formatDurationSec(45)).toBe('45s')
+  })
+})
+
+describe('formatDurationMinutes', () => {
+  it('keeps minute granularity under one minute', () => {
+    expect(formatDurationMinutes(45)).toBe('0m')
+  })
+
+  it('formats minutes only', () => {
+    expect(formatDurationMinutes(780)).toBe('13m')
+  })
+
+  it('formats hours and minutes', () => {
+    expect(formatDurationMinutes(3_780)).toBe('1h 3m')
   })
 })

@@ -1,7 +1,23 @@
-import { createAuthAwareFetch } from '@/utils/authAwareFetch'
+import { createAuthAwareFetch, isApiBoundRequest } from '@/utils/authAwareFetch'
 import { describe, expect, it, vi } from 'vitest'
 
 const authenticationError = { status: 401 }
+
+describe('isApiBoundRequest', () => {
+  const apiBase = 'http://localhost:3001/api'
+
+  it('keeps Nuxt build meta off the API client', () => {
+    expect(isApiBoundRequest('/_nuxt/builds/meta/dev.json', apiBase)).toBe(false)
+    expect(isApiBoundRequest('_nuxt/builds/meta/dev.json', apiBase)).toBe(false)
+  })
+
+  it('routes API relative and absolute URLs to the API client', () => {
+    expect(isApiBoundRequest('/users/me', apiBase)).toBe(true)
+    expect(isApiBoundRequest('http://localhost:3001/api/users/me', apiBase)).toBe(
+      true,
+    )
+  })
+})
 
 describe('createAuthAwareFetch', () => {
   it('does not refresh excluded public auth URLs', async () => {
@@ -62,7 +78,23 @@ describe('createAuthAwareFetch', () => {
     expect(onAuthFailure).toHaveBeenCalledOnce()
   })
 
-  it('honors the skip header supplied by a Request', async () => {
+  it('honors skipAuthRefresh option without sending a network header', async () => {
+    const baseFetch = vi.fn().mockRejectedValue(authenticationError)
+    const runRefresh = vi.fn()
+    const authFetch = createAuthAwareFetch({
+      baseFetch,
+      runRefresh,
+      onAuthFailure: vi.fn(),
+    })
+
+    await expect(
+      authFetch('/api/users/me', { skipAuthRefresh: true }),
+    ).rejects.toBe(authenticationError)
+    expect(runRefresh).not.toHaveBeenCalled()
+    expect(baseFetch.mock.calls[0]?.[1]?.skipAuthRefresh).toBeUndefined()
+  })
+
+  it('honors the legacy skip header supplied by a Request', async () => {
     const runRefresh = vi.fn()
     const authFetch = createAuthAwareFetch({
       baseFetch: vi.fn().mockRejectedValue(authenticationError),
@@ -107,7 +139,7 @@ describe('createAuthAwareFetch', () => {
     expect(baseFetch).toHaveBeenCalledTimes(2)
   })
 
-  it('merges Request and option headers into retry options', async () => {
+  it('merges Request and option headers into retry options without skip header', async () => {
     const baseFetch = vi
       .fn()
       .mockRejectedValueOnce(authenticationError)
@@ -129,6 +161,7 @@ describe('createAuthAwareFetch', () => {
     expect(retryHeaders.get('Idempotency-Key')).toBe('request-id')
     expect(retryHeaders.get('X-Request')).toBe('request')
     expect(retryHeaders.get('X-Option')).toBe('option')
-    expect(retryHeaders.get('X-Ritmo-Skip-Auth-Refresh')).toBe('1')
+    expect(retryHeaders.get('X-Ritmo-Skip-Auth-Refresh')).toBeNull()
+    expect(retryOptions?.skipAuthRefresh).toBeUndefined()
   })
 })

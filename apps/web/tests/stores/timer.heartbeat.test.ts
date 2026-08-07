@@ -79,6 +79,38 @@ describe('timer store — remote heartbeat terminal errors', () => {
     expect(store.remoteWorkSessionId).toBeNull()
   })
 
+  it('keeps the remote session when heartbeat is rate-limited (429)', async () => {
+    patchWorkSessionMock.mockRejectedValue({ status: 429, data: {} })
+    const { useTimerStore } = await import('@/stores/timer')
+    const store = useTimerStore()
+    store.remoteWorkSessionId = 'ws_rl'
+    store.activeTask = {
+      id: 't1',
+      name: 'T',
+      timeLeft: 100,
+      totalTime: 1500,
+      type: 'Pomodoro',
+      startedAt: new Date(),
+      totalPausedTime: 0,
+    }
+
+    await store.patchRemoteHeartbeat()
+    await store.patchRemoteHeartbeat()
+    await store.patchRemoteHeartbeat()
+    expect(store.remoteWorkSessionId).toBe('ws_rl')
+    expect(store.remoteHeartbeatFailures).toBe(0)
+  })
+
+  it('skips immediate heartbeat when bindRemoteWorkSession({ immediateHeartbeat: false })', async () => {
+    patchWorkSessionMock.mockResolvedValue({ data: {} })
+    const { useTimerStore } = await import('@/stores/timer')
+    const store = useTimerStore()
+    store.bindRemoteWorkSession('ws_new', { immediateHeartbeat: false })
+    expect(store.remoteWorkSessionId).toBe('ws_new')
+    expect(patchWorkSessionMock).not.toHaveBeenCalled()
+    store.clearRemoteHeartbeat()
+  })
+
   it('sends on_break and breakPausedDurationSec during break phase', async () => {
     patchWorkSessionMock.mockResolvedValue({ data: {} })
     const { useTimerStore } = await import('@/stores/timer')

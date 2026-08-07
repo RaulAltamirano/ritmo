@@ -63,6 +63,7 @@ export default defineNuxtConfig({
           content: 'Intelligent time management and productivity app with AI-powered study techniques',
         },
         { name: 'theme-color', content: '#14b8a6' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         // `black-translucent` u otras variantes: coordinar con diseño PWA (spec H6)
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },

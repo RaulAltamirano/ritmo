@@ -57,7 +57,9 @@ export async function applyRemoteTaskSwitch(
       timerStore.activeTask.startedAt = new Date()
     }
     timerStore.startTask(input.toTask, input.mode)
-    timerStore.bindRemoteWorkSession(result.newSessionId)
+    timerStore.bindRemoteWorkSession(result.newSessionId, {
+      immediateHeartbeat: false,
+    })
     if (timerStore.activeTask) timerStore.activeTask.pausedAt = undefined
     void useWorkSessionSummaryStore().refresh()
     if (timerStore.isPaused) timerStore.resumeTimer()

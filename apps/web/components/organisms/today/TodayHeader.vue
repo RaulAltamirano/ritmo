@@ -1,16 +1,29 @@
 <template>
   <header class="today-hdr">
-    <!-- Date -->
-    <div class="text-sm text-gray-400 dark:text-gray-500 capitalize tracking-wide mb-1">
-      {{ formattedDate }}
-    </div>
+    <ClientOnly>
+      <div>
+        <div class="text-sm text-gray-400 dark:text-gray-500 capitalize tracking-wide mb-1">
+          {{ formattedDate }}
+        </div>
+        <div class="hdr-time text-gray-900 dark:text-white">
+          {{ formattedTime }}
+        </div>
+      </div>
+      <template #fallback>
+        <div>
+          <div
+            class="text-sm text-gray-400 dark:text-gray-500 capitalize tracking-wide mb-1"
+            aria-hidden="true"
+          >
+            &nbsp;
+          </div>
+          <div class="hdr-time text-gray-900 dark:text-white" aria-hidden="true">
+            &nbsp;
+          </div>
+        </div>
+      </template>
+    </ClientOnly>
 
-    <!-- Live time -->
-    <div class="hdr-time text-gray-900 dark:text-white">
-      {{ formattedTime }}
-    </div>
-
-    <!-- Circadian phase card -->
     <CircadianPhaseCard />
 
     <TodayTimeStrip
@@ -28,7 +41,7 @@
   import TodayTimeStrip from '@/components/molecules/TodayTimeStrip.vue'
 
   interface Props {
-    phaseData?: any
+    phaseData?: unknown
     phaseLoading?: boolean
     dayTotalSeconds: number
     lastSessionEndedAt: string | null
@@ -40,6 +53,7 @@
   let tick: ReturnType<typeof setInterval> | null = null
 
   onMounted(() => {
+    now.value = new Date()
     tick = setInterval(() => {
       now.value = new Date()
     }, 1000)

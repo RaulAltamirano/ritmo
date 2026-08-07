@@ -1,7 +1,3 @@
-/**
- * Límites express-rate-limit en rutas /work-sessions (spec §10: 20 POST/h, 6 PATCH/min).
- */
-
 import type { Application } from 'express'
 import { DateTime } from 'luxon'
 import { beforeAll, describe, expect, it } from 'vitest'
@@ -33,7 +29,7 @@ function authedReq(token: string) {
 }
 
 describe('Work-session route rate limits', () => {
-  it('returns 429 on the 21st POST /api/work-sessions within the hourly window', async () => {
+  it('returns 429 on the 61st POST /api/work-sessions within the hourly window', async () => {
     const { userId, accessToken } = await createAuthedUser()
     await seedCheckinToday(userId)
     const task = await workerPrisma.task.create({
@@ -43,7 +39,7 @@ describe('Work-session route rate limits', () => {
     let sessionId: string | null = null
     let saw429 = false
 
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 62; i++) {
       if (sessionId) {
         await authedReq(accessToken).post(`/api/work-sessions/${sessionId}/abandon`)
         sessionId = null
@@ -57,7 +53,7 @@ describe('Work-session route rate limits', () => {
 
       if (res.status === 429) {
         saw429 = true
-        expect(i).toBeGreaterThanOrEqual(20)
+        expect(i).toBeGreaterThanOrEqual(60)
         break
       }
 
@@ -66,9 +62,9 @@ describe('Work-session route rate limits', () => {
     }
 
     expect(saw429).toBe(true)
-  })
+  }, 120_000)
 
-  it('returns 429 on the 7th PATCH /api/work-sessions/:id within one minute', async () => {
+  it('returns 429 on the 31st PATCH /api/work-sessions/:id within one minute', async () => {
     const { userId, accessToken } = await createAuthedUser()
     await seedCheckinToday(userId)
     const task = await workerPrisma.task.create({
@@ -84,7 +80,7 @@ describe('Work-session route rate limits', () => {
     const id = created.body.data.id as string
 
     let lastStatus = 200
-    for (let k = 0; k < 7; k++) {
+    for (let k = 0; k < 31; k++) {
       const patch = await authedReq(accessToken)
         .patch(`/api/work-sessions/${id}`)
         .send({

@@ -1,19 +1,30 @@
 <template>
-  <div class="tts" data-testid="today-time-strip">
-    <span class="tts-item">
-      <span class="tts-label">Hoy</span>
-      <span class="tts-value">{{ formatTotal(dayTotalSeconds) }}</span>
-    </span>
-    <span v-if="showIdle" class="tts-item tts-item--idle">
-      <span class="tts-dot">·</span>
-      <span class="tts-value">{{ formatIdle(idleSeconds) }} sin tarea</span>
-    </span>
-  </div>
+  <ClientOnly>
+    <div class="tts" data-testid="today-time-strip">
+      <span class="tts-item">
+        <span class="tts-label">Hoy</span>
+        <span class="tts-value">{{ dayTotalLabel }}</span>
+      </span>
+      <span v-if="showIdle" class="tts-item tts-item--idle">
+        <span class="tts-dot">·</span>
+        <span class="tts-value">{{ idleLabel }} sin tarea</span>
+      </span>
+    </div>
+    <template #fallback>
+      <div class="tts" data-testid="today-time-strip">
+        <span class="tts-item">
+          <span class="tts-label">Hoy</span>
+          <span class="tts-value">0m</span>
+        </span>
+      </div>
+    </template>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
   import { computed, onMounted, onUnmounted, ref } from 'vue'
   import { useTimerStore } from '@/stores/timer'
+  import { formatDurationMinutes, formatDurationSec } from '@/utils/workSessionDurations'
 
   interface Props {
     dayTotalSeconds: number
@@ -26,6 +37,7 @@
   let tick: ReturnType<typeof setInterval> | null = null
 
   onMounted(() => {
+    now.value = Date.now()
     tick = setInterval(() => {
       now.value = Date.now()
     }, 1000)
@@ -46,20 +58,8 @@
     return true
   })
 
-  const formatTotal = (sec: number): string => {
-    const s = Math.max(0, Math.floor(sec))
-    const h = Math.floor(s / 3600)
-    const m = Math.floor((s % 3600) / 60)
-    return h > 0 ? `${h}h ${m}m` : `${m}m`
-  }
-
-  const formatIdle = (sec: number): string => {
-    const s = Math.max(0, Math.floor(sec))
-    if (s < 60) return `${s}s`
-    const h = Math.floor(s / 3600)
-    const m = Math.floor((s % 3600) / 60)
-    return h > 0 ? `${h}h ${m}m` : `${m}m`
-  }
+  const dayTotalLabel = computed(() => formatDurationMinutes(props.dayTotalSeconds))
+  const idleLabel = computed(() => formatDurationSec(idleSeconds.value))
 </script>
 
 <style scoped>

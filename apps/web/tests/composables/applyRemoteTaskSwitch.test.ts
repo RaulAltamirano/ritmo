@@ -95,7 +95,9 @@ describe('applyRemoteTaskSwitch', () => {
     )
     expect(clearRemoteMock).toHaveBeenCalled()
     expect(startTaskMock).toHaveBeenCalledWith(input.toTask, input.mode)
-    expect(bindRemoteMock).toHaveBeenCalledWith('ws_new')
+    expect(bindRemoteMock).toHaveBeenCalledWith('ws_new', {
+      immediateHeartbeat: false,
+    })
     expect(refreshSummaryMock).toHaveBeenCalled()
     expect(resumeTimerMock).toHaveBeenCalled()
   })

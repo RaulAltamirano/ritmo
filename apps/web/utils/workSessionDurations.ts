@@ -51,3 +51,11 @@ export function formatDurationSec(sec: number): string {
   if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`
   return `${m}m`
 }
+
+/** Minute-granularity totals for day strips (e.g. `0m`, `12m`, `1h 3m`). */
+export function formatDurationMinutes(sec: number): string {
+  const s = Math.max(0, Math.floor(sec))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  return h > 0 ? `${h}h ${m}m` : `${m}m`
+}

@@ -12,6 +12,9 @@ import { WorkSessionController } from './controllers/WorkSessionController.js'
 const router = Router()
 const controller = new WorkSessionController()
 
+const POST_LIMIT = { windowMs: 60 * 60 * 1000, max: 60 } as const
+const PATCH_LIMIT = { windowMs: 60 * 1000, max: 30 } as const
+
 function requireAuthUser(req: Request, res: Response, next: NextFunction): void {
   const u = (req as AuthenticatedRequest).user
   if (!u?.id) {
@@ -23,38 +26,34 @@ function requireAuthUser(req: Request, res: Response, next: NextFunction): void 
   next()
 }
 
-const postWorkSessionLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req: Request) => {
-    const uid = (req as AuthenticatedRequest).user?.id
-    if (uid) return uid
-    return ipKeyGenerator(req.ip ?? '127.0.0.1')
-  },
-  handler: (req, res) => {
-    ApiResponses.rateLimitExceeded('Too many work sessions started')
+function workSessionRateKey(req: Request): string {
+  const uid = (req as AuthenticatedRequest).user?.id
+  if (uid) return uid
+  return ipKeyGenerator(req.ip ?? '127.0.0.1')
+}
+
+function rateLimitHandler(message: string) {
+  return (req: Request, res: Response) => {
+    ApiResponses.rateLimitExceeded(message)
       .withRequestId(req.requestId ?? 'unknown')
       .send(res, 429)
-  },
+  }
+}
+
+const postWorkSessionLimiter = rateLimit({
+  ...POST_LIMIT,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: workSessionRateKey,
+  handler: rateLimitHandler('Too many work sessions started'),
 })
 
 const patchWorkSessionLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 6,
+  ...PATCH_LIMIT,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req: Request) => {
-    const uid = (req as AuthenticatedRequest).user?.id
-    if (uid) return uid
-    return ipKeyGenerator(req.ip ?? '127.0.0.1')
-  },
-  handler: (req, res) => {
-    ApiResponses.rateLimitExceeded('Too many heartbeat requests')
-      .withRequestId(req.requestId ?? 'unknown')
-      .send(res, 429)
-  },
+  keyGenerator: workSessionRateKey,
+  handler: rateLimitHandler('Too many heartbeat requests'),
 })
 
 router.use(ResponseMiddleware.addRequestId)
