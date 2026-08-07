@@ -237,6 +237,13 @@ export class AuthService {
         return { success: false, error: 'Invalid refresh token' }
       }
 
+      const sessionIsActive = await this.sessionService.isSessionActive(
+        tokenInfo.sessionId,
+      )
+      if (!sessionIsActive) {
+        return { success: false, error: 'Session is invalid or expired' }
+      }
+
       // Use TokenRotationService for secure token rotation
       const rotationResult = await this.tokenRotationService.rotateRefreshToken(
         refreshToken,

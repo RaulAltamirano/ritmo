@@ -392,6 +392,18 @@ export class SessionService {
     })
   }
 
+  async isSessionActive(sessionId: string): Promise<boolean> {
+    const count = await this.prisma.userSession.count({
+      where: {
+        sessionId,
+        isActive: true,
+        expiresAt: { gt: new Date() },
+      },
+    })
+
+    return count > 0
+  }
+
   async extendSessionOnRefresh(sessionId: string): Promise<boolean> {
     const now = new Date()
     const result = await this.prisma.userSession.updateMany({

@@ -57,18 +57,45 @@ describe('SessionService.extendSessionOnRefresh', () => {
   })
 })
 
+describe('SessionService.isSessionActive', () => {
+  it('checks the public sessionId for an active unexpired session', async () => {
+    const now = new Date('2026-08-06T12:00:00.000Z')
+    vi.useFakeTimers()
+    vi.setSystemTime(now)
+    const count = vi.fn().mockResolvedValue(1)
+    const service = new SessionService({
+      userSession: { count },
+    } as never)
+
+    await expect(service.isSessionActive('public-session-id')).resolves.toBe(true)
+
+    expect(count).toHaveBeenCalledWith({
+      where: {
+        sessionId: 'public-session-id',
+        isActive: true,
+        expiresAt: { gt: now },
+      },
+    })
+    vi.useRealTimers()
+  })
+})
+
 describe('AuthService.refreshToken', () => {
   it('extends the session after successful token rotation', async () => {
     const service = new AuthService()
+    const isSessionActive = vi.fn().mockResolvedValue(true)
     const extendSessionOnRefresh = vi.fn().mockResolvedValue(true)
     const internals = service as unknown as {
       getTokenInfo: () => Promise<{ userId: string; sessionId: string }>
-      sessionService: { extendSessionOnRefresh: typeof extendSessionOnRefresh }
+      sessionService: {
+        isSessionActive: typeof isSessionActive
+        extendSessionOnRefresh: typeof extendSessionOnRefresh
+      }
     }
     internals.getTokenInfo = vi
       .fn()
       .mockResolvedValue({ userId: 'user-id', sessionId: 'public-session-id' })
-    internals.sessionService = { extendSessionOnRefresh }
+    internals.sessionService = { isSessionActive, extendSessionOnRefresh }
     service.tokenRotationService = {
       rotateRefreshToken: vi.fn().mockResolvedValue({
         success: true,
@@ -83,27 +110,30 @@ describe('AuthService.refreshToken', () => {
     })
 
     expect(result.success).toBe(true)
+    expect(isSessionActive).toHaveBeenCalledWith('public-session-id')
     expect(extendSessionOnRefresh).toHaveBeenCalledWith('public-session-id')
   })
 
-  it('rejects refresh when the rotated token session cannot be extended', async () => {
+  it('does not rotate when the refresh token session is invalid', async () => {
     const service = new AuthService()
+    const rotateRefreshToken = vi.fn()
+    const extendSessionOnRefresh = vi.fn()
     const internals = service as unknown as {
       getTokenInfo: () => Promise<{ userId: string; sessionId: string }>
-      sessionService: { extendSessionOnRefresh: () => Promise<boolean> }
+      sessionService: {
+        isSessionActive: () => Promise<boolean>
+        extendSessionOnRefresh: typeof extendSessionOnRefresh
+      }
     }
     internals.getTokenInfo = vi
       .fn()
       .mockResolvedValue({ userId: 'user-id', sessionId: 'expired-session' })
     internals.sessionService = {
-      extendSessionOnRefresh: vi.fn().mockResolvedValue(false),
+      isSessionActive: vi.fn().mockResolvedValue(false),
+      extendSessionOnRefresh,
     }
     service.tokenRotationService = {
-      rotateRefreshToken: vi.fn().mockResolvedValue({
-        success: true,
-        newAccessToken: 'new-access',
-        newRefreshToken: 'new-refresh',
-      }),
+      rotateRefreshToken,
     } as never
 
     await expect(
@@ -115,6 +145,44 @@ describe('AuthService.refreshToken', () => {
       success: false,
       error: 'Session is invalid or expired',
     })
+    expect(rotateRefreshToken).not.toHaveBeenCalled()
+    expect(extendSessionOnRefresh).not.toHaveBeenCalled()
+  })
+
+  it('does not extend the session when token rotation fails', async () => {
+    const service = new AuthService()
+    const extendSessionOnRefresh = vi.fn()
+    const internals = service as unknown as {
+      getTokenInfo: () => Promise<{ userId: string; sessionId: string }>
+      sessionService: {
+        isSessionActive: () => Promise<boolean>
+        extendSessionOnRefresh: typeof extendSessionOnRefresh
+      }
+    }
+    internals.getTokenInfo = vi
+      .fn()
+      .mockResolvedValue({ userId: 'user-id', sessionId: 'public-session-id' })
+    internals.sessionService = {
+      isSessionActive: vi.fn().mockResolvedValue(true),
+      extendSessionOnRefresh,
+    }
+    service.tokenRotationService = {
+      rotateRefreshToken: vi.fn().mockResolvedValue({
+        success: false,
+        error: 'Rotation failed',
+      }),
+    } as never
+
+    await expect(
+      service.refreshToken('refresh-token', {
+        ipAddress: '127.0.0.1',
+        userAgent: 'vitest',
+      }),
+    ).resolves.toEqual({
+      success: false,
+      error: 'Rotation failed',
+    })
+    expect(extendSessionOnRefresh).not.toHaveBeenCalled()
   })
 })
 
