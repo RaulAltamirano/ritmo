@@ -245,11 +245,24 @@ export class AuthService {
         context,
       )
 
+      if (!rotationResult.success) {
+        return {
+          success: false,
+          error: rotationResult.error,
+        }
+      }
+
+      const extended = await this.sessionService.extendSessionOnRefresh(
+        tokenInfo.sessionId,
+      )
+      if (!extended) {
+        return { success: false, error: 'Session is invalid or expired' }
+      }
+
       return {
-        success: rotationResult.success,
+        success: true,
         newAccessToken: rotationResult.newAccessToken,
         newRefreshToken: rotationResult.newRefreshToken,
-        error: rotationResult.error,
       }
     } catch (error) {
       console.error('Token refresh error:', error)

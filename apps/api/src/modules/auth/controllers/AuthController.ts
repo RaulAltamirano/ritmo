@@ -85,7 +85,7 @@ export class AuthController {
     try {
       const refreshToken = req.cookies.refresh_token
       if (!refreshToken) {
-        ApiResponses.unauthorized('Refresh token not found').send(res)
+        ApiResponses.unauthorized('Refresh token not found').send(res, 401)
         return
       }
 
@@ -95,7 +95,7 @@ export class AuthController {
       })
 
       if (!result.success) {
-        ApiResponses.unauthorized(result.error ?? 'Token refresh failed').send(res)
+        ApiResponses.unauthorized(result.error ?? 'Token refresh failed').send(res, 401)
         return
       }
 
@@ -114,7 +114,7 @@ export class AuthController {
       ).send(res)
     } catch (error) {
       console.error('Refresh error:', error)
-      ApiResponses.error('Token refresh failed', 'TOKEN_REFRESH_ERROR').send(res)
+      ApiResponses.internalError('Token refresh failed').send(res, 500)
     }
   }
 

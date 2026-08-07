@@ -5,6 +5,7 @@ import {
   type SecuritySeverity,
   UserSession,
 } from '@prisma/client'
+import { AUTH_TTL } from '@ritmo/config'
 import { SessionConsolidationStrategy } from '../../core/types/session.js'
 import { generateDeviceFingerprint } from '../../core/utils/deviceFingerprint.js'
 import { StructuredLoggingService } from '../logging/StructuredLoggingService.js'
@@ -36,7 +37,7 @@ export class SessionService {
     maxSessionsPerDevice: 1, // Máximo 1 sesión por dispositivo
     autoConsolidate: true, // Consolidación automática
     preserveTrustedSessions: true, // Preservar sesiones confiables
-    sessionTimeout: 7 * 24 * 60 * 60 * 1000, // 7 días
+    sessionTimeout: AUTH_TTL.sessionMs,
   }
 
   /**
@@ -389,6 +390,24 @@ export class SessionService {
         updatedAt: new Date(),
       },
     })
+  }
+
+  async extendSessionOnRefresh(sessionId: string): Promise<boolean> {
+    const now = new Date()
+    const result = await this.prisma.userSession.updateMany({
+      where: {
+        sessionId,
+        isActive: true,
+        expiresAt: { gt: now },
+      },
+      data: {
+        expiresAt: new Date(now.getTime() + AUTH_TTL.sessionMs),
+        lastActivity: now,
+        updatedAt: now,
+      },
+    })
+
+    return result.count > 0
   }
 
   /**

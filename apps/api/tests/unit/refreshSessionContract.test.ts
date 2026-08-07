@@ -1,0 +1,167 @@
+import { AUTH_TTL } from '@ritmo/config'
+import type { NextFunction, Request, Response } from 'express'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { SessionService } from '../../src/infrastructure/security/SessionService.js'
+import { AuthController } from '../../src/modules/auth/controllers/AuthController.js'
+import { AuthService } from '../../src/modules/auth/services/AuthService.js'
+
+function createResponse(): Response {
+  const response = {
+    status: vi.fn(),
+    json: vi.fn(),
+  }
+  response.status.mockReturnValue(response)
+  response.json.mockReturnValue(response)
+  return response as unknown as Response
+}
+
+describe('SessionService.extendSessionOnRefresh', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('always extends an active unexpired session by its public sessionId', async () => {
+    const now = new Date('2026-08-06T12:00:00.000Z')
+    vi.useFakeTimers()
+    vi.setSystemTime(now)
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 })
+    const service = new SessionService({
+      userSession: { updateMany },
+    } as never)
+
+    await expect(service.extendSessionOnRefresh('public-session-id')).resolves.toBe(
+      true,
+    )
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: {
+        sessionId: 'public-session-id',
+        isActive: true,
+        expiresAt: { gt: now },
+      },
+      data: {
+        expiresAt: new Date(now.getTime() + AUTH_TTL.sessionMs),
+        lastActivity: now,
+        updatedAt: now,
+      },
+    })
+  })
+
+  it('returns false when no active unexpired session is updated', async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 0 })
+    const service = new SessionService({
+      userSession: { updateMany },
+    } as never)
+
+    await expect(service.extendSessionOnRefresh('missing-session')).resolves.toBe(false)
+  })
+})
+
+describe('AuthService.refreshToken', () => {
+  it('extends the session after successful token rotation', async () => {
+    const service = new AuthService()
+    const extendSessionOnRefresh = vi.fn().mockResolvedValue(true)
+    const internals = service as unknown as {
+      getTokenInfo: () => Promise<{ userId: string; sessionId: string }>
+      sessionService: { extendSessionOnRefresh: typeof extendSessionOnRefresh }
+    }
+    internals.getTokenInfo = vi
+      .fn()
+      .mockResolvedValue({ userId: 'user-id', sessionId: 'public-session-id' })
+    internals.sessionService = { extendSessionOnRefresh }
+    service.tokenRotationService = {
+      rotateRefreshToken: vi.fn().mockResolvedValue({
+        success: true,
+        newAccessToken: 'new-access',
+        newRefreshToken: 'new-refresh',
+      }),
+    } as never
+
+    const result = await service.refreshToken('refresh-token', {
+      ipAddress: '127.0.0.1',
+      userAgent: 'vitest',
+    })
+
+    expect(result.success).toBe(true)
+    expect(extendSessionOnRefresh).toHaveBeenCalledWith('public-session-id')
+  })
+
+  it('rejects refresh when the rotated token session cannot be extended', async () => {
+    const service = new AuthService()
+    const internals = service as unknown as {
+      getTokenInfo: () => Promise<{ userId: string; sessionId: string }>
+      sessionService: { extendSessionOnRefresh: () => Promise<boolean> }
+    }
+    internals.getTokenInfo = vi
+      .fn()
+      .mockResolvedValue({ userId: 'user-id', sessionId: 'expired-session' })
+    internals.sessionService = {
+      extendSessionOnRefresh: vi.fn().mockResolvedValue(false),
+    }
+    service.tokenRotationService = {
+      rotateRefreshToken: vi.fn().mockResolvedValue({
+        success: true,
+        newAccessToken: 'new-access',
+        newRefreshToken: 'new-refresh',
+      }),
+    } as never
+
+    await expect(
+      service.refreshToken('refresh-token', {
+        ipAddress: '127.0.0.1',
+        userAgent: 'vitest',
+      }),
+    ).resolves.toEqual({
+      success: false,
+      error: 'Session is invalid or expired',
+    })
+  })
+})
+
+describe('AuthController.refresh', () => {
+  it('returns HTTP 401 when the refresh cookie is missing', async () => {
+    const controller = new AuthController()
+    const request = {
+      cookies: {},
+      headers: {},
+    } as Request
+    const response = createResponse()
+
+    await controller.refresh(request, response, vi.fn() as NextFunction)
+
+    expect(response.status).toHaveBeenCalledWith(401)
+    expect(response.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({ code: 'UNAUTHORIZED' }),
+      }),
+    )
+  })
+
+  it('returns HTTP 500 for unexpected refresh errors', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const controller = new AuthController()
+    const internals = controller as unknown as {
+      authService: { refreshToken: () => Promise<never> }
+    }
+    internals.authService = {
+      refreshToken: vi.fn().mockRejectedValue(new Error('unexpected')),
+    }
+    const request = {
+      cookies: { refresh_token: 'refresh-token' },
+      headers: {},
+      ip: '127.0.0.1',
+    } as unknown as Request
+    const response = createResponse()
+
+    await controller.refresh(request, response, vi.fn() as NextFunction)
+
+    expect(response.status).toHaveBeenCalledWith(500)
+    expect(consoleError).toHaveBeenCalledWith('Refresh error:', expect.any(Error))
+    expect(response.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({ code: 'INTERNAL_ERROR' }),
+      }),
+    )
+    consoleError.mockRestore()
+  })
+})
