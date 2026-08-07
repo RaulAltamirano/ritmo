@@ -31,7 +31,7 @@
 
           <button
             type="button"
-            class="p-2 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+            class="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-content-muted transition-colors duration-200 hover:bg-surface-raised hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
             aria-label="Close generate week"
             @click="requestClose"
           >
@@ -56,15 +56,42 @@
 
       <section
         v-if="uiPhase === 'chat'"
-        class="space-y-4"
+        class="space-y-3"
         :aria-labelledby="stepHeadingId"
       >
-        <AiModelPicker v-model="selectedModelId" />
-        <AiChatThread :messages="messages" />
-        <AiChatComposer
-          :disabled="generating"
-          @send="sendUserMessage"
-        />
+        <div
+          class="overflow-hidden rounded-2xl border border-outline bg-canvas/60 shadow-sm dark:bg-surface/40"
+        >
+          <div
+            class="flex flex-wrap items-center justify-between gap-2 border-b border-outline px-3 py-2.5"
+          >
+            <AiModelPicker v-model="selectedModelId" />
+            <p
+              v-if="readyToPreview"
+              class="inline-flex items-center gap-1.5 rounded-full bg-success-50 px-2.5 py-1 text-xs font-medium text-success-700 dark:bg-success-950/50 dark:text-success-300"
+            >
+              Ready to preview
+            </p>
+            <p
+              v-else
+              class="text-xs text-content-muted"
+            >
+              A few short answers are enough
+            </p>
+          </div>
+
+          <div class="px-3 py-3">
+            <AiChatThread :messages="messages" />
+          </div>
+
+          <div class="border-t border-outline bg-surface px-3 py-3 dark:bg-surface-raised">
+            <AiChatComposer
+              :disabled="generating"
+              @send="sendUserMessage"
+            />
+          </div>
+        </div>
+
         <p
           v-if="error"
           class="text-sm text-red-600 dark:text-red-400"
