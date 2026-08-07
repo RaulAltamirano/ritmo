@@ -23,9 +23,11 @@ export const useAuthAPI = () => {
 
   // Standardized error handling
   const handleApiError = (error: any, defaultMessage: string): never => {
-    const errorMessage = error?.userMessage ?? error?.message ?? defaultMessage
     console.error(`API Error: ${defaultMessage}`, error)
-    throw new Error(errorMessage)
+    if (error && typeof error === 'object') {
+      throw error
+    }
+    throw new Error(error?.message ?? defaultMessage)
   }
 
   /**

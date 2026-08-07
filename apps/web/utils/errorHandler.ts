@@ -345,6 +345,12 @@ export const handleGenericError = (
   enhancedError.technicalMessage = error.message
   enhancedError.timestamp = new Date().toISOString()
 
+  if (error?.status != null) (enhancedError as any).status = error.status
+  if (error?.statusCode != null) (enhancedError as any).statusCode = error.statusCode
+  if (error?.data != null) (enhancedError as any).data = error.data
+  const apiCode = error?.data?.error?.code ?? error?.code
+  if (typeof apiCode === 'string') enhancedError.code = apiCode
+
   // Log error if enabled
   if (logErrors) {
     console.error('❌ Generic Error:', {
