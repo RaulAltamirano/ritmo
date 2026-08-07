@@ -1,9 +1,13 @@
 import { runSingleFlightRefresh } from '@/composables/auth/useGlobalRefreshState'
 import { API_ENDPOINTS } from '@/constants/api'
-import { canRetryAfterRefresh, shouldAttemptAuthRefresh } from '@/utils/authFetchRetry'
+import {
+  createAuthAwareFetch,
+  SKIP_AUTH_REFRESH_HEADER,
+  type AuthFetchOptions,
+  type AuthFetchRequest,
+} from '@/utils/authAwareFetch'
 import { ofetch } from 'ofetch'
 
-const SKIP_AUTH_REFRESH_HEADER = 'X-Ritmo-Skip-Auth-Refresh'
 const LOGIN_REQUIRED_PATH = '/auth/login?reason=authentication_required'
 
 export default defineNuxtPlugin(() => {
@@ -27,37 +31,17 @@ export default defineNuxtPlugin(() => {
     })
   }
 
-  async function authAwareFetch(
-    request: Parameters<typeof base>[0],
-    options: Parameters<typeof base>[1] = {},
-  ) {
-    try {
-      return await base(request, options)
-    } catch (error) {
-      const headers = new Headers(options.headers)
-      const requestUrl = request instanceof Request ? request.url : String(request)
-
-      if (headers.get(SKIP_AUTH_REFRESH_HEADER) === '1') throw error
-      if (!shouldAttemptAuthRefresh(requestUrl, error)) throw error
-
-      const refreshed = await refreshAuthentication()
-      if (!refreshed) {
-        const { useAuthStore } = await import('@/stores/auth')
-        useAuthStore().clearAuth()
-        await navigateTo(LOGIN_REQUIRED_PATH)
-        throw error
-      }
-
-      const method = String(
-        options.method ?? (request instanceof Request ? request.method : 'GET'),
-      )
-      if (!canRetryAfterRefresh(method, options.headers)) throw error
-
-      const retryHeaders = new Headers(options.headers)
-      retryHeaders.set(SKIP_AUTH_REFRESH_HEADER, '1')
-      return await base(request, { ...options, headers: retryHeaders })
-    }
-  }
+  const authAwareFetch = createAuthAwareFetch({
+    baseFetch: <T = unknown>(request: AuthFetchRequest, options?: AuthFetchOptions) =>
+      base(request as Parameters<typeof base>[0], options as never) as Promise<T>,
+    runRefresh: refreshAuthentication,
+    onAuthFailure: async () => {
+      const { useAuthStore } = await import('@/stores/auth')
+      useAuthStore().clearAuth()
+      await navigateTo(LOGIN_REQUIRED_PATH)
+    },
+    apiBase: config.public.apiBaseUrl,
+  })
 
   globalThis.$fetch = authAwareFetch as typeof $fetch
 })

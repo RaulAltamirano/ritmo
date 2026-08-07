@@ -1,6 +1,15 @@
 import { isAuthenticationError } from '@/utils/authError'
 
-const AUTH_REFRESH_EXCLUSIONS = ['/auth/refresh', '/auth/login', '/auth/register']
+const AUTH_REFRESH_EXCLUSIONS = [
+  '/auth/refresh',
+  '/auth/login',
+  '/auth/register',
+  '/auth/password-reset',
+  '/auth/forgot-password',
+  '/auth/verify-email',
+  '/auth/resend-verification',
+  '/auth/device-challenge',
+]
 
 function requestPath(requestUrl: string): string {
   try {
@@ -13,8 +22,8 @@ function requestPath(requestUrl: string): string {
 export function shouldAttemptAuthRefresh(requestUrl: string, error: unknown): boolean {
   if (!isAuthenticationError(error)) return false
 
-  const path = requestPath(requestUrl)
-  return !AUTH_REFRESH_EXCLUSIONS.some(endpoint => path.endsWith(endpoint))
+  const path = requestPath(requestUrl).toLowerCase()
+  return !AUTH_REFRESH_EXCLUSIONS.some(endpoint => path.includes(endpoint))
 }
 
 export function canRetryAfterRefresh(

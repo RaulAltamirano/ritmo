@@ -2,16 +2,29 @@ import { canRetryAfterRefresh, shouldAttemptAuthRefresh } from '@/utils/authFetc
 import { describe, expect, it } from 'vitest'
 
 describe('shouldAttemptAuthRefresh', () => {
-  it.each(['/auth/refresh', '/auth/login', '/auth/register'])(
-    'skips the %s endpoint',
-    path => {
-      expect(
-        shouldAttemptAuthRefresh(`http://localhost:3001/api${path}`, {
-          status: 401,
-        }),
-      ).toBe(false)
-    },
-  )
+  it.each([
+    '/auth/refresh',
+    '/auth/login',
+    '/auth/register',
+    '/auth/password-reset',
+    '/auth/password-reset-request',
+    '/auth/forgot-password',
+    '/auth/verify-email',
+    '/auth/resend-verification',
+    '/auth/device-challenge',
+  ])('skips the %s endpoint', path => {
+    expect(
+      shouldAttemptAuthRefresh(`http://localhost:3001/api${path}`, {
+        status: 401,
+      }),
+    ).toBe(false)
+  })
+
+  it('matches public auth endpoint substrings case-insensitively', () => {
+    expect(
+      shouldAttemptAuthRefresh('/API/AUTH/VERIFY-EMAIL/token', { status: 401 }),
+    ).toBe(false)
+  })
 
   it('attempts refresh for authentication errors on protected endpoints', () => {
     expect(shouldAttemptAuthRefresh('/api/work-sessions', { status: 401 })).toBe(true)
