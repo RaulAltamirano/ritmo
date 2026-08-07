@@ -7,7 +7,7 @@
 
 import { NextFunction, Request, Response } from 'express'
 import { ApiResponses } from '../../../core/utils/apiResponse.js'
-import { setAuthCookies } from '../../../core/utils/authCookies.js'
+import { clearAuthCookies, setAuthCookies } from '../../../core/utils/authCookies.js'
 import {
   AccountLockedException,
   AuthenticationException,
@@ -37,6 +37,10 @@ export class AuthController {
       }
 
       const result = await this.authService.register(registerData)
+      setAuthCookies(res, {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      })
       ApiResponses.created(result, 'User registered successfully').send(res)
     } catch (error) {
       next(error)
@@ -122,12 +126,17 @@ export class AuthController {
    * POST /api/auth/logout
    * Cierra sesión del usuario actual
    */
-  logout(_req: Request, res: Response, _next: NextFunction): Promise<void> {
-    // Clear cookies
-    res.clearCookie('access_token')
-    res.clearCookie('refresh_token')
+  async logout(req: Request, res: Response, _next: NextFunction): Promise<void> {
+    const refreshToken = req.cookies?.refresh_token
+    if (refreshToken) {
+      try {
+        await this.authService.logoutWithRefreshToken(refreshToken)
+      } catch (error) {
+        console.error('Logout revoke failed:', error)
+      }
+    }
 
+    clearAuthCookies(res)
     ApiResponses.ok(null, 'Logout successful').send(res)
-    return Promise.resolve()
   }
 }

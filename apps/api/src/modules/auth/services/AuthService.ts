@@ -277,6 +277,27 @@ export class AuthService {
     }
   }
 
+  async logoutWithRefreshToken(refreshToken: string): Promise<void> {
+    const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
+    const tokenRecord = await prisma.refreshToken.findFirst({
+      where: { tokenHash },
+      select: { familyId: true, sessionId: true },
+    })
+
+    if (!tokenRecord) return
+
+    await this.tokenRotationService.revokeTokenFamily(tokenRecord.familyId, 'logout')
+    if (!tokenRecord.sessionId) return
+
+    await prisma.userSession.updateMany({
+      where: { sessionId: tokenRecord.sessionId, isActive: true },
+      data: {
+        isActive: false,
+        updatedAt: new Date(),
+      },
+    })
+  }
+
   private async getTokenInfo(
     refreshToken: string,
   ): Promise<{ userId: string; sessionId: string } | null> {
