@@ -1,30 +1,38 @@
 <template>
-  <div class="min-h-screen min-w-0 overflow-x-hidden bg-canvas">
-    <div class="mx-auto min-w-0 max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <PageHeader :title="plan.title" actions>
-        <template #actions>
-          <div
-            class="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
-          >
-            <TrainingWeekNav v-model="weekStart" />
-            <TrainingExportButton :plan="plan" :week-start="weekStart" />
-          </div>
-        </template>
-      </PageHeader>
+  <div class="mx-auto min-w-0 max-w-7xl px-2 py-6 sm:px-4 lg:px-8">
+    <PageHeader :title="plan.title" actions>
+      <template #actions>
+        <TrainingExportButton :plan="plan" :week-start="weekStart" />
+      </template>
+    </PageHeader>
 
-      <WeeklyPlanGrid :plan="plan" :week-start="weekStart" />
+    <div class="mt-6 space-y-6">
+      <PlanWeekStrip
+        v-model:week-start="weekStart"
+        v-model:selected-day="selectedDay"
+        :day-counts="sessionCounts"
+      />
+      <TrainingDaySession :training-day="selectedTrainingDay" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import PageHeader from '~/components/molecules/PageHeader.vue'
+  import PlanWeekStrip from '~/components/molecules/PlanWeekStrip.vue'
+  import TrainingDaySession from '~/components/molecules/TrainingDaySession.vue'
   import TrainingExportButton from '~/components/molecules/TrainingExportButton.vue'
-  import TrainingWeekNav from '~/components/molecules/TrainingWeekNav.vue'
-  import WeeklyPlanGrid from '~/components/organisms/WeeklyPlanGrid.vue'
   import { mockWeeklyPlan } from '~/data/mockWeeklyPlan'
-  import { startOfWeekSunday } from '~/utils/trainingWeek'
+  import {
+    defaultSelectedDay,
+    isSameCalendarDay,
+    startOfWeekMonday,
+  } from '~/utils/planWeek'
+  import {
+    buildWeekColumns,
+    sessionCountByDayKey,
+  } from '~/utils/trainingWeek'
 
   definePageMeta({
     title: 'Weekly plan',
@@ -32,5 +40,20 @@
   })
 
   const plan = mockWeeklyPlan
-  const weekStart = ref(startOfWeekSunday(new Date()))
+  const weekStart = ref(startOfWeekMonday(new Date()))
+  const selectedDay = ref(defaultSelectedDay(weekStart.value))
+
+  watch(weekStart, start => {
+    selectedDay.value = defaultSelectedDay(start)
+  })
+
+  const sessionCounts = computed(() =>
+    sessionCountByDayKey(weekStart.value, plan),
+  )
+
+  const selectedTrainingDay = computed(() => {
+    const columns = buildWeekColumns(weekStart.value, plan)
+    const column = columns.find(c => isSameCalendarDay(c.date, selectedDay.value))
+    return column?.trainingDay ?? null
+  })
 </script>
