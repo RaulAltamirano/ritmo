@@ -54,4 +54,20 @@ describe('PlanWeekStrip', () => {
     expect(wrapper.text()).toContain('Fri')
     expect(wrapper.text()).toContain('5')
   })
+
+  it('shows a dot for days with dayCounts > 0 without scheduledTasks', () => {
+    const weekStart = startOfWeekMonday(new Date(2026, 7, 10))
+    const mon = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`
+    const wrapper = mount(PlanWeekStrip, {
+      props: {
+        weekStart,
+        selectedDay: weekStart,
+        dayCounts: { [mon]: 1 },
+        'onUpdate:weekStart': () => undefined,
+        'onUpdate:selectedDay': () => undefined,
+      },
+    })
+    const selectedTab = wrapper.get('[aria-selected="true"]')
+    expect(selectedTab.html()).toContain('rounded-full')
+  })
 })

@@ -73,9 +73,13 @@
     isSameCalendarDay,
   } from '~/utils/planWeek'
 
-  const props = defineProps<{
-    scheduledTasks: Task[]
-  }>()
+  const props = withDefaults(
+    defineProps<{
+      scheduledTasks?: Task[]
+      dayCounts?: Record<string, number>
+    }>(),
+    { scheduledTasks: () => [] },
+  )
 
   const weekStart = defineModel<Date>('weekStart', { required: true })
   const selectedDay = defineModel<Date>('selectedDay', { required: true })
@@ -87,7 +91,7 @@
   const canGoNext = computed(() => canGoToNextWeek(weekStart.value))
 
   const days = computed(() =>
-    buildWeekDayCells(weekStart.value, props.scheduledTasks),
+    buildWeekDayCells(weekStart.value, props.scheduledTasks, props.dayCounts),
   )
 
   function isSelected(date: Date) {

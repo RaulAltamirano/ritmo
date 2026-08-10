@@ -96,8 +96,9 @@ const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 export function buildWeekDayCells(
   weekStart: Date,
   scheduled: Task[],
+  dayCounts?: Record<string, number>,
 ): WeekDayCell[] {
-  const counts = scheduledCountByDayKey(scheduled, weekStart)
+  const counts = dayCounts ?? scheduledCountByDayKey(scheduled, weekStart)
   return Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStart, i)
     const key = calendarDayKey(date)

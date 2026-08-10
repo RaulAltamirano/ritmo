@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { Task } from '~/types/task'
 import {
+  buildWeekDayCells,
+  calendarDayKey,
   canGoToNextWeek,
   defaultSelectedDay,
   isSameCalendarDay,
@@ -81,5 +83,13 @@ describe('planWeek', () => {
     const weekStart = startOfWeekMonday(now)
     const selected = defaultSelectedDay(weekStart, now)
     expect(isSameCalendarDay(selected, now)).toBe(true)
+  })
+
+  it('buildWeekDayCells prefers dayCounts when provided', () => {
+    const weekStart = startOfWeekMonday(new Date(2026, 7, 10))
+    const mon = calendarDayKey(weekStart)
+    const cells = buildWeekDayCells(weekStart, [], { [mon]: 1 })
+    expect(cells[0]?.taskCount).toBe(1)
+    expect(cells[1]?.taskCount).toBe(0)
   })
 })
