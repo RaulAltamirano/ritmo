@@ -1,8 +1,8 @@
 <template>
   <BaseModal
     :is-open="gate.showDailyCheckin"
-    title="Check-in del día"
-    aria-label="Check-in del día"
+    title="Daily check-in"
+    aria-label="Daily check-in"
     :close-on-backdrop-click="false"
     :close-on-escape="!saving"
     size="md"
@@ -10,7 +10,7 @@
   >
     <div class="space-y-5">
       <p class="text-sm text-content-secondary">
-        Antes del primer timer, indica con qué energía y nivel de estrés empezarás hoy.
+        Before your first timer, note your energy and stress level for today.
       </p>
       <p
         v-if="saveError"
@@ -21,13 +21,13 @@
       </p>
 
       <div class="space-y-3">
-        <p class="text-sm font-medium text-content">¿Cómo llegas de energía?</p>
+        <p class="text-sm font-medium text-content">How's your energy?</p>
         <div class="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-2">
           <button
             v-for="option in energyOptions"
             :key="`energy-${option.value}`"
             type="button"
-            :aria-label="`Energía ${option.value} de 5, ${option.label}`"
+            :aria-label="`Energy ${option.value} of 5, ${option.label}`"
             :class="optionButtonClasses(energy === option.value)"
             @click="energy = option.value"
           >
@@ -44,14 +44,14 @@
       </div>
 
       <div class="space-y-3">
-        <p class="text-sm font-medium text-content">¿Cómo va tu estrés ahora?</p>
-        <p class="text-xs text-content-secondary">De muy tranquilo a muy tenso.</p>
+        <p class="text-sm font-medium text-content">How's your stress right now?</p>
+        <p class="text-xs text-content-secondary">From very calm to very tense.</p>
         <div class="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-2">
           <button
             v-for="option in stressOptions"
             :key="`stress-${option.value}`"
             type="button"
-            :aria-label="`Estrés ${option.value} de 5, ${option.label}`"
+            :aria-label="`Stress ${option.value} of 5, ${option.label}`"
             :class="optionButtonClasses(stress === option.value)"
             @click="stress = option.value"
           >
@@ -71,7 +71,7 @@
     <template #footer>
       <div class="flex w-full justify-end gap-2">
         <BaseButton variant="ghost" size="sm" :disabled="saving" @click="onCancel">
-          Cancelar
+          Cancel
         </BaseButton>
         <BaseButton
           variant="primary"
@@ -80,7 +80,7 @@
           :disabled="saving"
           @click="onSave"
         >
-          Guardar
+          Save
         </BaseButton>
       </div>
     </template>
@@ -116,22 +116,22 @@
   const energy = ref(3)
   const stress = ref(3)
 
-  /** Alineado con `TodayTaskFeedbackModal` (energía al cerrar) */
+  /** Aligned with `TodayTaskFeedbackModal` (energy on close) */
   const energyOptions = [
-    { value: 1, iconKey: 'battery-low', label: 'Muy baja' },
-    { value: 2, iconKey: 'wind', label: 'Baja' },
-    { value: 3, iconKey: 'gauge', label: 'Media' },
-    { value: 4, iconKey: 'zap', label: 'Alta' },
-    { value: 5, iconKey: 'flame', label: 'Muy alta' },
+    { value: 1, iconKey: 'battery-low', label: 'Very low' },
+    { value: 2, iconKey: 'wind', label: 'Low' },
+    { value: 3, iconKey: 'gauge', label: 'Medium' },
+    { value: 4, iconKey: 'zap', label: 'High' },
+    { value: 5, iconKey: 'flame', label: 'Very high' },
   ] as const
 
-  /** Escala 1 = bajo estrés → 5 = alto, con “caras” (iconos) */
+  /** Scale 1 = low stress → 5 = high, with face icons */
   const stressOptions = [
-    { value: 1, iconKey: 'smile', label: 'Muy bajo' },
-    { value: 2, iconKey: 'laugh', label: 'Bajo' },
-    { value: 3, iconKey: 'meh', label: 'Medio' },
-    { value: 4, iconKey: 'frown', label: 'Alto' },
-    { value: 5, iconKey: 'angry', label: 'Muy alto' },
+    { value: 1, iconKey: 'smile', label: 'Very low' },
+    { value: 2, iconKey: 'laugh', label: 'Low' },
+    { value: 3, iconKey: 'meh', label: 'Medium' },
+    { value: 4, iconKey: 'frown', label: 'High' },
+    { value: 5, iconKey: 'angry', label: 'Very high' },
   ] as const
 
   const iconMap = {
@@ -151,7 +151,7 @@
     return iconMap[iconKey as keyof typeof iconMap] || Gauge
   }
 
-  /** Rejilla 1–5: layout + `semanticColors.interactiveOption` del design system (tokens) */
+  /** 1–5 grid: layout + `semanticColors.interactiveOption` from design system tokens */
   const optionButtonClasses = (isSelected: boolean) =>
     [
       'flex h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-center text-sm duration-200',
@@ -188,7 +188,7 @@
       {
         mapError: e => {
           if (e instanceof Error && e.message === 'CHECKIN_REQUIRED') return null
-          return fetchErrorUserMessage(e, 'No se pudo completar el guardado.')
+          return fetchErrorUserMessage(e, 'Could not save check-in.')
         },
       },
     )

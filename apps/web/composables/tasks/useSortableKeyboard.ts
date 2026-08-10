@@ -19,12 +19,12 @@ export function useSortableKeyboard({ items, onReorder }: Options) {
     snapshots.value = [...items.value]
 
     if (items.value.length <= 1) {
-      announce.value = 'Tarea agarrada. No hay otras posiciones disponibles.'
+      announce.value = 'Task grabbed. No other positions available.'
       return
     }
 
     const idx = items.value.findIndex(t => t.id === id)
-    announce.value = `Tarea agarrada. Posición ${idx + 1} de ${items.value.length}. Usa las flechas para mover, Enter para confirmar, Escape para cancelar.`
+    announce.value = `Task grabbed. Position ${idx + 1} of ${items.value.length}. Use arrow keys to move, Enter to confirm, Escape to cancel.`
   }
 
   const move = (id: string, direction: 1 | -1) => {
@@ -37,21 +37,21 @@ export function useSortableKeyboard({ items, onReorder }: Options) {
     if (next < 0 || next >= list.length) return
     ;[list[idx], list[next]] = [list[next], list[idx]]
     items.value = list
-    announce.value = `${list[next].name} movida a la posición ${next + 1} de ${list.length}.`
+    announce.value = `${list[next].name} moved to position ${next + 1} of ${list.length}.`
   }
 
   const confirm = (id: string) => {
     if (grabbedId.value !== id) return
     onReorder([...items.value])
     grabbedId.value = null
-    announce.value = 'Orden guardado.'
+    announce.value = 'Order saved.'
   }
 
   const cancel = (id: string) => {
     if (grabbedId.value !== id) return
     items.value = [...snapshots.value]
     grabbedId.value = null
-    announce.value = 'Reordenamiento cancelado.'
+    announce.value = 'Reorder cancelled.'
   }
 
   const onGripKeydown = (id: string, event: KeyboardEvent) => {

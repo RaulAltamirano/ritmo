@@ -125,16 +125,16 @@ describe('today feedback flow', () => {
     const wrapper = createWrapper()
     await flushPromises()
 
-    await wrapper.get('button[aria-label="Marcar como completada"]').trigger('click')
+    await wrapper.get('button[aria-label="Mark as completed"]').trigger('click')
     expect(wrapper.get('[data-testid="base-modal"]').exists()).toBe(true)
 
     await wrapper
-      .get('button[aria-label="Cerrar feedback post tarea"]')
+      .get('button[aria-label="Close task feedback"]')
       .trigger('click')
 
     expect(markActivityCompleted).not.toHaveBeenCalled()
     expect(wrapper.find('[data-testid="base-modal"]').exists()).toBe(false)
-    expect(wrapper.find('button[aria-label="Marcar como completada"]').exists()).toBe(
+    expect(wrapper.find('button[aria-label="Mark as completed"]').exists()).toBe(
       true,
     )
   })
@@ -143,22 +143,24 @@ describe('today feedback flow', () => {
     const wrapper = createWrapper()
     await flushPromises()
 
-    await wrapper.get('button[aria-label="Marcar como completada"]').trigger('click')
+    await wrapper.get('button[aria-label="Mark as completed"]').trigger('click')
 
-    await wrapper.get('button[aria-label="Energia 4 de 5"]').trigger('click')
-    await wrapper.get('button[aria-label="Momento del dia si"]').trigger('click')
-    await wrapper.get('button[aria-label="Continuar al paso 2"]').trigger('click')
-    await wrapper.get('button[aria-label="Enfoque 5 de 5"]').trigger('click')
-    await wrapper.get('button[aria-label="Progreso 4 de 5"]').trigger('click')
-    await wrapper.get('button[aria-label="Carga mental 3 de 5"]').trigger('click')
-    await wrapper.get('button[aria-label="Continuar al paso 3"]').trigger('click')
-    await wrapper.get('button[aria-label="Bloqueador ninguno"]').trigger('click')
-    await wrapper.get('button[aria-label="Enviar feedback de cierre"]').trigger('click')
+    await wrapper.get('button[aria-label="Energy 4 of 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Time of day: yes"]').trigger('click')
+    await wrapper.get('button[aria-label="Continue to step 2"]').trigger('click')
+    await wrapper.get('button[aria-label="Focus 5 of 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Progress 4 of 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Mental load 3 of 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Continue to step 3"]').trigger('click')
+    await wrapper.get('button[aria-label="Blocker none"]').trigger('click')
+    await wrapper
+      .get('button[aria-label="Submit completion feedback"]')
+      .trigger('click')
     await flushPromises()
 
     expect(markActivityCompleted).toHaveBeenCalledWith('activity-1', true)
     expect(wrapper.find('[data-testid="base-modal"]').exists()).toBe(false)
-    expect(wrapper.find('button[aria-label="Marcar como completada"]').exists()).toBe(
+    expect(wrapper.find('button[aria-label="Mark as completed"]').exists()).toBe(
       false,
     )
   })

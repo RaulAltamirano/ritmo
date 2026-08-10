@@ -96,15 +96,15 @@ export function useTaskTimer() {
         if (msg === 'WORK_SESSION_CONFLICT') return
         if (msg === 'WORK_SESSION_CONFLICT_UNRESOLVED') {
           timerStore.showNotification(
-            'No se puede iniciar la tarea',
-            'Hay un bloque remoto activo. Finalízalo o abandónalo antes de empezar otro.',
+            'Cannot start the task',
+            'There is an active remote block. Finish or abandon it before starting another.',
             'warning',
           )
           return
         }
         timerStore.showNotification(
-          'Sesión remota no iniciada',
-          'El temporizador local seguirá; el tiempo puede no contar en el resumen del día.',
+          'Remote session not started',
+          'The local timer will continue; time may not count toward the day summary.',
           'warning',
         )
       }

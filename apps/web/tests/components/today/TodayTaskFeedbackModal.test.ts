@@ -8,8 +8,8 @@ const createWrapper = () =>
       isOpen: true,
       task: {
         id: 'task-1',
-        name: 'Preparar presentación',
-        title: 'Preparar presentación',
+        name: 'Prepare presentation',
+        title: 'Prepare presentation',
         createdAt: new Date('2026-04-19T09:00:00.000Z'),
       },
     },
@@ -35,40 +35,42 @@ describe('TodayTaskFeedbackModal', () => {
   it('renders the MVP questions and progress flow', async () => {
     const wrapper = createWrapper()
 
-    expect(wrapper.text()).toContain('Paso 1 de 3')
-    expect(wrapper.text()).toContain('¿Con cuánta energía terminas?')
+    expect(wrapper.text()).toContain('Step 1 of 3')
+    expect(wrapper.text()).toContain('How much energy do you have left?')
     expect(wrapper.text()).toContain(
-      '¿Esta tarea encajó bien con este momento del día?',
+      'Did this task fit well with this time of day?',
     )
 
-    await wrapper.get('button[aria-label="Energia 4 de 5"]').trigger('click')
-    await wrapper.get('button[aria-label="Momento del dia si"]').trigger('click')
-    await wrapper.get('button[aria-label="Continuar al paso 2"]').trigger('click')
+    await wrapper.get('button[aria-label="Energy 4 of 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Time of day: yes"]').trigger('click')
+    await wrapper.get('button[aria-label="Continue to step 2"]').trigger('click')
 
-    expect(wrapper.text()).toContain('Paso 2 de 3')
-    expect(wrapper.text()).toContain('¿Qué tan concentrado estuviste?')
-    expect(wrapper.text()).toContain('¿Cuánto avanzaste de verdad?')
-    expect(wrapper.text()).toContain('¿Qué tan demandante fue?')
+    expect(wrapper.text()).toContain('Step 2 of 3')
+    expect(wrapper.text()).toContain('How focused were you?')
+    expect(wrapper.text()).toContain('How much real progress did you make?')
+    expect(wrapper.text()).toContain('How demanding was it?')
   })
 
   it('keeps submit disabled until all answers are selected and emits the payload', async () => {
     const wrapper = createWrapper()
 
-    await wrapper.get('button[aria-label="Energia 3 de 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Energy 3 of 5"]').trigger('click')
     await wrapper
-      .get('button[aria-label="Momento del dia mas o menos"]')
+      .get('button[aria-label="Time of day: somewhat"]')
       .trigger('click')
-    await wrapper.get('button[aria-label="Continuar al paso 2"]').trigger('click')
+    await wrapper.get('button[aria-label="Continue to step 2"]').trigger('click')
 
-    await wrapper.get('button[aria-label="Enfoque 4 de 5"]').trigger('click')
-    await wrapper.get('button[aria-label="Progreso 5 de 5"]').trigger('click')
-    await wrapper.get('button[aria-label="Carga mental 3 de 5"]').trigger('click')
-    await wrapper.get('button[aria-label="Continuar al paso 3"]').trigger('click')
+    await wrapper.get('button[aria-label="Focus 4 of 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Progress 5 of 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Mental load 3 of 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Continue to step 3"]').trigger('click')
 
-    const submitButton = wrapper.get('button[aria-label="Enviar feedback de cierre"]')
+    const submitButton = wrapper.get(
+      'button[aria-label="Submit completion feedback"]',
+    )
     expect(submitButton.attributes('disabled')).toBeDefined()
 
-    await wrapper.get('button[aria-label="Bloqueador distracciones"]').trigger('click')
+    await wrapper.get('button[aria-label="Blocker distractions"]').trigger('click')
 
     expect(submitButton.attributes('disabled')).toBeUndefined()
     await submitButton.trigger('click')
@@ -81,7 +83,7 @@ describe('TodayTaskFeedbackModal', () => {
           progressScore: 5,
           mentalDemand: 3,
           timeFit: 'mixed',
-          mainBlocker: 'distractions',
+          mainBlocker: 'distracted',
         },
       ],
     ])

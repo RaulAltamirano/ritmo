@@ -20,7 +20,7 @@
         type="button"
         class="tcard-grip"
         :class="{ 'tcard-grip--grabbed': isKeyboardGrabbed }"
-        :aria-label="`Mover tarea: ${displayTitle}`"
+        :aria-label="`Move task: ${displayTitle}`"
         :aria-pressed="isKeyboardGrabbed"
         @keydown="$emit('grip-keydown', $event)"
         @click.stop
@@ -31,7 +31,7 @@
       <button
         type="button"
         class="tcard-content tcard-content--clickable"
-        :aria-label="`Editar: ${displayTitle}`"
+        :aria-label="`Edit: ${displayTitle}`"
         @click="$emit('open-edit')"
         @keydown.enter.prevent="$emit('open-edit')"
         @keydown.space.prevent="$emit('open-edit')"
@@ -68,15 +68,15 @@
           <span
             v-if="task.isOnBreak"
             class="meta-priority inline-flex items-center justify-center text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20"
-            aria-label="Descanso"
-            title="Descanso"
+            aria-label="Break"
+            title="Break"
           >
             <Moon class="h-3.5 w-3.5" aria-hidden="true" />
           </span>
           <template v-if="task.totalTimeSpent">
             <span class="text-xs text-gray-300 dark:text-gray-600">·</span>
             <span class="text-xs text-gray-400 dark:text-gray-500"
-              >{{ formatAccumulated(task.totalTimeSpent) }} acumulado</span
+              >{{ formatAccumulated(task.totalTimeSpent) }} accumulated</span
             >
           </template>
         </div>
@@ -105,7 +105,7 @@
                 : 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-900/60'
               : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50',
           ]"
-          :aria-label="task.isRunning || task.isOnBreak ? 'Pausar tarea' : 'Iniciar tarea'"
+          :aria-label="task.isRunning || task.isOnBreak ? 'Pause task' : 'Start task'"
           @click.stop="$emit('start-timer')"
         >
           <svg
@@ -124,7 +124,7 @@
         <button
           v-if="!task.completed"
           class="tcard-btn bg-surface-overlay text-gray-400 dark:text-gray-500 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400"
-          aria-label="Marcar como completada"
+          aria-label="Mark as completed"
           @click.stop="$emit('request-complete')"
         >
           <svg
@@ -142,7 +142,7 @@
         <button
           v-if="!task.completed"
           class="tcard-btn bg-surface-overlay text-gray-400 dark:text-gray-500 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400"
-          aria-label="Eliminar tarea"
+          aria-label="Delete task"
           @click.stop="$emit('delete-task')"
         >
           <svg
@@ -180,7 +180,7 @@
 
 <script setup lang="ts">
   /**
-   * Tarjeta de tarea para listas/kanban: temporizador, prioridad, acciones y edición por teclado.
+   * Task card for lists/kanban: timer, priority, actions, and keyboard editing.
    * Emits: start-timer, request-complete, open-edit, delete-task.
    */
   import { computed } from 'vue'
@@ -208,7 +208,7 @@
     'grip-keydown': [event: KeyboardEvent]
   }>()
 
-  const FALLBACK_TITLE = 'Sin título'
+  const FALLBACK_TITLE = 'Untitled'
 
   const displayTitle = computed(() => {
     const raw = props.task.title?.trim() || props.task.name?.trim()

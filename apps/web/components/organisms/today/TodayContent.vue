@@ -21,10 +21,10 @@
     <div v-else class="tc-empty text-center py-14">
       <div class="text-3xl text-gray-300 dark:text-gray-700 mb-3 leading-none">◎</div>
       <p class="text-sm text-gray-400 dark:text-gray-500 mb-1">
-        Tus tareas de hoy aparecerán aquí
+        Your tasks for today will show up here
       </p>
       <p class="text-xs text-gray-300 dark:text-gray-700">
-        Escribe el nombre y presiona Enter para crear una
+        Type a name and press Enter to create one
       </p>
     </div>
   </div>

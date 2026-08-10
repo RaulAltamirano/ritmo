@@ -6,15 +6,15 @@
   >
     <div class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2">
       <p class="min-w-0 flex-1">
-        Tu bloque anterior fue abandonado automáticamente por inactividad (sin señal en
-        el servidor). Puedes iniciar un bloque nuevo cuando quieras.
+        Your previous block was abandoned automatically due to inactivity (no signal
+        on the server). You can start a new block whenever you are ready.
       </p>
       <button
         type="button"
         class="shrink-0 rounded-md border border-amber-300 bg-canvas px-3 py-1.5 font-medium text-content hover:bg-amber-100 dark:border-amber-700 dark:hover:bg-amber-900/40"
         @click="onDismiss"
       >
-        Entendido
+        Got it
       </button>
     </div>
   </div>

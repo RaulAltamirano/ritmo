@@ -2,7 +2,7 @@
   <div
     class="text-center py-12 text-gray-500 dark:text-gray-400"
     role="status"
-    aria-label="No hay tareas disponibles"
+    aria-label="No tasks available"
   >
     <div
       class="w-16 h-16 bg-surface-raised/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-outline"
@@ -12,15 +12,15 @@
     <p class="text-lg font-medium mb-2">
       {{
         selectedCategory
-          ? `No hay tareas en "${selectedCategory}"`
-          : 'No hay tareas disponibles'
+          ? `No tasks in "${selectedCategory}"`
+          : 'No tasks available'
       }}
     </p>
     <p class="text-sm text-gray-400 dark:text-gray-500">
       {{
         selectedCategory
-          ? 'Intenta crear una nueva tarea en esta categoría'
-          : 'Crea tu primera tarea para comenzar'
+          ? 'Try creating a new task in this category'
+          : 'Create your first task to get started'
       }}
     </p>
   </div>
