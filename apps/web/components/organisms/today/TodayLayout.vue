@@ -21,7 +21,7 @@
       />
     </div>
 
-    <!-- Feedback al *completar tarea* (escala / notas de tarea), distinto de WorkBlockFeedbackModal (reflexión de bloque remoto). -->
+    <!-- Feedback on *task complete* (scale / task notes), distinct from WorkBlockFeedbackModal (remote block reflection). -->
     <TodayTaskFeedbackModal
       :is-open="isFeedbackModalOpen"
       :task="selectedTaskForCompletion"
@@ -127,14 +127,14 @@
           selectedTaskForCompletion.value as Task,
           feedback,
           resolve,
-          error => reject(error ?? new Error('No se pudo completar la tarea')),
+          error => reject(error ?? new Error('Could not complete the task')),
         )
       })
 
       resetFeedbackState()
     } catch (error) {
       feedbackError.value =
-        error instanceof Error ? error.message : 'No se pudo completar la tarea'
+        error instanceof Error ? error.message : 'Could not complete the task'
     } finally {
       pendingFeedbackSubmit.value = false
     }

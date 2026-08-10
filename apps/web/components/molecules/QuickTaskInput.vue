@@ -6,7 +6,7 @@
         v-model="value"
         type="text"
         class="qi-field text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
-        placeholder="¿Qué necesitas hacer hoy?"
+        placeholder="What do you need to do today?"
         :disabled="isLoading"
         maxlength="200"
         autocomplete="off"
@@ -16,7 +16,7 @@
         v-if="value.trim() && !isLoading"
         class="qi-btn"
         type="button"
-        aria-label="Crear tarea"
+        aria-label="Create task"
         @click="submit"
       >
         <svg
@@ -36,11 +36,11 @@
         size="sm"
         color="current"
         class="text-[color:var(--ph,#0ea5e9)]"
-        aria-label="Creando tarea"
+        aria-label="Creating task"
       />
     </div>
     <p class="mt-2 pl-1 text-xs text-gray-300 dark:text-gray-700">
-      25 min · prioridad media por defecto · Enter para crear
+      25 min · medium priority by default · Enter to create
     </p>
   </div>
 </template>

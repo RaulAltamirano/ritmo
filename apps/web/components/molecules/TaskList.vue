@@ -15,7 +15,7 @@
         data-testid="task-counter"
         class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0"
       >
-        {{ pendingTasks.length }} {{ pendingTasks.length === 1 ? 'tarea' : 'tareas' }}
+        {{ pendingTasks.length }} {{ pendingTasks.length === 1 ? 'task' : 'tasks' }}
       </span>
     </div>
 
@@ -26,7 +26,7 @@
       tag="ul"
       data-testid="pending-list"
       class="tl-list"
-      aria-label="Tareas pendientes"
+      aria-label="Pending tasks"
       handle=".tcard-grip"
       ghost-class="tl-row--ghost"
       chosen-class="tl-row--chosen"
@@ -61,12 +61,12 @@
         <span
           class="text-xs font-medium text-gray-400 dark:text-gray-500 flex-shrink-0"
         >
-          Completadas ({{ completedTasks.length }})
+          Completed ({{ completedTasks.length }})
         </span>
         <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700/60" />
       </div>
 
-      <ul data-testid="completed-list" class="tl-list" aria-label="Tareas completadas">
+      <ul data-testid="completed-list" class="tl-list" aria-label="Completed tasks">
         <li v-for="task in completedTasks" :key="task.id" class="tl-row">
           <TaskCard
             :task="convertToTaskItemFormat(task)"

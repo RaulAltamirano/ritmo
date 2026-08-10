@@ -28,9 +28,9 @@ describe('TaskCard', () => {
         task: baseTask({ title: '', name: '   ' }),
       },
     })
-    expect(wrapper.text()).toContain('Sin título')
+    expect(wrapper.text()).toContain('Untitled')
     const clickable = wrapper.find('button.tcard-content--clickable')
-    expect(clickable.attributes('aria-label')).toContain('Sin título')
+    expect(clickable.attributes('aria-label')).toContain('Untitled')
   })
 
   it('emite open-edit al clic en el área principal', async () => {

@@ -1,11 +1,11 @@
 <template>
   <div v-if="currentPhase || isLoading || error">
-    <!-- Skeleton: solo en carga inicial sin datos previos -->
+    <!-- Skeleton: initial load only when there is no prior data -->
     <div
       v-if="isLoading && !currentPhase"
       class="space-y-2 animate-pulse"
       aria-busy="true"
-      aria-label="Cargando fase circadiana"
+      aria-label="Loading circadian phase"
     >
       <div class="flex items-center justify-between">
         <div class="h-4 bg-surface-raised rounded w-2/5" />
@@ -15,18 +15,18 @@
       <div class="h-0.5 bg-surface-raised rounded-full mt-3" />
     </div>
 
-    <!-- Error sin datos previos -->
+    <!-- Error with no prior data -->
     <div v-else-if="error && !currentPhase" class="flex items-center gap-2.5">
-      <p class="text-sm text-gray-400 dark:text-gray-500">No se pudo cargar la fase</p>
+      <p class="text-sm text-gray-400 dark:text-gray-500">Could not load phase</p>
       <button
         class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 cursor-pointer"
         @click="fetchCurrentPhase"
       >
-        Reintentar
+        Retry
       </button>
     </div>
 
-    <!-- Phase strip: visible siempre que haya datos, incluso durante refetch -->
+    <!-- Phase strip: visible whenever there is data, including during refetch -->
     <div v-else-if="currentPhase">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
@@ -43,7 +43,7 @@
           <span
             v-if="isLoading"
             class="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"
-            aria-label="Actualizando"
+            aria-label="Updating"
           />
           <span class="text-xs tabular-nums text-gray-400 dark:text-gray-500">
             {{ displayPercent }}%
@@ -52,7 +52,7 @@
             type="button"
             class="p-0.5 -mr-0.5 rounded text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-gray-400"
             :aria-expanded="isExpanded"
-            :aria-label="isExpanded ? 'Ocultar descripción' : 'Mostrar descripción'"
+            :aria-label="isExpanded ? 'Hide description' : 'Show description'"
             @click="isExpanded = !isExpanded"
           >
             <ChevronDown

@@ -42,7 +42,7 @@ export const useTodayHandlers = () => {
         estimatedDuration: getDefaultEstimateMinutes(),
       })
       if (!result.success) {
-        notifyError('No se pudo crear la tarea', result.error)
+        notifyError('Could not create the task', result.error)
       }
     } finally {
       isQuickTaskLoading.value = false
@@ -61,7 +61,7 @@ export const useTodayHandlers = () => {
     }
     const result = await store.remove(taskId)
     if (!result.success) {
-      notifyError('No se pudo eliminar la tarea', result.error)
+      notifyError('Could not delete the task', result.error)
     }
   }
 
@@ -73,7 +73,7 @@ export const useTodayHandlers = () => {
       title: payload.title?.trim() ? payload.title.trim() : titleFallback,
     })
     if (!result.success) {
-      notifyError('No se pudo actualizar la tarea', result.error)
+      notifyError('Could not update the task', result.error)
     }
   }
 
@@ -83,7 +83,7 @@ export const useTodayHandlers = () => {
       description: trimmed || undefined,
     })
     if (!result.success) {
-      notifyError('No se pudo guardar la nota', result.error)
+      notifyError('Could not save the note', result.error)
     }
   }
 
@@ -98,8 +98,8 @@ export const useTodayHandlers = () => {
     }
     const result = await store.markCompleted(task.id, true)
     if (!result.success) {
-      notifyError('No se pudo completar la tarea', result.error)
-      throw new Error(result.error ?? 'No se pudo completar la tarea')
+      notifyError('Could not complete the task', result.error)
+      throw new Error(result.error ?? 'Could not complete the task')
     }
   }
 
@@ -113,7 +113,7 @@ export const useTodayHandlers = () => {
       const remoteId = timerStore.remoteWorkSessionId
       const isActiveTask = timerStore.activeTask?.id === task.id
       if (!remoteId || !isActiveTask) {
-        throw new Error('No hay una sesión remota activa para esta tarea')
+        throw new Error('There is no active remote session for this task')
       }
 
       await completeWorkSession(
@@ -125,12 +125,12 @@ export const useTodayHandlers = () => {
 
       const result = await store.markCompleted(task.id, true)
       if (!result.success) {
-        throw new Error(result.error ?? 'No se pudo completar la tarea')
+        throw new Error(result.error ?? 'Could not complete the task')
       }
 
       resolve()
     } catch (err) {
-      reject(err instanceof Error ? err : new Error('No se pudo completar la tarea'))
+      reject(err instanceof Error ? err : new Error('Could not complete the task'))
     }
   }
 

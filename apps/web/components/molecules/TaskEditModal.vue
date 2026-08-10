@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :is-open="modelValue && !!editingTask"
-    aria-label="Editar tarea"
+    aria-label="Edit task"
     :show-close-button="false"
     size="md"
     backdrop="blur"
@@ -16,17 +16,17 @@
             id="task-edit-heading"
             class="text-lg font-semibold text-gray-900 dark:text-white"
           >
-            Editar tarea
+            Edit task
           </h3>
           <p class="text-sm text-gray-500 dark:text-gray-400">
-            Modifica los detalles de la tarea
+            Update the task details
           </p>
         </div>
 
         <button
           type="button"
           class="p-2 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
-          aria-label="Cerrar edición de tarea"
+          aria-label="Close task editor"
           @click="emit('update:modelValue', false)"
         >
           <X class="h-5 w-5" aria-hidden="true" />
@@ -35,7 +35,7 @@
 
       <section class="space-y-4" aria-labelledby="task-edit-heading">
         <div class="space-y-1.5">
-          <label class="field-label" for="task-edit-name">Nombre</label>
+          <label class="field-label" for="task-edit-name">Name</label>
           <input
             id="task-edit-name"
             v-model="editingTask.name"
@@ -46,22 +46,22 @@
 
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-1.5">
-            <label class="field-label" for="task-edit-category">Categoría</label>
+            <label class="field-label" for="task-edit-category">Category</label>
             <IconSelect
               id="task-edit-category"
               v-model="selectedCategory"
               :options="categoryOptions"
-              placeholder="Sin categoría"
+              placeholder="No category"
             />
           </div>
 
           <div class="space-y-1.5">
-            <label class="field-label" for="task-edit-priority">Prioridad</label>
+            <label class="field-label" for="task-edit-priority">Priority</label>
             <IconSelect
               id="task-edit-priority"
               v-model="selectedPriority"
               :options="priorityOptions"
-              placeholder="Elegir prioridad"
+              placeholder="Choose priority"
             />
           </div>
         </div>
@@ -69,17 +69,17 @@
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-1.5">
             <label class="field-label" for="task-edit-duration">
-              Duración estimada
+              Estimated duration
             </label>
             <IconSelect
               id="task-edit-duration"
               v-model="durationMode"
               :options="durationOptions"
-              placeholder="Sin estimar"
+              placeholder="No estimate"
             />
             <div v-if="isFreeDuration" class="pt-1">
               <label class="field-label" for="task-edit-duration-free">
-                Minutos libres
+                Custom minutes
               </label>
               <input
                 id="task-edit-duration-free"
@@ -88,17 +88,17 @@
                 min="1"
                 max="480"
                 step="1"
-                placeholder="Ej. 40"
+                placeholder="e.g. 40"
                 class="field-control mt-1.5"
               />
             </div>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              Bloques de foco de Ritmo, o tiempo libre a tu medida
+              Ritmo focus blocks, or free time that fits you
             </p>
           </div>
 
           <div class="space-y-1.5">
-            <label class="field-label" for="task-edit-due-date">Fecha límite</label>
+            <label class="field-label" for="task-edit-due-date">Due date</label>
             <input
               id="task-edit-due-date"
               v-model="dueDateLocal"
@@ -109,23 +109,23 @@
         </div>
 
         <div class="space-y-1.5">
-          <label class="field-label" for="task-edit-description">Descripción</label>
+          <label class="field-label" for="task-edit-description">Description</label>
           <textarea
             id="task-edit-description"
             v-model="editingTask.notes"
             rows="3"
-            placeholder="Opcional"
+            placeholder="Optional"
             class="field-control resize-none"
           />
         </div>
 
         <div class="space-y-1.5">
-          <label class="field-label" for="task-edit-tags">Etiquetas</label>
+          <label class="field-label" for="task-edit-tags">Tags</label>
           <input
             id="task-edit-tags"
             v-model="tagsInput"
             type="text"
-            placeholder="Separadas por coma"
+            placeholder="Comma-separated"
             class="field-control"
           />
         </div>
@@ -138,17 +138,17 @@
           class="flex-1"
           @click="emit('update:modelValue', false)"
         >
-          Cancelar
+          Cancel
         </BaseButton>
         <BaseButton
           variant="primary"
           size="sm"
           class="flex-1"
           :disabled="!canSave"
-          aria-label="Guardar cambios de la tarea"
+          aria-label="Save task changes"
           @click="handleSave"
         >
-          Guardar cambios
+          Save changes
         </BaseButton>
       </div>
     </div>
@@ -210,30 +210,30 @@
   }
 
   const categoryOptions: IconSelectOption[] = [
-    { value: '', label: 'Sin categoría', icon: CircleOff, tone: 'slate' },
-    { value: 'work', label: 'Trabajo', icon: Briefcase, tone: 'blue' },
-    { value: 'study', label: 'Estudio', icon: BookOpen, tone: 'violet' },
-    { value: 'exercise', label: 'Ejercicio', icon: Dumbbell, tone: 'emerald' },
+    { value: '', label: 'No category', icon: CircleOff, tone: 'slate' },
+    { value: 'work', label: 'Work', icon: Briefcase, tone: 'blue' },
+    { value: 'study', label: 'Study', icon: BookOpen, tone: 'violet' },
+    { value: 'exercise', label: 'Exercise', icon: Dumbbell, tone: 'emerald' },
     { value: 'social', label: 'Social', icon: Users, tone: 'cyan' },
     { value: 'personal', label: 'Personal', icon: User, tone: 'slate' },
-    { value: 'health', label: 'Salud', icon: Heart, tone: 'rose' },
-    { value: 'learning', label: 'Aprendizaje', icon: GraduationCap, tone: 'amber' },
-    { value: 'creative', label: 'Creativo', icon: Palette, tone: 'pink' },
-    { value: 'other', label: 'Otro', icon: MoreHorizontal, tone: 'slate' },
+    { value: 'health', label: 'Health', icon: Heart, tone: 'rose' },
+    { value: 'learning', label: 'Learning', icon: GraduationCap, tone: 'amber' },
+    { value: 'creative', label: 'Creative', icon: Palette, tone: 'pink' },
+    { value: 'other', label: 'Other', icon: MoreHorizontal, tone: 'slate' },
   ]
 
   const priorityOptions: IconSelectOption[] = [
-    { value: 'LOW', label: 'Baja', icon: ArrowDown, tone: 'slate' },
-    { value: 'MEDIUM', label: 'Media', icon: Minus, tone: 'blue' },
-    { value: 'HIGH', label: 'Alta', icon: ArrowUp, tone: 'amber' },
-    { value: 'URGENT', label: 'Urgente', icon: AlertTriangle, tone: 'orange' },
-    { value: 'CRITICAL', label: 'Crítica', icon: Flame, tone: 'rose' },
+    { value: 'LOW', label: 'Low', icon: ArrowDown, tone: 'slate' },
+    { value: 'MEDIUM', label: 'Medium', icon: Minus, tone: 'blue' },
+    { value: 'HIGH', label: 'High', icon: ArrowUp, tone: 'amber' },
+    { value: 'URGENT', label: 'Urgent', icon: AlertTriangle, tone: 'orange' },
+    { value: 'CRITICAL', label: 'Critical', icon: Flame, tone: 'rose' },
   ]
 
   const durationOptions = computed<IconSelectOption[]>(() => {
     const choices = getEstimateDurationChoices(DEFAULT_TIMER_PRESETS)
     return [
-      { value: '', label: 'Sin estimar', icon: CircleOff, tone: 'slate' },
+      { value: '', label: 'No estimate', icon: CircleOff, tone: 'slate' },
       ...choices.map(choice => ({
         value: choice.value,
         label: choice.label,
@@ -242,7 +242,7 @@
       })),
       {
         value: FREE_ESTIMATE_DURATION_VALUE,
-        label: 'Tiempo libre',
+        label: 'Free time',
         icon: Clock,
         tone: 'cyan',
       },

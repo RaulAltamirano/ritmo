@@ -64,7 +64,7 @@
   })
 
   const formattedDate = computed(() =>
-    now.value.toLocaleDateString('es-ES', {
+    now.value.toLocaleDateString('en-US', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -73,7 +73,7 @@
   )
 
   const formattedTime = computed(() =>
-    now.value.toLocaleTimeString('es-ES', {
+    now.value.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,

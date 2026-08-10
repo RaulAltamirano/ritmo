@@ -2,18 +2,18 @@
   <ClientOnly>
     <div class="tts" data-testid="today-time-strip">
       <span class="tts-item">
-        <span class="tts-label">Hoy</span>
+        <span class="tts-label">Today</span>
         <span class="tts-value">{{ dayTotalLabel }}</span>
       </span>
       <span v-if="showIdle" class="tts-item tts-item--idle">
         <span class="tts-dot">·</span>
-        <span class="tts-value">{{ idleLabel }} sin tarea</span>
+        <span class="tts-value">{{ idleLabel }} without a task</span>
       </span>
     </div>
     <template #fallback>
       <div class="tts" data-testid="today-time-strip">
         <span class="tts-item">
-          <span class="tts-label">Hoy</span>
+          <span class="tts-label">Today</span>
           <span class="tts-value">0m</span>
         </span>
       </div>

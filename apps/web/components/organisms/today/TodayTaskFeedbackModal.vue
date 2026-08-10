@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :is-open="isOpen"
-    aria-label="Feedback al terminar la tarea"
+    aria-label="Task completion feedback"
     :show-close-button="false"
     :close-on-backdrop-click="false"
     :close-on-escape="!loading"
@@ -10,14 +10,14 @@
   >
     <div class="space-y-6">
       <div class="space-y-3 border-b border-gray-200 pb-5 dark:border-gray-800">
-        <span class="sr-only">Paso {{ currentStep }} de 3</span>
+        <span class="sr-only">Step {{ currentStep }} of 3</span>
 
         <div class="flex items-start justify-between gap-4">
           <div class="space-y-1">
             <p
               class="text-xs font-medium uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500"
             >
-              Paso {{ currentStep }} de 3
+              Step {{ currentStep }} of 3
             </p>
             <h3
               :id="stepHeadingId"
@@ -33,7 +33,7 @@
           <button
             type="button"
             class="p-2 text-gray-400 transition-colors hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-gray-300"
-            aria-label="Cerrar feedback post tarea"
+            aria-label="Close task feedback"
             :disabled="loading"
             @click="handleRequestClose(false)"
           >
@@ -58,7 +58,7 @@
       >
         <div class="space-y-3">
           <p class="text-sm font-medium text-gray-900 dark:text-white">
-            ¿Con cuánta energía terminas?
+            How much energy do you have left?
           </p>
 
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -66,7 +66,7 @@
               v-for="option in energyOptions"
               :key="option.value"
               type="button"
-              :aria-label="`Energía ${option.value} de 5`"
+              :aria-label="`Energy ${option.value} of 5`"
               :class="selectCardClasses(energyAfter === option.value)"
               @click="energyAfter = option.value"
             >
@@ -84,7 +84,7 @@
 
         <div class="space-y-3">
           <p class="text-sm font-medium text-gray-900 dark:text-white">
-            ¿Esta tarea encajó bien con este momento del día?
+            Did this task fit well with this time of day?
           </p>
 
           <div class="grid gap-3 sm:grid-cols-3">
@@ -92,7 +92,7 @@
               v-for="option in timeFitOptions"
               :key="option.value"
               type="button"
-              :aria-label="`Momento del día: ${option.ariaLabel}`"
+              :aria-label="`Time of day: ${option.ariaLabel}`"
               :class="selectCardClasses(timeFit === option.value)"
               @click="timeFit = option.value"
             >
@@ -124,7 +124,7 @@
               {{ metric.label }}
             </p>
             <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {{ getMetricValue(metric.key) ?? 'Sin respuesta' }}
+              {{ getMetricValue(metric.key) ?? 'No answer' }}
             </span>
           </div>
 
@@ -133,7 +133,7 @@
               v-for="value in 5"
               :key="value"
               type="button"
-              :aria-label="`${metric.ariaPrefix} ${value} de 5`"
+              :aria-label="`${metric.ariaPrefix} ${value} of 5`"
               :class="ratingButtonClasses(getMetricValue(metric.key) === value)"
               @click="setMetricValue(metric.key, value as 1 | 2 | 3 | 4 | 5)"
             >
@@ -157,7 +157,7 @@
       <section v-else class="space-y-6" :aria-labelledby="stepHeadingId">
         <div class="space-y-3">
           <p class="text-sm font-medium text-gray-900 dark:text-white">
-            ¿Qué fue lo que más afectó tu rendimiento?
+            What affected your performance the most?
           </p>
 
           <div class="grid gap-3 sm:grid-cols-2">
@@ -165,7 +165,7 @@
               v-for="option in blockerOptions"
               :key="option.value"
               type="button"
-              :aria-label="`Bloqueador ${option.ariaLabel}`"
+              :aria-label="`Blocker ${option.ariaLabel}`"
               :class="selectCardClasses(mainBlocker === option.value)"
               @click="mainBlocker = option.value"
             >
@@ -184,8 +184,7 @@
         <div
           class="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900/60 dark:text-gray-300"
         >
-          Este check-out le ayuda a Ritmo a recomendar mejores momentos y tipos de tarea
-          para ti.
+          This check-out helps Ritmo recommend better times and task types for you.
         </div>
       </section>
 
@@ -204,7 +203,7 @@
           :disabled="loading"
           @click="handleRequestClose(false)"
         >
-          Ahora no
+          Not now
         </BaseButton>
 
         <div class="flex gap-3">
@@ -212,11 +211,11 @@
             v-if="currentStep > 1"
             variant="secondary"
             size="sm"
-            aria-label="Volver al paso anterior"
+            aria-label="Go back to previous step"
             :disabled="loading"
             @click="currentStep -= 1"
           >
-            Atrás
+            Back
           </BaseButton>
 
           <BaseButton
@@ -225,11 +224,11 @@
             size="sm"
             :disabled="!isCurrentStepValid || loading"
             :aria-label="
-              currentStep === 1 ? 'Continuar al paso 2' : 'Continuar al paso 3'
+              currentStep === 1 ? 'Continue to step 2' : 'Continue to step 3'
             "
             @click="currentStep += 1"
           >
-            Continuar
+            Continue
           </BaseButton>
 
           <BaseButton
@@ -238,10 +237,10 @@
             size="sm"
             :loading="loading"
             :disabled="!isSubmitValid || loading"
-            aria-label="Enviar feedback de cierre"
+            aria-label="Submit completion feedback"
             @click="handleSubmit"
           >
-            Guardar feedback
+            Save feedback
           </BaseButton>
         </div>
       </div>
@@ -273,7 +272,7 @@
   } from 'lucide-vue-next'
   import { computed, ref, watch } from 'vue'
 
-  /** Encabezado de paso: usado por regiones para aria-labelledby */
+  /** Step heading id used by regions for aria-labelledby */
   const stepHeadingId = 'today-task-feedback-step-heading'
 
   interface Props {
@@ -303,20 +302,20 @@
   const mainBlocker = ref<TaskCompletionFeedback['mainBlocker'] | null>(null)
 
   const energyOptions = [
-    { value: 1, iconKey: 'battery-low', label: 'Muy baja' },
-    { value: 2, iconKey: 'wind', label: 'Baja' },
-    { value: 3, iconKey: 'gauge', label: 'Media' },
-    { value: 4, iconKey: 'zap', label: 'Alta' },
-    { value: 5, iconKey: 'flame', label: 'Muy alta' },
+    { value: 1, iconKey: 'battery-low', label: 'Very low' },
+    { value: 2, iconKey: 'wind', label: 'Low' },
+    { value: 3, iconKey: 'gauge', label: 'Medium' },
+    { value: 4, iconKey: 'zap', label: 'High' },
+    { value: 5, iconKey: 'flame', label: 'Very high' },
   ] as const
 
   const timeFitOptions = [
-    { value: 'yes', iconKey: 'thumbs-up', label: 'Sí', ariaLabel: 'sí' },
+    { value: 'yes', iconKey: 'thumbs-up', label: 'Yes', ariaLabel: 'yes' },
     {
       value: 'mixed',
       iconKey: 'circle-help',
-      label: 'Más o menos',
-      ariaLabel: 'más o menos',
+      label: 'Somewhat',
+      ariaLabel: 'somewhat',
     },
     { value: 'no', iconKey: 'thumbs-down', label: 'No', ariaLabel: 'no' },
   ] as const
@@ -325,76 +324,81 @@
     {
       value: 'fatigue',
       iconKey: 'moon',
-      label: 'Cansancio',
-      ariaLabel: 'cansancio',
+      label: 'Fatigue',
+      ariaLabel: 'fatigue',
     },
     {
-      value: 'distractions',
+      value: 'distracted',
       iconKey: 'smartphone',
-      label: 'Distracciones',
-      ariaLabel: 'distracciones',
+      label: 'Distractions',
+      ariaLabel: 'distractions',
     },
     {
       value: 'clarity',
       iconKey: 'circle-help',
-      label: 'Falta de claridad',
-      ariaLabel: 'falta de claridad',
+      label: 'Lack of clarity',
+      ariaLabel: 'lack of clarity',
     },
     {
       value: 'difficulty',
       iconKey: 'brain',
-      label: 'Dificultad',
-      ariaLabel: 'dificultad',
+      label: 'Difficulty',
+      ariaLabel: 'difficulty',
     },
     {
       value: 'motivation',
       iconKey: 'battery-low',
-      label: 'Baja motivación',
-      ariaLabel: 'baja motivación',
+      label: 'Low motivation',
+      ariaLabel: 'low motivation',
     },
-    { value: 'environment', iconKey: 'wind', label: 'Entorno', ariaLabel: 'entorno' },
-    { value: 'none', iconKey: 'sparkles', label: 'Ninguno', ariaLabel: 'ninguno' },
+    {
+      value: 'environment',
+      iconKey: 'wind',
+      label: 'Environment',
+      ariaLabel: 'environment',
+    },
+    { value: 'none', iconKey: 'sparkles', label: 'None', ariaLabel: 'none' },
   ] as const
 
   const ratingMetrics = [
     {
       key: 'focusScore',
-      label: '¿Qué tan concentrado estuviste?',
-      ariaPrefix: 'Enfoque',
+      label: 'How focused were you?',
+      ariaPrefix: 'Focus',
     },
     {
       key: 'progressScore',
-      label: '¿Cuánto avanzaste de verdad?',
-      ariaPrefix: 'Progreso',
+      label: 'How much real progress did you make?',
+      ariaPrefix: 'Progress',
     },
     {
       key: 'mentalDemand',
-      label: '¿Qué tan demandante fue?',
-      ariaPrefix: 'Carga mental',
+      label: 'How demanding was it?',
+      ariaPrefix: 'Mental load',
     },
   ] as const
 
   const ratingOptions = {
     focusScore: [
-      { value: 1, iconKey: 'battery-low', label: 'Muy bajo' },
-      { value: 2, iconKey: 'wind', label: 'Bajo' },
-      { value: 3, iconKey: 'gauge', label: 'Medio' },
-      { value: 4, iconKey: 'zap', label: 'Alto' },
-      { value: 5, iconKey: 'flame', label: 'Total' },
+      { value: 1, iconKey: 'battery-low', label: 'Very low' },
+      { value: 2, iconKey: 'wind', label: 'Low' },
+      { value: 3, iconKey: 'gauge', label: 'Medium' },
+      { value: 4, iconKey: 'zap', label: 'High' },
+      { value: 5, iconKey: 'flame', label: 'Full' },
     ],
     progressScore: [
-      { value: 1, iconKey: 'battery-low', label: 'Poco' },
-      { value: 2, iconKey: 'gauge', label: 'Algo' },
-      { value: 3, iconKey: 'sun', label: 'Bien' },
-      { value: 4, iconKey: 'zap', label: 'Mucho' },
+      { value: 1, iconKey: 'battery-low', label: 'Little' },
+      { value: 2, iconKey: 'gauge', label: 'Some' },
+      { value: 3, iconKey: 'sun', label: 'Good' },
+      { value: 4, iconKey: 'zap', label: 'A lot' },
       { value: 5, iconKey: 'sparkles', label: 'Max' },
     ],
     mentalDemand: [
-      { value: 1, iconKey: 'moon', label: 'Ligera' },
-      { value: 2, iconKey: 'gauge', label: 'Suave' },
-      { value: 3, iconKey: 'circle-help', label: 'Media' },
-      { value: 4, iconKey: 'brain', label: 'Alta' },
-      { value: 5, iconKey: 'flame', label: 'Intensa' },
+      { value: 1, iconKey: 'moon', label: 'Light' },
+      { value: 2, iconKey: 'gauge', label: 'Mild' },
+      { value: 3, iconKey: 'circle-help', label: 'Medium' },
+      { value: 4, iconKey: 'brain', label: 'High' },
+      { value: 5, iconKey: 'flame', label: 'Intense' },
     ],
   } as const
 
@@ -422,9 +426,9 @@
   }
 
   const stepTitle = computed(() => {
-    if (currentStep.value === 1) return 'Tu energía al cerrar'
-    if (currentStep.value === 2) return 'Cómo se sintió la sesión'
-    return 'Último detalle y listo'
+    if (currentStep.value === 1) return 'Your energy at wrap-up'
+    if (currentStep.value === 2) return 'How the session felt'
+    return 'One last detail'
   })
 
   const isCurrentStepValid = computed(() => {
@@ -472,7 +476,7 @@
     mainBlocker.value = null
   }
 
-  /** Sincroniza con BaseModal sin duplicar `close` (BaseModal ya emite update + close). */
+  /** Sync with BaseModal without duplicating `close` (BaseModal already emits update + close). */
   const handleIsOpenUpdate = (value: boolean) => {
     if (props.loading && !value) return
     emit('update:isOpen', value)
