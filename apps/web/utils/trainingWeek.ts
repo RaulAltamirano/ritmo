@@ -4,6 +4,7 @@ import type {
   WeekdayIndex,
   WeeklyPlan,
 } from '~/types/training'
+import { calendarDayKey } from '~/utils/planWeek'
 
 /** Sunday-start week, local timezone (calendar date only). */
 export function startOfWeekSunday(date: Date): Date {
@@ -61,4 +62,16 @@ export function buildWeekColumns(weekStart: Date, plan: WeeklyPlan): WeekColumn[
       trainingDay: byWeekday.get(weekday) ?? null,
     }
   })
+}
+
+export function sessionCountByDayKey(
+  weekStart: Date,
+  plan: WeeklyPlan,
+): Record<string, number> {
+  const columns = buildWeekColumns(weekStart, plan)
+  const counts: Record<string, number> = {}
+  for (const column of columns) {
+    counts[calendarDayKey(column.date)] = column.trainingDay ? 1 : 0
+  }
+  return counts
 }

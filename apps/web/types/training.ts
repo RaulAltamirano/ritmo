@@ -20,7 +20,7 @@ export interface TrainingDay {
   dayNumber: number
   name: string
   focus: TrainingDayFocus
-  /** Calendar weekday this session maps to within a Sun–Sat week. */
+  /** JS `Date.getDay()` index for the calendar day this session maps to (weeks displayed Mon–Sun). */
   weekday: WeekdayIndex
   exercises: ExerciseEntry[]
 }
