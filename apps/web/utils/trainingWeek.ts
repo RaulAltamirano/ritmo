@@ -12,13 +12,6 @@ function calendarDayKey(date: Date): string {
   return `${y}-${m}-${day}`
 }
 
-/** Sunday-start week, local timezone (calendar date only). */
-export function startOfWeekSunday(date: Date): Date {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  d.setDate(d.getDate() - d.getDay())
-  return d
-}
-
 export function addDays(date: Date, days: number): Date {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   d.setDate(d.getDate() + days)
