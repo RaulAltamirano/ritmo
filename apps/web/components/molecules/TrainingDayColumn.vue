@@ -46,7 +46,8 @@
 <script setup lang="ts">
   import { computed } from 'vue'
   import ExerciseRow from '~/components/molecules/ExerciseRow.vue'
-  import type { ExerciseEntry, WeekColumn } from '~/types/training'
+  import type { WeekColumn } from '~/types/training'
+  import { groupExercisesByBlock } from '~/utils/groupExercisesByBlock'
 
   const props = defineProps<{
     column: WeekColumn
@@ -92,23 +93,7 @@
     return 'text-content-secondary'
   })
 
-  const groups = computed(() => {
-    const exercises = props.column.trainingDay?.exercises ?? []
-    const result: ExerciseEntry[][] = []
-    let current: ExerciseEntry[] = []
-
-    for (const exercise of exercises) {
-      if (exercise.block === 'a' && current.length > 0) {
-        result.push(current)
-        current = []
-      }
-      current.push(exercise)
-    }
-
-    if (current.length > 0) {
-      result.push(current)
-    }
-
-    return result
-  })
+  const groups = computed(() =>
+    groupExercisesByBlock(props.column.trainingDay?.exercises ?? []),
+  )
 </script>
