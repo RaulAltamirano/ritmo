@@ -7,7 +7,7 @@
       actions
     >
       <template #actions>
-        <BaseButton variant="primary" @click="openCreateStudyPlanModal">
+        <BaseButton variant="primary" @click="openNewProjectModal">
           <Plus :size="16" />
           <span>New plan</span>
         </BaseButton>
@@ -100,7 +100,7 @@
             <BaseButton
               v-if="!hasActiveFilters"
               variant="primary"
-              @click="openCreateStudyPlanModal"
+              @click="openNewProjectModal"
             >
               <Plus :size="16" />
               <span>New plan</span>
@@ -110,13 +110,12 @@
       </div>
     </ClientOnly>
 
-    <CreateStudyPlanModal
-      :is-open="showCreateStudyPlanModal"
-      :loading="isSaving"
-      :error="saveError"
-      @update:is-open="showCreateStudyPlanModal = $event"
-      @close="showCreateStudyPlanModal = false"
-      @submit="handleCreateStudyPlan"
+    <ProjectModal
+      v-model="showProjectModal"
+      :project="editingProject"
+      :saving="isSaving"
+      :error-message="saveError"
+      @save="handleSaveProject"
     />
   </div>
 </template>
@@ -128,13 +127,12 @@
   import EmptyState from '@ritmo/ui/components/molecules/feedback/EmptyState.vue'
   import { Compass, Plus, Search } from 'lucide-vue-next'
   import { computed, onMounted, ref } from 'vue'
-  import CreateStudyPlanModal from '@/components/organisms/CreateStudyPlanModal.vue'
   import PageHeader from '~/components/molecules/PageHeader.vue'
   import PlanListRow from '~/components/molecules/PlanListRow.vue'
+  import ProjectModal from '~/components/molecules/ProjectModal.vue'
   import { useBreadcrumbs } from '@/composables/shared/useBreadcrumbs'
   import { useProjectsStore } from '@/stores/projects'
-  import type { StudyPlanIntake } from '@/types/studyPlan'
-  import { studyPlanIntakeToProjectForm } from '@/utils/studyPlanIntake'
+  import type { Project, ProjectFormData } from '@/types/project'
 
   useHead({
     title: 'Plans',
@@ -161,15 +159,14 @@
   const { breadcrumbs } = useBreadcrumbs()
   const projectsStore = useProjectsStore()
 
-  const showCreateStudyPlanModal = ref(false)
+  const showProjectModal = ref(false)
+  const editingProject = ref<Project | null>(null)
   const statusFilter = ref('')
   const sortBy = ref('createdAt')
   const searchQuery = ref('')
-  const isLoading = computed(
-    () => projectsStore.loading && !showCreateStudyPlanModal.value,
-  )
+  const isLoading = computed(() => projectsStore.loading && !showProjectModal.value)
   const loadError = computed(() =>
-    showCreateStudyPlanModal.value ? null : projectsStore.error,
+    showProjectModal.value ? null : projectsStore.error,
   )
   const isSaving = ref(false)
   const saveError = ref<string | null>(null)
@@ -234,19 +231,32 @@
     return 'Create a plan for a language, an exam, a habit, or a personal goal, and organize tasks around that objective.'
   })
 
-  const openCreateStudyPlanModal = () => {
+  const openNewProjectModal = () => {
+    editingProject.value = null
     saveError.value = null
-    showCreateStudyPlanModal.value = true
+    showProjectModal.value = true
   }
 
-  const handleCreateStudyPlan = async (intake: StudyPlanIntake) => {
+  const handleSaveProject = async (form: ProjectFormData) => {
     saveError.value = null
+    if (editingProject.value) {
+      projectsStore.updateProject({
+        ...editingProject.value,
+        name: form.name,
+        description: form.description,
+        status: form.status,
+        color: form.color,
+        updatedAt: new Date(),
+      })
+      showProjectModal.value = false
+      return
+    }
+
     isSaving.value = true
     try {
-      const form = studyPlanIntakeToProjectForm(intake)
       const result = await projectsStore.createPlan(form)
       if (result.success) {
-        showCreateStudyPlanModal.value = false
+        showProjectModal.value = false
       } else {
         saveError.value = result.error
       }
