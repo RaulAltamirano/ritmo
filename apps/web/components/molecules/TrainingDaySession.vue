@@ -1,5 +1,5 @@
 <template>
-  <section aria-label="Training session">
+  <section :aria-label="sectionLabel">
     <p v-if="!trainingDay" class="py-8 text-center text-sm text-content-secondary">
       Rest day
     </p>
@@ -33,6 +33,10 @@
   const props = defineProps<{
     trainingDay: TrainingDay | null
   }>()
+
+  const sectionLabel = computed(() =>
+    props.trainingDay ? props.trainingDay.name : 'Rest day',
+  )
 
   const titleClass = computed(() => {
     if (props.trainingDay?.focus === 'upper') return 'text-brand-text'

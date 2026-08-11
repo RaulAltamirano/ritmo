@@ -9,6 +9,7 @@ describe('TrainingDaySession', () => {
       props: { trainingDay: null },
     })
     expect(wrapper.text()).toContain('Rest day')
+    expect(wrapper.get('section').attributes('aria-label')).toBe('Rest day')
   })
 
   it('shows session title and an exercise name', () => {
@@ -18,5 +19,6 @@ describe('TrainingDaySession', () => {
     })
     expect(wrapper.text()).toContain(day.name)
     expect(wrapper.text()).toContain(day.exercises[0]!.name)
+    expect(wrapper.get('section').attributes('aria-label')).toBe(day.name)
   })
 })

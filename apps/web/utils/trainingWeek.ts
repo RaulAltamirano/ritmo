@@ -4,13 +4,7 @@ import type {
   WeekdayIndex,
   WeeklyPlan,
 } from '~/types/training'
-
-function calendarDayKey(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
+import { calendarDayKey } from '~/utils/calendarDayKey'
 
 export function addDays(date: Date, days: number): Date {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())

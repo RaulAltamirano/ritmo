@@ -1,7 +1,8 @@
 import type { Task } from '~/types/task'
+import { calendarDayKey } from '~/utils/calendarDayKey'
 import { addDays, formatWeekLabel } from '~/utils/trainingWeek'
 
-export { addDays, formatWeekLabel }
+export { addDays, formatWeekLabel, calendarDayKey }
 
 /** Monday-start week, local timezone (calendar date only). */
 export function startOfWeekMonday(date: Date): Date {
@@ -18,13 +19,6 @@ export function isSameCalendarDay(a: Date, b: Date): boolean {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   )
-}
-
-export function calendarDayKey(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
 }
 
 /** Client heuristic: scheduled if endTime or duration/estimatedTime is present. */
