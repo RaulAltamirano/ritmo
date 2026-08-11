@@ -43,10 +43,8 @@ export const useTokenManager = () => {
       const response = await authAPI.refreshToken()
       const { success } = response
 
-      if (success) {
-        console.log('✅ Silent refresh successful - tokens refreshed proactively')
-      } else {
-        console.warn('⚠️ Silent refresh failed - response indicates failure')
+      if (!success) {
+        console.warn('Silent refresh failed')
       }
 
       return success

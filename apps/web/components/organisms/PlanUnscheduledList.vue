@@ -15,9 +15,13 @@
           >
             {{ task.name || task.title }}
           </p>
-          <p v-if="task.category" class="truncate text-xs text-content-secondary">
+          <p
+            v-if="task.category"
+            class="truncate text-xs text-content-secondary"
+          >
             {{ task.category }}
           </p>
+          <PlanTaskMeta :task="task" />
         </div>
         <input
           type="checkbox"
@@ -32,6 +36,7 @@
 </template>
 
 <script setup lang="ts">
+  import PlanTaskMeta from '~/components/molecules/PlanTaskMeta.vue'
   import type { Task } from '~/types/task'
 
   defineProps<{

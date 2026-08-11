@@ -51,6 +51,16 @@ export interface UpdateTaskPayload {
 }
 
 // ── Tipo de UI (usado por TaskItem, TaskCard, stores/timer, etc.) ──────────
+export type StudyTechniqueId =
+  | 'active_recall'
+  | 'spaced_repetition'
+  | 'interleaving'
+  | 'self_explanation'
+  | 'dual_coding'
+  | 'worked_examples'
+  | 'shadowing'
+  | 'deep_work'
+
 export interface Task {
   id: string
   name: string
@@ -81,6 +91,8 @@ export interface Task {
   endTime?: Date
   dueDate?: Date | null
   type?: string
+  /** Optional study method id (see utils/studyTechniques). */
+  studyTechnique?: StudyTechniqueId
 }
 
 // ── Timer ──────────────────────────────────────────────────────────────────

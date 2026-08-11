@@ -31,12 +31,13 @@
       <p v-if="rangeLabel" class="mt-0.5 text-xs text-content-secondary">
         {{ rangeLabel }}
       </p>
+      <PlanTaskMeta :task="task" dense />
     </div>
 
-    <div class="shrink-0 pt-0.5">
+    <div v-if="interactive" class="shrink-0 pt-0.5">
       <input
         type="checkbox"
-        class="h-4 w-4 rounded border-outline-strong text-primary-500 focus:ring-primary-500"
+        class="h-4 w-4 cursor-pointer rounded border-outline-strong text-primary-500 focus:ring-primary-500"
         :checked="completed"
         :aria-label="`Mark ${title} complete`"
         @change="onToggle"
@@ -49,12 +50,22 @@
   import { computed } from 'vue'
   import type { Task } from '~/types/task'
   import { formatTaskTimeRange } from '~/utils/planWeek'
+  import PlanTaskMeta from '~/components/molecules/PlanTaskMeta.vue'
 
-  const props = defineProps<{
-    task: Task
-    isFirst?: boolean
-    isLast?: boolean
-  }>()
+  const props = withDefaults(
+    defineProps<{
+      task: Task
+      isFirst?: boolean
+      isLast?: boolean
+      /** When false, hides the complete checkbox (preview / read-only). */
+      interactive?: boolean
+    }>(),
+    {
+      isFirst: false,
+      isLast: false,
+      interactive: true,
+    },
+  )
 
   const emit = defineEmits<{
     toggleComplete: [task: Task, completed: boolean]

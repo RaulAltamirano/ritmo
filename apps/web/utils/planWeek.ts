@@ -21,12 +21,9 @@ export function isSameCalendarDay(a: Date, b: Date): boolean {
   )
 }
 
-/** Client heuristic: scheduled if endTime or duration/estimatedTime is present. */
+/** Client heuristic: scheduled when a start time is set (duration alone = estimate). */
 export function isTaskScheduled(task: Task): boolean {
-  if (task.endTime) return true
-  if (task.duration) return true
-  if (task.estimatedTime) return true
-  return false
+  return task.startTime != null
 }
 
 export function splitPlanTasks(tasks: Task[]): {

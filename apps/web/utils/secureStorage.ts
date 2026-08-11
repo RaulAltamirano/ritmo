@@ -39,10 +39,13 @@ export class SecureStorageService {
   private readonly memoryStore = new Map<string, { value: any; expires: number }>()
   private readonly DEFAULT_TTL = 24 * 60 * 60 * 1000 // 24 hours
   private readonly KEY_ROTATION_INTERVAL = 7 * 24 * 60 * 60 * 1000 // 7 days
+  private readonly MASTER_KEY_NAME = 'ritmo_master_key_v2'
+  private readonly ROTATION_TS_KEY = 'ritmo_master_key_rotated_at'
   private lastKeyRotation = 0
+  private initPromise: Promise<void> | null = null
 
   private constructor() {
-    void this.initializeCrypto()
+    this.initPromise = this.initializeCrypto()
   }
 
   static getInstance(): SecureStorageService {
@@ -50,6 +53,17 @@ export class SecureStorageService {
       SecureStorageService.instance = new SecureStorageService()
     }
     return SecureStorageService.instance
+  }
+
+  /** @internal Clears singleton + in-memory state between unit tests. */
+  static resetInstanceForTests(): void {
+    SecureStorageService.instance = undefined as unknown as SecureStorageService
+  }
+
+  private async ensureReady(): Promise<void> {
+    if (this.initPromise) {
+      await this.initPromise
+    }
   }
 
   /**
@@ -60,16 +74,27 @@ export class SecureStorageService {
   private async initializeCrypto(): Promise<void> {
     try {
       if (typeof window !== 'undefined' && window.crypto?.subtle) {
-        // Generate or retrieve master key
+        this.lastKeyRotation = this.readRotationTimestamp()
         const masterKey = await this.getOrGenerateMasterKey()
         this.cryptoKey = masterKey
-
-        // Check if key rotation is needed
         await this.checkKeyRotation()
       }
     } catch {
       // Crypto initialization failed
     }
+  }
+
+  private readRotationTimestamp(): number {
+    if (typeof window === 'undefined' || !window.localStorage) return 0
+    const raw = localStorage.getItem(this.ROTATION_TS_KEY)
+    if (!raw) return 0
+    const parsed = Number(raw)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
+  private persistRotationTimestamp(timestamp: number): void {
+    if (typeof window === 'undefined' || !window.localStorage) return
+    localStorage.setItem(this.ROTATION_TS_KEY, String(timestamp))
   }
 
   /**
@@ -78,19 +103,21 @@ export class SecureStorageService {
    * Creates a cryptographically secure master key for encryption
    */
   private async getOrGenerateMasterKey(): Promise<CryptoKey> {
-    const keyName = 'ritmo_master_key_v2'
-
     try {
-      // Try to get existing key
-      const existingKey = await this.getStoredKey(keyName)
+      const existingKey = await this.getStoredKey(this.MASTER_KEY_NAME)
       if (existingKey) {
+        // First install / restored key without rotation stamp: treat "now" as baseline
+        // so we don't immediately rotate and orphan ciphertext.
+        if (this.lastKeyRotation === 0) {
+          this.lastKeyRotation = Date.now()
+          this.persistRotationTimestamp(this.lastKeyRotation)
+        }
         return existingKey
       }
     } catch {
       // Key not found or invalid, generate new one
     }
 
-    // Generate new master key
     const newKey = await window.crypto.subtle.generateKey(
       {
         name: 'AES-GCM',
@@ -100,8 +127,9 @@ export class SecureStorageService {
       ['encrypt', 'decrypt'],
     )
 
-    // Store the key securely
-    await this.storeKey(keyName, newKey)
+    await this.storeKey(this.MASTER_KEY_NAME, newKey)
+    this.lastKeyRotation = Date.now()
+    this.persistRotationTimestamp(this.lastKeyRotation)
 
     return newKey
   }
@@ -114,9 +142,14 @@ export class SecureStorageService {
   private async checkKeyRotation(): Promise<void> {
     const now = Date.now()
 
+    if (this.lastKeyRotation === 0) {
+      this.lastKeyRotation = now
+      this.persistRotationTimestamp(now)
+      return
+    }
+
     if (now - this.lastKeyRotation > this.KEY_ROTATION_INTERVAL) {
       await this.rotateMasterKey()
-      this.lastKeyRotation = now
     }
   }
 
@@ -127,9 +160,9 @@ export class SecureStorageService {
    */
   private async rotateMasterKey(): Promise<void> {
     try {
-      // Rotating master encryption key for enhanced security
+      const oldKey = this.cryptoKey
+      if (!oldKey) return
 
-      // Generate new master key
       const newKey = await window.crypto.subtle.generateKey(
         {
           name: 'AES-GCM',
@@ -139,14 +172,12 @@ export class SecureStorageService {
         ['encrypt', 'decrypt'],
       )
 
-      // Re-encrypt all stored data with new key
-      await this.reEncryptAllData(newKey)
+      await this.reEncryptAllData(oldKey, newKey)
 
-      // Update master key
       this.cryptoKey = newKey
-      await this.storeKey('ritmo_master_key_v2', newKey)
-
-      // Master key rotation completed successfully
+      await this.storeKey(this.MASTER_KEY_NAME, newKey)
+      this.lastKeyRotation = Date.now()
+      this.persistRotationTimestamp(this.lastKeyRotation)
     } catch (error) {
       console.error('❌ Master key rotation failed:', error)
     }
@@ -155,28 +186,22 @@ export class SecureStorageService {
   /**
    * 🔄 RE-ENCRYPT ALL DATA
    *
-   * Re-encrypts all stored data with new master key
+   * Decrypts with the old key and encrypts with the new key.
    */
-  private async reEncryptAllData(_newKey: CryptoKey): Promise<void> {
+  private async reEncryptAllData(oldKey: CryptoKey, newKey: CryptoKey): Promise<void> {
     try {
-      // Get all encrypted data from storage
       const keys = Object.keys(localStorage)
       const encryptedKeys = keys.filter(key => key.startsWith('ritmo_encrypted_'))
 
       for (const key of encryptedKeys) {
         try {
-          // Decrypt with old key
           const encryptedData = localStorage.getItem(key)
-          if (encryptedData) {
-            const decrypted = await this.decrypt(encryptedData)
+          if (!encryptedData) continue
 
-            // Re-encrypt with new key
-            const reEncrypted = await this.encrypt(decrypted)
-            localStorage.setItem(key, reEncrypted)
-          }
+          const decrypted = await this.decryptWithKey(encryptedData, oldKey)
+          const reEncrypted = await this.encryptWithKey(decrypted, newKey)
+          localStorage.setItem(key, reEncrypted)
         } catch {
-          // Failed to re-encrypt key
-          // Remove corrupted data
           localStorage.removeItem(key)
         }
       }
@@ -196,10 +221,10 @@ export class SecureStorageService {
     options: SecureStorageOptions = {},
   ): Promise<void> {
     try {
+      await this.ensureReady()
       const { encryption = true, ttl = this.DEFAULT_TTL, memoryOnly = false } = options
 
       if (memoryOnly) {
-        // Store only in memory (most secure)
         this.memoryStore.set(key, {
           value,
           expires: Date.now() + ttl,
@@ -208,7 +233,6 @@ export class SecureStorageService {
       }
 
       if (encryption && this.cryptoKey) {
-        // Encrypt and store
         const encrypted = await this.encrypt(JSON.stringify(value))
         const storageKey = `ritmo_encrypted_${key}`
 
@@ -216,7 +240,6 @@ export class SecureStorageService {
           localStorage.setItem(storageKey, encrypted)
         }
       } else {
-        // Store without encryption (fallback)
         const storageKey = `ritmo_plain_${key}`
         const dataWithTTL = {
           value,
@@ -243,10 +266,10 @@ export class SecureStorageService {
     options: SecureStorageOptions = {},
   ): Promise<T | null> {
     try {
+      await this.ensureReady()
       const { encryption = true, memoryOnly = false } = options
 
       if (memoryOnly) {
-        // Check memory store
         const memoryData = this.memoryStore.get(key)
         if (memoryData && memoryData.expires > Date.now()) {
           return memoryData.value
@@ -256,7 +279,6 @@ export class SecureStorageService {
       }
 
       if (encryption && this.cryptoKey) {
-        // Try encrypted storage
         const storageKey = `ritmo_encrypted_${key}`
         const encrypted =
           typeof window !== 'undefined' && window.localStorage
@@ -264,11 +286,16 @@ export class SecureStorageService {
             : null
 
         if (encrypted) {
-          const decrypted = await this.decrypt(encrypted)
-          return JSON.parse(decrypted)
+          try {
+            const decrypted = await this.decrypt(encrypted)
+            return JSON.parse(decrypted)
+          } catch {
+            // Orphaned ciphertext (e.g. prior broken key rotation) — drop and miss.
+            localStorage.removeItem(storageKey)
+            return null
+          }
         }
       } else {
-        // Try plain storage
         const storageKey = `ritmo_plain_${key}`
         const plain =
           typeof window !== 'undefined' && window.localStorage
@@ -280,7 +307,6 @@ export class SecureStorageService {
           if (dataWithTTL.expires > Date.now()) {
             return dataWithTTL.value
           }
-          // Remove expired data
           localStorage.removeItem(storageKey)
         }
       }
@@ -370,15 +396,17 @@ export class SecureStorageService {
     if (!this.cryptoKey) {
       throw new Error('Crypto key not available')
     }
+    return this.encryptWithKey(data, this.cryptoKey)
+  }
 
+  private async encryptWithKey(data: string, key: CryptoKey): Promise<string> {
     const iv = window.crypto.getRandomValues(new Uint8Array(12))
     const salt = window.crypto.getRandomValues(new Uint8Array(16))
-
     const encodedData = new TextEncoder().encode(data)
 
     const encrypted = await window.crypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
-      this.cryptoKey,
+      key,
       encodedData,
     )
 
@@ -408,7 +436,10 @@ export class SecureStorageService {
     if (!this.cryptoKey) {
       throw new Error('Crypto key not available')
     }
+    return this.decryptWithKey(encryptedData, this.cryptoKey)
+  }
 
+  private async decryptWithKey(encryptedData: string, key: CryptoKey): Promise<string> {
     const encrypted: EncryptedData = JSON.parse(encryptedData)
 
     const iv = new Uint8Array(
@@ -421,7 +452,7 @@ export class SecureStorageService {
 
     const decrypted = await window.crypto.subtle.decrypt(
       { name: 'AES-GCM', iv },
-      this.cryptoKey,
+      key,
       data,
     )
 
