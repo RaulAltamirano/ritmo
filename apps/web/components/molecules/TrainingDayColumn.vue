@@ -27,25 +27,20 @@
       No exercises in this day.
     </div>
 
-    <div v-else class="flex flex-col gap-3.5 p-3 sm:gap-4 sm:p-3.5">
-      <ul
+    <div v-else class="flex flex-col gap-3 p-3 sm:gap-3.5 sm:p-3.5">
+      <ExerciseBlockGroup
         v-for="(group, groupIndex) in groups"
         :key="`${column.key}-group-${groupIndex}`"
-        class="overflow-hidden rounded-lg border border-outline bg-canvas/40 divide-y divide-outline"
-      >
-        <ExerciseRow
-          v-for="exercise in group"
-          :key="exercise.id"
-          :exercise="exercise"
-        />
-      </ul>
+        :exercises="group"
+        :group-index="groupIndex"
+      />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
   import { computed } from 'vue'
-  import ExerciseRow from '~/components/molecules/ExerciseRow.vue'
+  import ExerciseBlockGroup from '~/components/molecules/ExerciseBlockGroup.vue'
   import type { WeekColumn } from '~/types/training'
   import { groupExercisesByBlock } from '~/utils/groupExercisesByBlock'
 
@@ -72,7 +67,7 @@
   const headerToneClass = computed(() => {
     if (focus.value === 'upper') return 'bg-brand-subtle/55'
     if (focus.value === 'lower') {
-      return 'bg-accent-50/70 dark:bg-accent-950/35'
+      return 'bg-warning-50/75 dark:bg-warning-950/30'
     }
     return 'bg-surface-raised/40'
   })
@@ -80,7 +75,7 @@
   const eyebrowClass = computed(() => {
     if (focus.value === 'upper') return 'text-brand-text/85'
     if (focus.value === 'lower') {
-      return 'text-accent-800/80 dark:text-accent-300/85'
+      return 'text-warning-800/80 dark:text-warning-300/85'
     }
     return 'text-content-muted'
   })
@@ -88,7 +83,7 @@
   const titleClass = computed(() => {
     if (focus.value === 'upper') return 'text-brand-text'
     if (focus.value === 'lower') {
-      return 'text-accent-900/90 dark:text-accent-200/90'
+      return 'text-warning-800 dark:text-warning-300'
     }
     return 'text-content-secondary'
   })

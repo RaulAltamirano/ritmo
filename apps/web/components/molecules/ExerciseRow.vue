@@ -1,50 +1,68 @@
 <template>
-  <li class="px-3.5 py-3.5 sm:px-4 sm:py-4">
-    <div class="min-w-0 space-y-2.5">
-      <p class="text-sm font-semibold leading-normal text-content">
-        <span class="sr-only">Block {{ exercise.block }}. </span>
-        {{ exercise.name }}
-      </p>
-
-      <p
-        class="inline-flex max-w-full items-start gap-1.5 font-mono text-sm font-medium leading-normal tracking-tight text-content"
-      >
-        <Repeat2
-          class="mt-0.5 h-3.5 w-3.5 shrink-0 text-content-muted"
-          aria-hidden="true"
-        />
-        <span>{{ exercise.setsReps }}</span>
-      </p>
-
-      <dl class="flex flex-wrap items-center gap-2">
-        <div
-          class="inline-flex items-center gap-1 rounded-md border border-brand/15 bg-brand-subtle/70 px-2 py-1 text-xs text-brand-text/90"
+  <li class="relative px-3.5 py-3 sm:px-4 sm:py-3.5">
+    <div
+      class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+    >
+      <div class="min-w-0 flex-1 space-y-1">
+        <p class="text-sm font-semibold leading-snug text-content">
+          <span class="sr-only">Block {{ exercise.block }}. </span>
+          {{ exercise.name }}
+        </p>
+        <p
+          class="inline-flex max-w-full items-start gap-1.5 text-sm leading-normal text-content-secondary"
         >
-          <Target class="h-3 w-3 shrink-0 opacity-70" aria-hidden="true" />
-          <dt class="font-semibold uppercase tracking-wide opacity-80">RIR</dt>
-          <dd class="font-mono font-medium">
-            {{ exercise.targetRir }}
-          </dd>
-        </div>
+          <Repeat2
+            class="mt-0.5 h-3.5 w-3.5 shrink-0 text-content-muted"
+            aria-hidden="true"
+          />
+          <span class="font-mono tracking-tight text-content">{{
+            exercise.setsReps
+          }}</span>
+        </p>
+      </div>
+
+      <dl class="shrink-0 sm:self-center">
         <div
-          class="inline-flex items-center gap-1 rounded-md border border-accent-200/70 bg-accent-50/80 px-2 py-1 text-xs text-accent-800/80 dark:border-accent-800/40 dark:bg-accent-950/45 dark:text-accent-300/85"
+          class="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-outline bg-surface-raised/80 px-2.5 py-1 text-xs text-content"
         >
-          <Gauge class="h-3 w-3 shrink-0 opacity-70" aria-hidden="true" />
-          <dt class="font-semibold uppercase tracking-wide opacity-80">RPE</dt>
-          <dd class="font-mono font-medium">
+          <Gauge
+            class="h-3.5 w-3.5 shrink-0 text-brand"
+            aria-hidden="true"
+          />
+          <dt class="sr-only">Rate of perceived exertion (RPE)</dt>
+          <dd class="font-medium tracking-wide text-content-secondary">
+            <span class="font-semibold text-brand-text">RPE</span>
             {{ exercise.rpe }}
           </dd>
         </div>
       </dl>
     </div>
+
+    <p
+      v-if="showNextCue"
+      class="mt-2 flex items-center gap-1.5 text-[11px] font-medium tracking-wide"
+      :class="cueClass"
+    >
+      <Link2 class="h-3 w-3 shrink-0" aria-hidden="true" />
+      Then, minimal rest
+    </p>
   </li>
 </template>
 
 <script setup lang="ts">
-  import { Gauge, Repeat2, Target } from 'lucide-vue-next'
+  import { Gauge, Link2, Repeat2 } from 'lucide-vue-next'
   import type { ExerciseEntry } from '~/types/training'
 
-  defineProps<{
-    exercise: ExerciseEntry
-  }>()
+  withDefaults(
+    defineProps<{
+      exercise: ExerciseEntry
+      /** Shown between exercises inside a superset / triset / giant set. */
+      showNextCue?: boolean
+      cueClass?: string
+    }>(),
+    {
+      showNextCue: false,
+      cueClass: 'text-content-muted',
+    },
+  )
 </script>

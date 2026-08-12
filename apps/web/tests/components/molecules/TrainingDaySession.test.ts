@@ -21,4 +21,17 @@ describe('TrainingDaySession', () => {
     expect(wrapper.text()).toContain(day.exercises[0]!.name)
     expect(wrapper.get('section').attributes('aria-label')).toBe(day.name)
   })
+
+  it('labels supersets and shows RPE without RIR', () => {
+    const day = mockWeeklyPlan.days[1]! // Piernas A: supersets + triset
+    const wrapper = mount(TrainingDaySession, {
+      props: { trainingDay: day },
+    })
+    const text = wrapper.text()
+    expect(text).toContain('Superset')
+    expect(text).toContain('Triset')
+    expect(text).toMatch(/back-to-back/i)
+    expect(text).toMatch(/RPE/)
+    expect(text).not.toMatch(/@ RIR|\bRIR\b/)
+  })
 })
