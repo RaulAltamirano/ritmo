@@ -101,6 +101,7 @@ export function chartMetricValues(
 ): number[] {
   return [...points]
     .sort((a, b) => a.dayKey.localeCompare(b.dayKey))
+    .filter(point => point.convertible)
     .map(point => metricValue(point, metric))
     .filter((value): value is number => typeof value === 'number')
 }

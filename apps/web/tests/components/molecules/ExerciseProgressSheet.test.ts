@@ -6,7 +6,8 @@ import { buildMockTrainingLogs } from '@/data/mockTrainingLogs'
 const monday = new Date(2026, 7, 10)
 
 const BaseModalStub = {
-  props: ['isOpen', 'title'],
+  name: 'BaseModal',
+  props: ['isOpen', 'title', 'closeButtonLabel'],
   template: '<div v-if="isOpen"><slot /></div>',
 }
 
@@ -74,5 +75,19 @@ describe('ExerciseProgressSheet', () => {
     })
     expect(wrapper.text()).toContain('No sets logged for this exercise yet')
     expect(wrapper.find('svg').exists()).toBe(false)
+  })
+
+  it('passes Close as the modal close button label', () => {
+    const wrapper = mountSheet({
+      isOpen: true,
+      exerciseName: 'Pec Fly',
+      logs: [],
+      todayKey: '2026-08-10',
+      settings: { exerciseId: 'x', plateKg: null, lastUnit: 'kg' },
+      bodyweightKg: 80,
+    })
+    expect(wrapper.getComponent({ name: 'BaseModal' }).props('closeButtonLabel')).toBe(
+      'Close',
+    )
   })
 })

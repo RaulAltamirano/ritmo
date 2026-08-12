@@ -47,6 +47,17 @@ describe('sessionVolumeKg', () => {
     ]
     expect(sessionVolumeKg(sets, null, null)).toBeNull()
   })
+
+  it('returns null rather than 0 when no sets are completed', () => {
+    expect(sessionVolumeKg([], null, null)).toBeNull()
+    expect(
+      sessionVolumeKg([set({ id: '1', index: 1, completed: false })], null, null),
+    ).toBeNull()
+  })
+
+  it('returns 0 when completed convertible sets have zero load', () => {
+    expect(sessionVolumeKg([set({ id: '1', index: 1, load: 0 })], null, null)).toBe(0)
+  })
 })
 
 describe('formatLastSessionLine', () => {

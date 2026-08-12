@@ -7,6 +7,7 @@ import {
   ensureSetRows,
   isSetComplete,
   isSetStarted,
+  validateLoad,
   validateRpe,
 } from '@/utils/trainingSetLog'
 
@@ -50,6 +51,15 @@ describe('ensureSetRows', () => {
     expect(rows).toHaveLength(1)
     expect(rows[0]?.id).toBe('s1')
   })
+
+  it('keeps an empty sets array when a log exists', () => {
+    const rows = ensureSetRows(
+      { exerciseId: 'e1', dayKey: '2026-08-10', note: null, sets: [] },
+      '10x4rp',
+      'kg',
+    )
+    expect(rows).toEqual([])
+  })
 })
 
 describe('validateRpe', () => {
@@ -58,6 +68,13 @@ describe('validateRpe', () => {
     expect(validateRpe(7.5)).toBeNull()
     expect(validateRpe(7.2)).toBe('RPE is 1–10 in 0.5 steps')
     expect(validateRpe(0)).toBe('RPE is 1–10 in 0.5 steps')
+  })
+})
+
+describe('validateLoad', () => {
+  it('rejects non-finite values', () => {
+    expect(validateLoad(Number.NaN, 'kg')).toBe('Load must be 0 or more')
+    expect(validateLoad(Number.POSITIVE_INFINITY, 'kg')).toBe('Load must be 0 or more')
   })
 })
 
@@ -112,6 +129,12 @@ describe('isSetComplete', () => {
     expect(isSetComplete({ ...base, unit: 'bw', reps: 10, rpe: 8, load: null })).toBe(
       true,
     )
+  })
+
+  it('is false when completeSetErrors has a load error', () => {
+    const nanLoad = { ...emptySetLog(1, 'kg'), reps: 10, rpe: 8, load: Number.NaN }
+    expect(completeSetErrors(nanLoad).load).toBe('Load must be 0 or more')
+    expect(isSetComplete(nanLoad)).toBe(false)
   })
 })
 

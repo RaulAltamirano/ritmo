@@ -200,7 +200,8 @@
   function parseField(raw: string): number | null {
     const trimmed = raw.trim()
     if (trimmed === '') return null
-    return Number(trimmed)
+    const value = Number(trimmed)
+    return Number.isFinite(value) ? value : null
   }
 
   function errorFor(

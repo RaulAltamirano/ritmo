@@ -7,6 +7,7 @@
     close-on-escape
     close-on-backdrop-click
     show-close-button
+    close-button-label="Close"
     @update:is-open="onIsOpenUpdate"
   >
     <div class="flex flex-col gap-4">

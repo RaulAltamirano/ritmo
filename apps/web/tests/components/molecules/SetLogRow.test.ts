@@ -39,6 +39,21 @@ describe('SetLogRow', () => {
     expect(emitted).toBeUndefined()
     expect(wrapper.text()).toContain('Load must be 0 or more')
   })
+
+  it('does not mark complete when Load is abc', async () => {
+    const wrapper = mount(SetLogRow, {
+      props: {
+        set: { ...emptySetLog(1, 'kg'), reps: 10, rpe: 8, load: null },
+      },
+    })
+    await wrapper.get('input[aria-label="Load"]').setValue('abc')
+    await wrapper.get('[aria-label="Mark set complete"]').trigger('click')
+    const completed = wrapper
+      .emitted('update:set')
+      ?.some(args => (args[0] as { completed?: boolean }).completed === true)
+    expect(completed).toBeFalsy()
+    expect(wrapper.text()).toContain('Load must be 0 or more')
+  })
 })
 
 describe('SetLogRow extras', () => {

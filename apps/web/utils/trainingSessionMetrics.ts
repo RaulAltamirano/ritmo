@@ -57,13 +57,15 @@ export function sessionVolumeKg(
   bodyweightKg: number | null,
 ): number | null {
   let total = 0
+  let counted = 0
   for (const set of sets) {
     if (!set.completed) continue
     const kg = setKgEq(set, plateKg, bodyweightKg)
     if (kg == null || set.reps == null) return null
     total += set.reps * kg
+    counted += 1
   }
-  return total
+  return counted === 0 ? null : total
 }
 
 export function formatLastSessionLine(set: SetLog): string {

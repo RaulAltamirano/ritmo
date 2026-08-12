@@ -36,9 +36,7 @@ export function ensureSetRows(
   setsReps: string,
   unit: LoadUnit,
 ): SetLog[] {
-  if (log?.sets.length && log.sets.length > 0) {
-    return log.sets
-  }
+  if (log) return log.sets
   const count = parsePlannedSetCount(setsReps)
   return Array.from({ length: count }, (_, i) => emptySetLog(i + 1, unit))
 }
@@ -59,7 +57,7 @@ export function validateRpe(value: number | null): string | null {
 
 export function validateLoad(value: number | null, _unit: LoadUnit): string | null {
   if (value === null) return null
-  if (value < 0) return LOAD_ERROR
+  if (!Number.isFinite(value) || value < 0) return LOAD_ERROR
   return null
 }
 
@@ -88,17 +86,8 @@ export function isSetStarted(set: SetLog): boolean {
 }
 
 export function isSetComplete(set: SetLog): boolean {
-  if (validateReps(set.reps) !== null) return false
-  if (validateRpe(set.rpe) !== null) return false
-
-  if (set.unit === 'bw') {
-    if (set.reps === null || set.rpe === null) return false
-    if (set.load !== null && validateLoad(set.load, set.unit) !== null) return false
-    return true
-  }
-
-  if (set.reps === null || set.rpe === null || set.load === null) return false
-  return validateLoad(set.load, set.unit) === null
+  const errors = completeSetErrors(set)
+  return errors.reps === null && errors.rpe === null && errors.load === null
 }
 
 export function dayLogStatus(logs: ExerciseLog[]): DayLogStatus {
