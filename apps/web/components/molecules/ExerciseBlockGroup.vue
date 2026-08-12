@@ -45,6 +45,12 @@
           :exercise="exercise"
           :show-next-cue="isSuperset && index < exercises.length - 1"
           :cue-class="tone.cue"
+          :day-key="dayKey"
+          :log="findExerciseLog(logs, exercise.id, dayKey)"
+          :last-session-line="lastSessionLineById[exercise.id] ?? null"
+          :last-unit="settingsById[exercise.id]?.lastUnit ?? 'kg'"
+          @update:log="emit('update:log', $event)"
+          @open-progress="emit('open-progress', exercise.id)"
         />
       </ul>
     </div>
@@ -54,20 +60,40 @@
 <script setup lang="ts">
   import { computed } from 'vue'
   import ExerciseRow from '~/components/molecules/ExerciseRow.vue'
-  import type { ExerciseEntry } from '~/types/training'
+  import type {
+    ExerciseEntry,
+    ExerciseLoadSettings,
+    ExerciseLog,
+  } from '~/types/training'
   import { getExerciseGroupMeta } from '~/utils/exerciseGroupMeta'
   import { getGroupToneClasses } from '~/utils/exerciseGroupTone'
+  import { findExerciseLog } from '~/utils/trainingLogLookup'
 
-  const props = defineProps<{
-    exercises: ExerciseEntry[]
-    groupIndex: number
+  const props = withDefaults(
+    defineProps<{
+      exercises: ExerciseEntry[]
+      groupIndex: number
+      logs?: ExerciseLog[]
+      lastSessionLineById?: Record<string, string | null>
+      settingsById?: Record<string, ExerciseLoadSettings>
+      dayKey?: string
+    }>(),
+    {
+      logs: () => [],
+      lastSessionLineById: () => ({}),
+      settingsById: () => ({}),
+      dayKey: '',
+    },
+  )
+
+  const emit = defineEmits<{
+    'update:log': [value: ExerciseLog]
+    'open-progress': [exerciseId: string]
   }>()
 
   const meta = computed(() => getExerciseGroupMeta(props.exercises.length))
   const tone = computed(() => getGroupToneClasses(meta.value.tone))
   const isSuperset = computed(() => meta.value.kind !== 'single')
   const headingId = computed(() => `exercise-group-${props.groupIndex}`)
-  const listLabel = computed(
-    () => `${meta.value.title}: ${meta.value.hint}`,
-  )
+  const listLabel = computed(() => `${meta.value.title}: ${meta.value.hint}`)
 </script>
