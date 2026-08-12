@@ -51,13 +51,28 @@ export function validateLoad(value: number | null, _unit: LoadUnit): string | nu
   return null
 }
 
+export function completeSetErrors(set: SetLog): {
+  reps: string | null
+  rpe: string | null
+  load: string | null
+} {
+  return {
+    reps: set.reps === null ? REPS_ERROR : validateReps(set.reps),
+    rpe: set.rpe === null ? RPE_ERROR : validateRpe(set.rpe),
+    load: completeLoadError(set),
+  }
+}
+
+function completeLoadError(set: SetLog): string | null {
+  if (set.unit === 'bw') {
+    return set.load === null ? null : validateLoad(set.load, set.unit)
+  }
+  if (set.load === null) return LOAD_ERROR
+  return validateLoad(set.load, set.unit)
+}
+
 export function isSetStarted(set: SetLog): boolean {
-  return (
-    set.reps !== null
-    || set.rpe !== null
-    || set.load !== null
-    || set.completed
-  )
+  return set.reps !== null || set.rpe !== null || set.load !== null || set.completed
 }
 
 export function isSetComplete(set: SetLog): boolean {

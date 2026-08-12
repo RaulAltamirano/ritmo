@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SetLog } from '@/types/training'
 import {
+  completeSetErrors,
   dayLogStatus,
   emptySetLog,
   ensureSetRows,
@@ -60,14 +61,57 @@ describe('validateRpe', () => {
   })
 })
 
+describe('completeSetErrors', () => {
+  it('requires load for kg, lbs, and plates', () => {
+    for (const unit of ['kg', 'lbs', 'plates'] as const) {
+      const set = { ...emptySetLog(1, unit), reps: 10, rpe: 8, load: null }
+      expect(completeSetErrors(set).load).toBe('Load must be 0 or more')
+    }
+  })
+
+  it('allows empty extra load for bodyweight', () => {
+    const set = { ...emptySetLog(1, 'bw'), reps: 10, rpe: 8, load: null }
+    expect(completeSetErrors(set).load).toBeNull()
+  })
+
+  it('rejects negative bodyweight extra load', () => {
+    const set = { ...emptySetLog(1, 'bw'), reps: 10, rpe: 8, load: -1 }
+    expect(completeSetErrors(set).load).toBe('Load must be 0 or more')
+  })
+
+  it('treats empty reps and rpe as complete-time errors', () => {
+    expect(completeSetErrors(emptySetLog(1, 'kg'))).toEqual({
+      reps: 'Reps must be a whole number of 1 or more',
+      rpe: 'RPE is 1–10 in 0.5 steps',
+      load: 'Load must be 0 or more',
+    })
+  })
+
+  it('returns no errors for a complete kg set', () => {
+    const set = { ...emptySetLog(1, 'kg'), reps: 10, rpe: 8, load: 70 }
+    expect(completeSetErrors(set)).toEqual({
+      reps: null,
+      rpe: null,
+      load: null,
+    })
+  })
+
+  it('uses field validators for filled invalid values', () => {
+    const set = { ...emptySetLog(1, 'kg'), reps: 0, rpe: 7.2, load: -1 }
+    expect(completeSetErrors(set).reps).toBe('Reps must be a whole number of 1 or more')
+    expect(completeSetErrors(set).rpe).toBe('RPE is 1–10 in 0.5 steps')
+    expect(completeSetErrors(set).load).toBe('Load must be 0 or more')
+  })
+})
+
 describe('isSetComplete', () => {
   it('requires load for kg but not for BW extra', () => {
     const base = emptySetLog(1, 'kg')
     expect(isSetComplete({ ...base, reps: 10, rpe: 8, load: 70 })).toBe(true)
     expect(isSetComplete({ ...base, reps: 10, rpe: 8, load: null })).toBe(false)
-    expect(
-      isSetComplete({ ...base, unit: 'bw', reps: 10, rpe: 8, load: null }),
-    ).toBe(true)
+    expect(isSetComplete({ ...base, unit: 'bw', reps: 10, rpe: 8, load: null })).toBe(
+      true,
+    )
   })
 })
 
@@ -88,9 +132,7 @@ describe('dayLogStatus', () => {
   it('marks incomplete when a started set is missing fields', () => {
     const started: SetLog = { ...emptySetLog(1, 'kg'), reps: 10 }
     expect(
-      dayLogStatus([
-        { exerciseId: 'e1', dayKey: 'd', note: null, sets: [started] },
-      ]),
+      dayLogStatus([{ exerciseId: 'e1', dayKey: 'd', note: null, sets: [started] }]),
     ).toBe('incomplete')
   })
 
@@ -105,7 +147,12 @@ describe('dayLogStatus', () => {
     expect(isSetStarted(done)).toBe(true)
     expect(
       dayLogStatus([
-        { exerciseId: 'e1', dayKey: 'd', note: null, sets: [done, emptySetLog(2, 'kg')] },
+        {
+          exerciseId: 'e1',
+          dayKey: 'd',
+          note: null,
+          sets: [done, emptySetLog(2, 'kg')],
+        },
       ]),
     ).toBe('logged')
   })
