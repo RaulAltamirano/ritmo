@@ -42,7 +42,7 @@
             : 'text-content-secondary hover:bg-surface-raised'
         "
         :aria-selected="isSelected(day.date)"
-        :aria-label="`${day.weekdayShort} ${day.dayNumber}`"
+        :aria-label="dayAriaLabel(day)"
         @click="selectDay(day.date)"
       >
         <span class="text-[0.65rem] font-medium uppercase tracking-wide">
@@ -51,9 +51,14 @@
         <span class="text-sm font-semibold tabular-nums">{{ day.dayNumber }}</span>
         <span class="flex h-1.5 items-center justify-center gap-0.5" aria-hidden="true">
           <span
-            v-if="day.taskCount > 0"
+            v-if="showFilledDot(day)"
             class="h-1 w-1 rounded-full"
             :class="isSelected(day.date) ? 'bg-white/90' : 'bg-primary-500'"
+          />
+          <span
+            v-else-if="showHollowRing(day)"
+            class="box-border h-1.5 w-1.5 rounded-full border bg-transparent"
+            :class="isSelected(day.date) ? 'border-white/90' : 'border-primary-500'"
           />
         </span>
       </button>
@@ -71,12 +76,16 @@
     canGoToNextWeek,
     formatWeekLabel,
     isSameCalendarDay,
+    type WeekDayCell,
   } from '~/utils/planWeek'
+
+  type DayLogStatus = 'none' | 'incomplete' | 'logged'
 
   const props = withDefaults(
     defineProps<{
       scheduledTasks?: Task[]
       dayCounts?: Record<string, number>
+      dayStatuses?: Record<string, DayLogStatus>
     }>(),
     { scheduledTasks: () => [] },
   )
@@ -93,6 +102,29 @@
   const days = computed(() =>
     buildWeekDayCells(weekStart.value, props.scheduledTasks, props.dayCounts),
   )
+
+  function dayStatus(day: WeekDayCell): DayLogStatus | null {
+    if (!props.dayStatuses) return null
+    return props.dayStatuses[day.key] ?? 'none'
+  }
+
+  function dayAriaLabel(day: WeekDayCell) {
+    const base = `${day.weekdayShort} ${day.dayNumber}`
+    const status = dayStatus(day)
+    if (status === 'incomplete') return `${base} incomplete`
+    if (status === 'logged') return `${base} logged`
+    return base
+  }
+
+  function showFilledDot(day: WeekDayCell) {
+    const status = dayStatus(day)
+    if (status !== null) return status === 'logged'
+    return day.taskCount > 0
+  }
+
+  function showHollowRing(day: WeekDayCell) {
+    return dayStatus(day) === 'incomplete'
+  }
 
   function isSelected(date: Date) {
     return isSameCalendarDay(date, selectedDay.value)

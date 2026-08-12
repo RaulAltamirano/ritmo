@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import TrainingDaySession from '@/components/molecules/TrainingDaySession.vue'
+import { buildMockLoadSettings, buildMockTrainingLogs } from '@/data/mockTrainingLogs'
 import { mockWeeklyPlan } from '@/data/mockWeeklyPlan'
 
 describe('TrainingDaySession', () => {
@@ -33,5 +34,34 @@ describe('TrainingDaySession', () => {
     expect(text).toMatch(/back-to-back/i)
     expect(text).toMatch(/RPE/)
     expect(text).not.toMatch(/@ RIR|\bRIR\b/)
+  })
+
+  it('renders set fields for an exercise', () => {
+    const day = mockWeeklyPlan.days[0]!
+    const wrapper = mount(TrainingDaySession, {
+      props: {
+        trainingDay: day,
+        dayKey: '2026-08-10',
+        logs: [],
+        settings: [],
+        bodyweightKg: 80,
+      },
+    })
+    expect(wrapper.text()).toContain('Reps')
+    expect(wrapper.text()).toContain('Add set')
+  })
+
+  it('shows last session line from prior logs', () => {
+    const day = mockWeeklyPlan.days[0]!
+    const wrapper = mount(TrainingDaySession, {
+      props: {
+        trainingDay: day,
+        dayKey: '2026-08-10',
+        logs: buildMockTrainingLogs(new Date(2026, 7, 10)),
+        settings: buildMockLoadSettings(),
+        bodyweightKg: 80,
+      },
+    })
+    expect(wrapper.text()).toMatch(/Last:/)
   })
 })
