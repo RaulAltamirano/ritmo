@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import TrainingDaySession from '@/components/molecules/TrainingDaySession.vue'
 import { buildMockLoadSettings, buildMockTrainingLogs } from '@/data/mockTrainingLogs'
 import { mockWeeklyPlan } from '@/data/mockWeeklyPlan'
+import type { ExerciseLoadSettings, ExerciseLog } from '@/types/training'
 
 describe('TrainingDaySession', () => {
   it('shows Rest day when trainingDay is null', () => {
@@ -63,5 +64,41 @@ describe('TrainingDaySession', () => {
       },
     })
     expect(wrapper.text()).toMatch(/Last:/)
+  })
+
+  it('persists lastUnit from the changed set only', async () => {
+    const day = mockWeeklyPlan.days[0]!
+    const exercise = day.exercises[0]!
+    const wrapper = mount(TrainingDaySession, {
+      props: {
+        trainingDay: day,
+        dayKey: '2026-08-10',
+        logs: [],
+        settings: [{ exerciseId: exercise.id, plateKg: null, lastUnit: 'kg' }],
+        bodyweightKg: 80,
+      },
+    })
+
+    await wrapper.get('[aria-label="Pounds"]').trigger('click')
+
+    const afterUnit = wrapper.emitted('update:settings')
+    expect(afterUnit).toHaveLength(1)
+    const unitSettings = afterUnit![0]![0] as ExerciseLoadSettings[]
+    expect(unitSettings.find(item => item.exerciseId === exercise.id)?.lastUnit).toBe(
+      'lbs',
+    )
+
+    const logs = wrapper.emitted('update:logs')![0]![0] as ExerciseLog[]
+    await wrapper.setProps({ logs, settings: unitSettings })
+
+    await wrapper.get('[aria-label="Reps"]').setValue('8')
+
+    const settingsEmits = wrapper.emitted('update:settings') ?? []
+    expect(settingsEmits).toHaveLength(1)
+    const laterUnits = settingsEmits.slice(1).flatMap(payload => {
+      const list = payload[0] as ExerciseLoadSettings[]
+      return list.map(item => item.lastUnit)
+    })
+    expect(laterUnits).not.toContain('kg')
   })
 })

@@ -52,7 +52,7 @@
     TrainingDay,
   } from '~/types/training'
   import { groupExercisesByBlock } from '~/utils/groupExercisesByBlock'
-  import { findLastSessionLine, findLoadSettings } from '~/utils/trainingLogLookup'
+  import { findExerciseLog, findLastSessionLine, findLoadSettings } from '~/utils/trainingLogLookup'
 
   const props = withDefaults(
     defineProps<{
@@ -133,9 +133,14 @@
   )
 
   function onUpdateLog(updated: ExerciseLog) {
+    const previous = findExerciseLog(props.logs, updated.exerciseId, updated.dayKey)
     emit('update:logs', replaceLog(props.logs, updated))
     const current = findLoadSettings(props.settings, updated.exerciseId)
-    const unit = lastDifferingUnit(updated.sets, current.lastUnit)
+    const unit = lastChangedSetUnit(
+      previous?.sets ?? [],
+      updated.sets,
+      current.lastUnit,
+    )
     if (!unit) return
     emit(
       'update:settings',
@@ -168,10 +173,16 @@
     return list.map((item, i) => (i === index ? next : item))
   }
 
-  function lastDifferingUnit(sets: SetLog[], lastUnit: LoadUnit): LoadUnit | null {
+  function lastChangedSetUnit(
+    previous: SetLog[],
+    next: SetLog[],
+    lastUnit: LoadUnit,
+  ): LoadUnit | null {
     let found: LoadUnit | null = null
-    for (const set of sets) {
-      if (set.unit !== lastUnit) found = set.unit
+    for (const set of next) {
+      const prior = previous.find(item => item.id === set.id)
+      const from = prior?.unit ?? lastUnit
+      if (set.unit !== from) found = set.unit
     }
     return found
   }
