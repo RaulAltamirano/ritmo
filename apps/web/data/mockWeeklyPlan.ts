@@ -20,6 +20,7 @@ export const mockWeeklyPlan: WeeklyPlan = {
           setsReps: '10x4rp (4 series de 10 reps)',
           targetRir: '2',
           rpe: '8',
+          emphasis: 'main',
         },
         {
           id: 'd1-e2',
@@ -85,6 +86,7 @@ export const mockWeeklyPlan: WeeklyPlan = {
           setsReps: '20,15,10,10,10rp (Serie rampa)',
           targetRir: '2',
           rpe: '8',
+          emphasis: 'main',
         },
         {
           id: 'd2-e2',
@@ -150,6 +152,7 @@ export const mockWeeklyPlan: WeeklyPlan = {
           setsReps: '10x4rp',
           targetRir: '2',
           rpe: '8',
+          emphasis: 'main',
         },
         {
           id: 'd3-e2',
@@ -215,6 +218,7 @@ export const mockWeeklyPlan: WeeklyPlan = {
           setsReps: '20,15,10,10,10rp (Serie rampa)',
           targetRir: '2',
           rpe: '8',
+          emphasis: 'main',
         },
         {
           id: 'd4-e2',
