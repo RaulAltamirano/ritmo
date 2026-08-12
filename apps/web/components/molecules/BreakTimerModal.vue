@@ -1,8 +1,8 @@
 <template>
   <BaseModal
     :is-open="isOpen"
+    title="Descanso"
     aria-label="Descanso"
-    :show-close-button="false"
     close-on-backdrop-click
     close-on-escape
     size="lg"
@@ -10,12 +10,6 @@
     @update:is-open="onIsOpenUpdate"
   >
     <div class="flex flex-col items-center gap-5 py-2 text-center">
-      <BreakRestIllustration
-        class="h-auto w-40 text-primary-400"
-        :paused="timerStore.isPaused"
-      />
-      <h2 class="text-2xl font-semibold text-content">Descanso</h2>
-
       <div class="relative h-48 w-48">
         <svg class="h-full w-full -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
           <circle
@@ -54,14 +48,6 @@
       <div class="flex w-full max-w-xs flex-col gap-2">
         <button
           type="button"
-          data-testid="break-modal-close"
-          class="rounded-full bg-primary-500 px-5 py-3 text-sm font-semibold text-white transition-[color,background-color,transform] duration-150 hover:bg-primary-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-          @click="timerStore.dismissBreakModal()"
-        >
-          Cerrar
-        </button>
-        <button
-          type="button"
           data-testid="break-modal-pause"
           class="rounded-full border border-outline bg-surface px-5 py-3 text-sm font-semibold text-content transition-[color,border-color,background-color,transform] duration-150 hover:border-primary-400 hover:text-primary-400 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
           :disabled="skipBusy"
@@ -84,7 +70,6 @@
 </template>
 
 <script setup lang="ts">
-  import BreakRestIllustration from '@/components/atoms/BreakRestIllustration.vue'
   import { useTimerStore } from '@/stores/timer'
   import BaseModal from '@ritmo/ui/components/atoms/interactive/BaseModal.vue'
   import { usePreferredReducedMotion } from '@vueuse/core'

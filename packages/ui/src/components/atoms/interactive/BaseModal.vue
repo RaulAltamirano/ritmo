@@ -180,6 +180,8 @@
   // Clases del botón de cerrar
   const closeButtonClasses = computed(() => {
     const baseClasses = [
+      // Always pin to the trailing edge (even when header title is sr-only / empty).
+      'ml-auto shrink-0',
       'p-2 rounded-lg transition-colors duration-200',
       'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
       'hover:bg-surface-overlay',
