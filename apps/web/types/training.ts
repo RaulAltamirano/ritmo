@@ -13,6 +13,7 @@ export interface ExerciseEntry {
   setsReps: string
   targetRir: string
   rpe: string
+  emphasis?: 'main' | 'accessory'
 }
 
 export interface TrainingDay {
@@ -37,4 +38,29 @@ export interface WeekColumn {
   date: Date
   weekday: WeekdayIndex
   trainingDay: TrainingDay | null
+}
+
+export type LoadUnit = 'kg' | 'lbs' | 'plates' | 'bw'
+
+export interface SetLog {
+  id: string
+  index: number
+  reps: number | null
+  rpe: number | null
+  load: number | null
+  unit: LoadUnit
+  completed: boolean
+}
+
+export interface ExerciseLog {
+  exerciseId: string
+  dayKey: string
+  note: string | null
+  sets: SetLog[]
+}
+
+export interface ExerciseLoadSettings {
+  exerciseId: string
+  plateKg: number | null
+  lastUnit: LoadUnit
 }
