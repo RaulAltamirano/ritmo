@@ -80,7 +80,7 @@
   import { computed } from 'vue'
   import SetLogRow from '~/components/molecules/SetLogRow.vue'
   import type { ExerciseEntry, ExerciseLog, LoadUnit, SetLog } from '~/types/training'
-  import { emptySetLog, ensureSetRows } from '~/utils/trainingSetLog'
+  import { emptySetLog, ensureSetRows, nextSetLogId } from '~/utils/trainingSetLog'
 
   const props = withDefaults(
     defineProps<{
@@ -135,7 +135,10 @@
 
   function onAddSet() {
     const sets = setRows.value
-    emitLog([...sets, emptySetLog(sets.length + 1, props.lastUnit)])
+    emitLog([
+      ...sets,
+      emptySetLog(sets.length + 1, props.lastUnit, nextSetLogId(sets)),
+    ])
   }
 
   function onNoteInput(event: Event) {

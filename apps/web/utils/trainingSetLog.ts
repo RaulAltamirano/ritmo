@@ -7,9 +7,21 @@ const REPS_ERROR = 'Reps must be a whole number of 1 or more'
 const RPE_ERROR = 'RPE is 1–10 in 0.5 steps'
 const LOAD_ERROR = 'Load must be 0 or more'
 
-export function emptySetLog(index: number, unit: LoadUnit): SetLog {
+export function nextSetLogId(sets: { id: string }[]): string {
+  const max = sets.reduce((highest, set) => {
+    const n = Number(/^set-(\d+)$/.exec(set.id)?.[1] ?? 0)
+    return Number.isFinite(n) && n > highest ? n : highest
+  }, 0)
+  return `set-${max + 1}`
+}
+
+export function emptySetLog(
+  index: number,
+  unit: LoadUnit,
+  id = `set-${index}`,
+): SetLog {
   return {
-    id: `set-${index}`,
+    id,
     index,
     reps: null,
     rpe: null,
