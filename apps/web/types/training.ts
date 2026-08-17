@@ -64,3 +64,31 @@ export interface ExerciseLoadSettings {
   plateKg: number | null
   lastUnit: LoadUnit
 }
+
+export type TrainingCheckScale = 1 | 2 | 3 | 4 | 5
+
+export type TrainingCheckPhaseStatus = 'none' | 'skipped' | 'saved'
+
+export interface TrainingSessionStartCheck {
+  preparation: TrainingCheckScale
+  motivation: TrainingCheckScale
+  strength: TrainingCheckScale
+}
+
+export interface TrainingSessionEndCheck {
+  fatigue: TrainingCheckScale
+  pain: TrainingCheckScale
+  strength: TrainingCheckScale
+}
+
+export interface TrainingSessionCheck {
+  dayKey: string
+  startStatus: TrainingCheckPhaseStatus
+  endStatus: TrainingCheckPhaseStatus
+  start: TrainingSessionStartCheck | null
+  end: TrainingSessionEndCheck | null
+}
+
+export type TrainingSessionFeedbackSubmit =
+  | { phase: 'start'; check: TrainingSessionStartCheck }
+  | { phase: 'end'; check: TrainingSessionEndCheck }
