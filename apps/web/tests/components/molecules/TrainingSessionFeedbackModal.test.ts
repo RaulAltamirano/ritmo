@@ -72,8 +72,8 @@ describe('TrainingSessionFeedbackModal', () => {
   it('emits skip from Not now', async () => {
     const wrapper = mountModal()
     const notNow = wrapper.findAll('button').find(node => node.text() === 'Not now')
-    expect(notNow).toBeDefined()
-    await notNow!.trigger('click')
+    if (!notNow) throw new Error('Not now button was not rendered')
+    await notNow.trigger('click')
     expect(wrapper.emitted('skip')).toHaveLength(1)
     expect(wrapper.emitted('update:isOpen')?.[0]).toEqual([false])
   })
