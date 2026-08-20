@@ -93,7 +93,15 @@ describe('TrainingDaySession', () => {
     expect(text).not.toMatch(/@ RIR|\bRIR\b/)
   })
 
-  it('renders set fields for an exercise', () => {
+  async function openExerciseLogIfNeeded(
+    wrapper: ReturnType<typeof mountSession>,
+    exerciseName: string,
+  ) {
+    const logTrigger = wrapper.find(`[aria-label="Log ${exerciseName}"]`)
+    if (logTrigger.exists()) await logTrigger.trigger('click')
+  }
+
+  it('renders set fields for an exercise', async () => {
     const day = mockWeeklyPlan.days[0]!
     const wrapper = mountSession({
       trainingDay: day,
@@ -102,6 +110,7 @@ describe('TrainingDaySession', () => {
       settings: [],
       bodyweightKg: 80,
     })
+    await openExerciseLogIfNeeded(wrapper, day.exercises[0]!.name)
     expect(wrapper.text()).toContain('Reps')
     expect(wrapper.text()).toContain('Add set')
   })
@@ -131,6 +140,7 @@ describe('TrainingDaySession', () => {
       bodyweightKg: 80,
     })
 
+    await openExerciseLogIfNeeded(wrapper, exercise.name)
     await wrapper.get('[aria-label="Pounds"]').trigger('click')
 
     const afterUnit = wrapper.emitted('update:settings')
