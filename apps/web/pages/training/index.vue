@@ -20,9 +20,12 @@
         :logs="logs"
         :settings="settings"
         :bodyweight-kg="bodyweightKg"
+        :session-check="currentCheck"
+        :is-today="isToday"
         @update:logs="logs = $event"
         @update:settings="settings = $event"
         @update:bodyweight-kg="bodyweightKg = $event"
+        @update:session-check="onUpdateSessionCheck"
         @select-day="onSelectDay"
       />
     </div>
@@ -48,6 +51,11 @@
     isSameCalendarDay,
     startOfWeekMonday,
   } from '~/utils/planWeek'
+  import type { TrainingSessionCheck } from '~/types/training'
+  import {
+    findSessionCheck,
+    upsertSessionCheck,
+  } from '~/utils/trainingSessionCheck'
   import { dayLogStatus, type DayLogStatus } from '~/utils/trainingSetLog'
   import { buildWeekColumns } from '~/utils/trainingWeek'
 
@@ -62,6 +70,7 @@
   const logs = ref(buildMockTrainingLogs(weekStart.value))
   const settings = ref(buildMockLoadSettings())
   const bodyweightKg = ref<number | null>(MOCK_BODYWEIGHT_KG)
+  const sessionChecks = ref<TrainingSessionCheck[]>([])
 
   watch(weekStart, start => {
     const inWeek = Array.from({ length: 7 }, (_, i) => addDays(start, i)).some(date =>
@@ -71,6 +80,16 @@
   })
 
   const selectedDayKey = computed(() => calendarDayKey(selectedDay.value))
+
+  const isToday = computed(() => isSameCalendarDay(selectedDay.value, new Date()))
+
+  const currentCheck = computed(() =>
+    findSessionCheck(sessionChecks.value, selectedDayKey.value),
+  )
+
+  function onUpdateSessionCheck(next: TrainingSessionCheck) {
+    sessionChecks.value = upsertSessionCheck(sessionChecks.value, next)
+  }
 
   const dayStatuses = computed(() => {
     const statuses: Record<string, DayLogStatus> = {}
