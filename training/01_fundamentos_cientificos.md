@@ -50,6 +50,17 @@ Para controlar la fatiga y asegurar que una serie sea efectiva, utilizamos la es
 
 ---
 
+## 4. Periodización (dónde está documentada)
+
+Este archivo cubre **estímulo por serie** (cargas, RIR, volumen semanal). La organización en el tiempo (lineal / ondulante / conjugada / bloques, fitness–fatiga, prep. anatómica → acumulación → intensificación → peak/taper) está en:
+
+- Ciencia y modelos: [`docs/knowledge/training/`](../docs/knowledge/training/README.md)
+- Aplicación WFITNESS: [`05_periodizacion_wfitness.md`](05_periodizacion_wfitness.md)
+
+No duplicar aquí esa teoría.
+
+---
+
 ## 📚 Referencias Bibliográficas
 1. **Schoenfeld, B. J., Grgic, J., Van Every, D. W., & Plotkin, D. L. (2021).** Loading recommendations for muscle strength, hypertrophy, and local endurance: A re-examination of the repetition continuum. *Sports*, 9(2), 32. https://doi.org/10.3390/sports9020032
 2. **Tuchscherer, M. (2008).** *The Reactive Training Manual: Developing your own custom training program for powerlifting*. Reactive Training Systems.

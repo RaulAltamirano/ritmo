@@ -5,10 +5,11 @@
 **Idioma de salida:** español (México / LatAm), tono profesional y directo.
 
 ### Cómo usarlo (coach)
-1. Adjunta: `00` (este), `01`, `02`/`02A`–`02C` según nivel, `03`, `04`, `06`.
-2. Pega el **perfil del cliente** (o deja que la IA lo complete con las preguntas obligatorias).
-3. Pide: “Genera el plan semanal según WFITNESS”.
-4. Revisa sustituciones y RIR antes de entregar al cliente.
+1. Adjunta: `00` (este), `01`, `02`/`02A`–`02C` según nivel, `03`, `04`, `05`, `06`.
+2. Si hace falta contexto de modelos/periodización (bloques, fitness–fatiga, taper): añade `docs/knowledge/training/` (README + los `.md` relevantes).
+3. Pega el **perfil del cliente** (o deja que la IA lo complete con las preguntas obligatorias).
+4. Pide: “Genera el plan semanal según WFITNESS”.
+5. Revisa sustituciones, RIR y fase del mesociclo (`05`) antes de entregar al cliente.
 
 ---
 
@@ -89,5 +90,5 @@ Repetir días. Aclarar NxMrp entre paréntesis al menos en la 1ª fila del día.
 3. Elegir programa con [`03_motor_decision.md`](03_motor_decision.md).  
 4. Copiar estructura del día desde `02A`/`02B`/`02C`.  
 5. Sustituir solo si equipo/restricción lo exige (`04`).  
-6. Añadir **RIR Objetivo** y **RPE** (columnas aparte) + progresión/deload (`03`, `01`).  
+6. Añadir **RIR Objetivo** y **RPE** (columnas aparte) + progresión/deload (`03`, `01`) y fase de mesociclo según [`05_periodizacion_wfitness.md`](05_periodizacion_wfitness.md).  
 7. Emitir en la plantilla de salida.
