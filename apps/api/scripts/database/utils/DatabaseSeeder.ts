@@ -3,6 +3,7 @@ import { ActivityFactory } from '../factories/ActivityFactory'
 import { CircadianPhaseFactory } from '../factories/CircadianPhaseFactory'
 import { UserFactory } from '../factories/UserFactory'
 import { UserPreferencesFactory } from '../factories/UserPreferencesFactory'
+import { seedTrainingCatalog } from '../seeds/trainingSeed.js'
 
 export class DatabaseSeeder {
   private readonly userFactory: UserFactory
@@ -19,6 +20,16 @@ export class DatabaseSeeder {
 
   async cleanDatabase() {
     console.log('🧹 Cleaning existing data...')
+    await this.prisma.exerciseSetLog.deleteMany()
+    await this.prisma.trainingSessionCheck.deleteMany()
+    await this.prisma.trainingDayExercise.deleteMany()
+    await this.prisma.trainingDay.deleteMany()
+    await this.prisma.trainingWeek.deleteMany()
+    await this.prisma.trainingProfile.deleteMany()
+    await this.prisma.programTemplateSlot.deleteMany()
+    await this.prisma.programTemplateDay.deleteMany()
+    await this.prisma.programTemplate.deleteMany()
+    await this.prisma.exercise.deleteMany()
     await this.prisma.workSessionIdempotency.deleteMany()
     await this.prisma.workSession.deleteMany()
     await this.prisma.dailyCheckin.deleteMany()
@@ -44,6 +55,9 @@ export class DatabaseSeeder {
 
     // Clean existing data
     await this.cleanDatabase()
+
+    console.log('🏋️ Creating exercise catalog...')
+    await seedTrainingCatalog(this.prisma)
 
     // Create circadian phases first (they don't depend on users)
     console.log('🌅 Creating circadian phases...')
