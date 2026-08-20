@@ -1,12 +1,8 @@
 <template>
   <section :aria-label="sectionLabel">
-    <div v-if="!trainingDay" class="py-14 text-center" role="status">
-      <div class="mb-3 text-3xl leading-none text-gray-300 dark:text-gray-700">◎</div>
-      <p class="mb-1 text-sm text-gray-400 dark:text-gray-500">Rest day</p>
-      <p class="text-xs text-gray-300 dark:text-gray-700">
-        No session planned for this day
-      </p>
-    </div>
+    <p v-if="!trainingDay" class="py-8 text-center text-sm text-content-secondary">
+      Rest day
+    </p>
     <div v-else class="space-y-3">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-base font-semibold text-content" :class="titleClass">

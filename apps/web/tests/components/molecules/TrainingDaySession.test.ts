@@ -65,10 +65,7 @@ describe('TrainingDaySession', () => {
     const wrapper = mount(TrainingDaySession, {
       props: { trainingDay: null },
     })
-    const empty = wrapper.get('[role="status"]')
-    expect(empty.text()).toContain('Rest day')
-    expect(empty.text()).toContain('No session planned for this day')
-    expect(empty.text()).toContain('◎')
+    expect(wrapper.text()).toContain('Rest day')
     expect(wrapper.get('section').attributes('aria-label')).toBe('Rest day')
   })
 
