@@ -10,6 +10,6 @@ export const painScaleOptions = [
   { value: 1, iconKey: 'sparkles', label: 'None' },
   { value: 2, iconKey: 'wind', label: 'Mild' },
   { value: 3, iconKey: 'gauge', label: 'Moderate' },
-  { value: 4, iconKey: 'circle-help', label: 'Strong' },
+  { value: 4, iconKey: 'alert-circle', label: 'Strong' },
   { value: 5, iconKey: 'flame', label: 'Severe' },
 ] as const

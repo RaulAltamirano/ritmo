@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
 import TrainingDaySession from '@/components/molecules/TrainingDaySession.vue'
+import TrainingSessionFeedbackModal from '@/components/molecules/TrainingSessionFeedbackModal.vue'
 import { buildMockLoadSettings, buildMockTrainingLogs } from '@/data/mockTrainingLogs'
 import { mockWeeklyPlan } from '@/data/mockWeeklyPlan'
 import type {
@@ -92,7 +93,7 @@ describe('TrainingDaySession', () => {
     expect(text).not.toMatch(/@ RIR|\bRIR\b/)
   })
 
-  it('opens set fields in a modal when the movement is clicked', async () => {
+  it('renders set fields for an exercise', () => {
     const day = mockWeeklyPlan.days[0]!
     const wrapper = mountSession({
       trainingDay: day,
@@ -101,10 +102,8 @@ describe('TrainingDaySession', () => {
       settings: [],
       bodyweightKg: 80,
     })
-    expect(wrapper.find('[aria-label="Reps"]').exists()).toBe(false)
-    await wrapper.get(`[aria-label="Log ${day.exercises[0]!.name}"]`).trigger('click')
-    expect(wrapper.get('[role="dialog"]').text()).toContain('Reps')
-    expect(wrapper.get('[role="dialog"]').text()).toContain('Add set')
+    expect(wrapper.text()).toContain('Reps')
+    expect(wrapper.text()).toContain('Add set')
   })
 
   it('shows last session line from prior logs', () => {
@@ -132,7 +131,6 @@ describe('TrainingDaySession', () => {
       bodyweightKg: 80,
     })
 
-    await wrapper.get(`[aria-label="Log ${exercise.name}"]`).trigger('click')
     await wrapper.get('[aria-label="Pounds"]').trigger('click')
 
     const afterUnit = wrapper.emitted('update:settings')
@@ -272,6 +270,31 @@ describe('TrainingDaySession', () => {
     expect(wrapper.get('[role="dialog"]').text()).toContain('How the session felt')
   })
 
+  it('skips an auto-opened wrap-up when dismissed with Escape', async () => {
+    const checkedIn = saveSessionCheckStart(emptySessionCheck('2026-08-17'), {
+      preparation: 3,
+      motivation: 3,
+      strength: 3,
+    })
+    const wrapper = mountSession({
+      trainingDay: shortDay,
+      dayKey: '2026-08-17',
+      logs: completeLogs('2026-08-17'),
+      sessionCheck: checkedIn,
+      isToday: true,
+    })
+    await nextTick()
+
+    wrapper
+      .getComponent(TrainingSessionFeedbackModal)
+      .vm.$emit('update:isOpen', false)
+    await nextTick()
+
+    const emitted = wrapper.emitted('update:sessionCheck')
+    expect((emitted![0]![0] as TrainingSessionCheck).endStatus).toBe('skipped')
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+  })
+
   it('keeps check-in open instead of wrap-up when a complete session has no start response', async () => {
     const wrapper = mountSession({
       trainingDay: shortDay,
@@ -320,5 +343,23 @@ describe('TrainingDaySession', () => {
 
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     expect(wrapper.emitted('update:sessionCheck')).toBeUndefined()
+  })
+
+  it('auto-opens check-in when navigating back to today', async () => {
+    const wrapper = mountSession({
+      trainingDay: shortDay,
+      dayKey: '2026-08-18',
+      sessionCheck: emptySessionCheck('2026-08-18'),
+      isToday: false,
+    })
+
+    await wrapper.setProps({
+      dayKey: '2026-08-17',
+      sessionCheck: emptySessionCheck('2026-08-17'),
+      isToday: true,
+    })
+    await nextTick()
+
+    expect(wrapper.get('[role="dialog"]').text()).toContain('Ready to train')
   })
 })

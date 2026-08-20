@@ -37,6 +37,10 @@ export function useTrainingSessionCheckUi(options: TrainingSessionCheckUiOptions
   }
 
   function onFeedbackOpen(open: boolean) {
+    if (!open && feedbackOpen.value) {
+      onFeedbackSkip()
+      return
+    }
     feedbackOpen.value = open
   }
 
@@ -56,43 +60,36 @@ export function useTrainingSessionCheckUi(options: TrainingSessionCheckUiOptions
     options.emitUpdate(next)
   }
 
-  watch(
-    [
-      options.isToday,
-      () => options.trainingDay()?.id,
-      options.dayKey,
-      () => options.currentCheck.value.startStatus,
-    ],
-    () => {
-      if (!options.trainingDay() || !options.isToday()) return
-      if (options.currentCheck.value.startStatus === 'none') openPhase('start')
-    },
-    { immediate: true },
-  )
+  let observedDayKey = options.dayKey()
 
   watch(
     [
-      plannedComplete,
+      options.dayKey,
       options.isToday,
-      () => options.currentCheck.value.endStatus,
+      () => options.trainingDay()?.id,
       () => options.currentCheck.value.startStatus,
-      feedbackOpen,
-      feedbackPhase,
+      () => options.currentCheck.value.endStatus,
+      plannedComplete,
     ],
     () => {
-      if (feedbackOpen.value && feedbackPhase.value === 'start') return
-      if (options.currentCheck.value.startStatus === 'none') return
+      const dayKey = options.dayKey()
+      if (dayKey !== observedDayKey) {
+        feedbackOpen.value = false
+        observedDayKey = dayKey
+      }
+
       if (!options.isToday() || !options.trainingDay()) return
+      if (options.currentCheck.value.startStatus === 'none') {
+        openPhase('start')
+        return
+      }
+      if (feedbackOpen.value && feedbackPhase.value === 'start') return
       if (plannedComplete.value && options.currentCheck.value.endStatus === 'none') {
         openPhase('end')
       }
     },
     { immediate: true },
   )
-
-  watch(options.dayKey, () => {
-    feedbackOpen.value = false
-  })
 
   return {
     feedbackOpen,

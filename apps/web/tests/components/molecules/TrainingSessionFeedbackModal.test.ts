@@ -4,7 +4,8 @@ import TrainingSessionFeedbackModal from '@/components/molecules/TrainingSession
 
 const modalStubs = {
   BaseModal: {
-    props: ['isOpen'],
+    name: 'BaseModal',
+    props: ['isOpen', 'closeOnBackdropClick'],
     emits: ['update:isOpen'],
     template:
       '<div v-if="isOpen"><div data-testid="base-modal"><slot /></div></div>',
@@ -78,6 +79,41 @@ describe('TrainingSessionFeedbackModal', () => {
     expect(wrapper.emitted('update:isOpen')?.[0]).toEqual([false])
   })
 
+  it('emits skip and closes from the X button', async () => {
+    const wrapper = mountModal()
+
+    await wrapper.get('button[aria-label="Close session check"]').trigger('click')
+
+    expect(wrapper.emitted('skip')).toHaveLength(1)
+    expect(wrapper.emitted('update:isOpen')?.[0]).toEqual([false])
+  })
+
+  it('resets the step and answers when reopened', async () => {
+    const wrapper = mountModal()
+    await wrapper.get('button[aria-label="Preparation 5 of 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Motivation 4 of 5"]').trigger('click')
+    await wrapper.get('button[aria-label="Continue to step 2"]').trigger('click')
+
+    const notNow = wrapper.findAll('button').find(node => node.text() === 'Not now')
+    if (!notNow) throw new Error('Not now button was not rendered')
+    await notNow.trigger('click')
+    await wrapper.setProps({ isOpen: false })
+    await wrapper.setProps({ isOpen: true })
+
+    expect(wrapper.text()).toContain('Step 1 of 2')
+    expect(
+      wrapper.get('button[aria-label="Continue to step 2"]').attributes('disabled'),
+    ).toBeDefined()
+  })
+
+  it('disables backdrop dismissal', () => {
+    const wrapper = mountModal()
+
+    expect(wrapper.getComponent({ name: 'BaseModal' }).props('closeOnBackdropClick')).toBe(
+      false,
+    )
+  })
+
   it('renders end copy, pain labels, and started-at helper', async () => {
     const wrapper = mountModal({ phase: 'end', startStrength: 4 })
     expect(wrapper.text()).toContain('How the session felt')
@@ -89,6 +125,7 @@ describe('TrainingSessionFeedbackModal', () => {
     await wrapper.get('button[aria-label="Pain 1 of 5"]').trigger('click')
     await wrapper.get('button[aria-label="Continue to step 2"]').trigger('click')
     expect(wrapper.text()).toContain('Your strength at wrap-up')
+    expect(wrapper.text()).toContain('How much force do you have now?')
     expect(wrapper.text()).toContain('You started at High')
     await wrapper.get('button[aria-label="Force 3 of 5"]').trigger('click')
     await wrapper.get('button[aria-label="Save wrap-up"]').trigger('click')

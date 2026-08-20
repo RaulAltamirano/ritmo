@@ -88,7 +88,11 @@
         </div>
         <div class="space-y-3">
           <p class="text-sm font-medium text-gray-900 dark:text-white">
-            How much force do you have right now?
+            {{
+              phase === 'end'
+                ? 'How much force do you have now?'
+                : 'How much force do you have right now?'
+            }}
           </p>
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
             <button
@@ -203,7 +207,7 @@
     zap: Zap,
     flame: Flame,
     sparkles: Sparkles,
-    'circle-help': AlertCircle,
+    'alert-circle': AlertCircle,
   } as const
 
   const stepTitle = computed(() => {
