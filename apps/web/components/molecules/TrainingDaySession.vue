@@ -1,13 +1,23 @@
 <template>
   <section :aria-label="sectionLabel">
-    <p v-if="!trainingDay" class="py-8 text-center text-sm text-content-secondary">
-      Rest day
-    </p>
+    <div v-if="!trainingDay" class="py-14 text-center" role="status">
+      <div class="mb-3 text-3xl leading-none text-gray-300 dark:text-gray-700">◎</div>
+      <p class="mb-1 text-sm text-gray-400 dark:text-gray-500">Rest day</p>
+      <p class="text-xs text-gray-300 dark:text-gray-700">
+        No session planned for this day
+      </p>
+    </div>
     <div v-else class="space-y-3">
-      <header>
+      <header class="flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-base font-semibold text-content" :class="titleClass">
           {{ trainingDay.name }}
         </h2>
+        <TrainingSessionCheckBar
+          :session-check="currentCheck"
+          :planned-complete="plannedComplete"
+          @check-in="openPhase('start')"
+          @finish-session="openPhase('end')"
+        />
       </header>
       <div class="flex flex-col gap-3">
         <ExerciseBlockGroup
@@ -37,22 +47,36 @@
       @update:bodyweight-kg="emit('update:bodyweightKg', $event)"
       @select-day="emit('select-day', $event)"
     />
+    <TrainingSessionFeedbackModal
+      :is-open="feedbackOpen"
+      :phase="feedbackPhase"
+      :session-name="trainingDay?.name ?? ''"
+      :start-strength="currentCheck.start?.strength ?? null"
+      @update:is-open="onFeedbackOpen"
+      @skip="onFeedbackSkip"
+      @submit="onFeedbackSubmit"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
   import { computed, ref } from 'vue'
+  import { useTrainingSessionCheckUi } from '~/composables/useTrainingSessionCheckUi'
   import ExerciseBlockGroup from '~/components/molecules/ExerciseBlockGroup.vue'
   import ExerciseProgressSheet from '~/components/molecules/ExerciseProgressSheet.vue'
+  import TrainingSessionCheckBar from '~/components/molecules/TrainingSessionCheckBar.vue'
+  import TrainingSessionFeedbackModal from '~/components/molecules/TrainingSessionFeedbackModal.vue'
   import type {
     ExerciseLoadSettings,
     ExerciseLog,
     LoadUnit,
     SetLog,
     TrainingDay,
+    TrainingSessionCheck,
   } from '~/types/training'
   import { groupExercisesByBlock } from '~/utils/groupExercisesByBlock'
   import { findExerciseLog, findLastSessionLine, findLoadSettings } from '~/utils/trainingLogLookup'
+  import { emptySessionCheck } from '~/utils/trainingSessionCheck'
 
   const props = withDefaults(
     defineProps<{
@@ -61,12 +85,16 @@
       logs?: ExerciseLog[]
       settings?: ExerciseLoadSettings[]
       bodyweightKg?: number | null
+      sessionCheck?: TrainingSessionCheck
+      isToday?: boolean
     }>(),
     {
       dayKey: '',
       logs: () => [],
       settings: () => [],
       bodyweightKg: null,
+      sessionCheck: undefined,
+      isToday: false,
     },
   )
 
@@ -75,6 +103,7 @@
     'update:settings': [value: ExerciseLoadSettings[]]
     'update:bodyweightKg': [value: number | null]
     'select-day': [dayKey: string]
+    'update:sessionCheck': [value: TrainingSessionCheck]
   }>()
 
   const progressExerciseId = ref<string | null>(null)
@@ -82,6 +111,25 @@
   const sectionLabel = computed(() =>
     props.trainingDay ? props.trainingDay.name : 'Rest day',
   )
+  const currentCheck = computed(
+    () => props.sessionCheck ?? emptySessionCheck(props.dayKey),
+  )
+  const {
+    feedbackOpen,
+    feedbackPhase,
+    plannedComplete,
+    openPhase,
+    onFeedbackOpen,
+    onFeedbackSkip,
+    onFeedbackSubmit,
+  } = useTrainingSessionCheckUi({
+    trainingDay: () => props.trainingDay,
+    dayKey: () => props.dayKey,
+    logs: () => props.logs,
+    isToday: () => props.isToday,
+    currentCheck,
+    emitUpdate: check => emit('update:sessionCheck', check),
+  })
 
   const titleClass = computed(() => {
     if (props.trainingDay?.focus === 'upper') return 'text-brand-text'
