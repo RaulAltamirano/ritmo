@@ -62,6 +62,10 @@ model User {
   dailyCheckins           DailyCheckin[]
   workSessionIdempotencies WorkSessionIdempotency[]
   preferences             UserPreferences?
+  trainingProfile         TrainingProfile?
+  trainingWeeks           TrainingWeek[]
+  exerciseSetLogs         ExerciseSetLog[]
+  trainingSessionChecks   TrainingSessionCheck[]
   
   // Circadian Rhythm Relations
   circadianPhasePreferences CircadianPhasePreference[]

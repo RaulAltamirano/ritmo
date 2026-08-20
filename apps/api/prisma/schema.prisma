@@ -237,6 +237,67 @@ enum WorkSessionFrictionBlocker {
   none
 }
 
+enum TrainingLevel {
+  basic
+  intermediate
+  advanced
+}
+
+enum TrainingGoal {
+  hypertrophy
+  strength
+  recomposition
+  health
+}
+
+enum EquipmentProfile {
+  full_gym
+  limited_machines
+  dumbbells_cables
+  home
+}
+
+enum BlockPhase {
+  accumulation
+  deload
+}
+
+enum DayFocus {
+  upper
+  lower
+}
+
+enum TrainingWeekStatus {
+  draft
+  applied
+}
+
+enum ExerciseFamily {
+  press_horizontal
+  press_inclinado
+  aduccion_horizontal
+  press_vertical
+  elevacion_lateral
+  deltoides_posterior
+  jalon
+  remo
+  pullover
+  extension_lumbar
+  sentadilla_bilateral
+  sentadilla_unilateral
+  bisagra_cadera
+  empuje_cadera
+  extension_rodilla
+  curl_femoral
+  aductor
+  abductor
+  pantorrilla
+  curl_biceps
+  extension_triceps
+  core
+  face_pull
+}
+
 
 // =====================================================
 // MODULE: models/user.prisma
@@ -306,6 +367,10 @@ model User {
   dailyCheckins           DailyCheckin[]
   workSessionIdempotencies WorkSessionIdempotency[]
   preferences             UserPreferences?
+  trainingProfile         TrainingProfile?
+  trainingWeeks           TrainingWeek[]
+  exerciseSetLogs         ExerciseSetLog[]
+  trainingSessionChecks   TrainingSessionCheck[]
   
   // Circadian Rhythm Relations
   circadianPhasePreferences CircadianPhasePreference[]
@@ -710,6 +775,184 @@ model WorkSession {
   @@index([circadianPhaseId])
   @@index([dailyCheckinId])
   @@map("work_sessions")
+}
+
+
+// =====================================================
+// MODULE: models/training.prisma
+// =====================================================
+
+model Exercise {
+  id                   String                    @id @default(cuid())
+  slug                 String                    @unique
+  name                 String
+  family               ExerciseFamily
+  equipment            String[]
+  isCore               Boolean                   @default(true)
+  templateSlots        ProgramTemplateSlot[]
+  trainingDayExercises TrainingDayExercise[]
+  setLogs              ExerciseSetLog[]
+
+  @@map("exercises")
+}
+
+model ProgramTemplate {
+  id          String               @id @default(cuid())
+  code        String               @unique
+  level       TrainingLevel
+  daysPerWeek Int
+  sourceFile  String
+  days        ProgramTemplateDay[]
+  profiles    TrainingProfile[]
+  weeks       TrainingWeek[]
+
+  @@map("program_templates")
+}
+
+model ProgramTemplateDay {
+  id         String                @id @default(cuid())
+  templateId String
+  dayNumber  Int
+  name       String
+  focus      DayFocus
+  weekday    Int?
+  template   ProgramTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  slots      ProgramTemplateSlot[]
+
+  @@unique([templateId, dayNumber])
+  @@map("program_template_days")
+}
+
+model ProgramTemplateSlot {
+  id         String             @id @default(cuid())
+  dayId      String
+  sortOrder  Int
+  block      String
+  exerciseId String
+  setsReps   String
+  targetRir  String
+  targetRpe  String
+  emphasis   String?
+  day        ProgramTemplateDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  exercise   Exercise           @relation(fields: [exerciseId], references: [id])
+
+  @@unique([dayId, sortOrder])
+  @@index([exerciseId])
+  @@map("program_template_slots")
+}
+
+model TrainingProfile {
+  id                 String           @id @default(cuid())
+  userId             String           @unique
+  level              TrainingLevel
+  daysPerWeek        Int
+  minutesPerSession  Int
+  equipment          EquipmentProfile
+  goal               TrainingGoal
+  hasActiveInjury    Boolean          @default(false)
+  injuriesNotes      String?
+  restrictions       String?
+  understandsRir     Boolean          @default(false)
+  programTemplateId  String?
+  blockPhase         BlockPhase       @default(accumulation)
+  weekInBlock        Int              @default(1)
+  blockLengthWeeks   Int              @default(4)
+  historyWindowWeeks Int              @default(1)
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programTemplate    ProgramTemplate? @relation(fields: [programTemplateId], references: [id], onDelete: SetNull)
+
+  @@index([programTemplateId])
+  @@map("training_profiles")
+}
+
+model TrainingWeek {
+  id                String             @id @default(cuid())
+  userId            String
+  weekStart         DateTime           @db.Date
+  status            TrainingWeekStatus @default(draft)
+  profileSnapshot   Json
+  programTemplateId String
+  blockPhase        BlockPhase
+  weekInBlock       Int
+  summary           String?
+  substitutions     Json?
+  source            String             @default("wfitness_v1")
+  warning           String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programTemplate   ProgramTemplate    @relation(fields: [programTemplateId], references: [id])
+  days              TrainingDay[]
+
+  @@unique([userId, weekStart])
+  @@index([userId, weekStart])
+  @@map("training_weeks")
+}
+
+model TrainingDay {
+  id        String                @id @default(cuid())
+  weekId    String
+  dayNumber Int
+  name      String
+  focus     DayFocus
+  weekday   Int
+  date      DateTime              @db.Date
+  week      TrainingWeek          @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  exercises TrainingDayExercise[]
+
+  @@unique([weekId, dayNumber])
+  @@index([weekId, date])
+  @@map("training_days")
+}
+
+model TrainingDayExercise {
+  id         String      @id @default(cuid())
+  dayId      String
+  exerciseId String
+  sortOrder  Int
+  block      String
+  setsReps   String
+  targetRir  String
+  targetRpe  String
+  emphasis   String?
+  day        TrainingDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  exercise   Exercise    @relation(fields: [exerciseId], references: [id])
+
+  @@unique([dayId, sortOrder])
+  @@index([exerciseId])
+  @@map("training_day_exercises")
+}
+
+model ExerciseSetLog {
+  id         String   @id @default(cuid())
+  userId     String
+  dayKey     String   @db.VarChar(10)
+  exerciseId String
+  note       String?
+  sets       Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@unique([userId, dayKey, exerciseId])
+  @@map("exercise_set_logs")
+}
+
+model TrainingSessionCheck {
+  id          String   @id @default(cuid())
+  userId      String
+  dayKey      String   @db.VarChar(10)
+  startStatus String   @default("none")
+  endStatus   String   @default("none")
+  start       Json?
+  end         Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dayKey])
+  @@map("training_session_checks")
 }
 
 

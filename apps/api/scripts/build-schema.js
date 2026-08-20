@@ -25,6 +25,7 @@ const SCHEMA_MODULES = [
   'models/session.prisma',
   'models/security.prisma',
   'models/business.prisma',
+  'models/training.prisma',
   'models/circadian.prisma',
 ]
 
