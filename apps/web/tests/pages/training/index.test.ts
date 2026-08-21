@@ -21,8 +21,10 @@ function mountPage(mockStore = false) {
   setActivePinia(pinia)
   const store = useTrainingStore(pinia)
   if (mockStore) {
-    store.week = mockWeeklyPlan
-    store.loadWeek = vi.fn().mockResolvedValue(mockWeeklyPlan)
+    store.loadWeek = vi.fn().mockImplementation(async () => {
+      store.week = mockWeeklyPlan
+      return mockWeeklyPlan
+    })
     store.loadLogs = vi.fn().mockResolvedValue([])
     store.loadSessionChecks = vi.fn().mockResolvedValue([])
     store.saveLogs = vi.fn().mockResolvedValue([])
@@ -40,7 +42,11 @@ function mountPage(mockStore = false) {
           emits: ['open'],
           template: '<button @click="$emit(\'open\')">Generate week</button>',
         },
-        PlanWeekStrip: true,
+        PlanWeekStrip: {
+          props: ['weekStart'],
+          emits: ['update:weekStart', 'update:selectedDay'],
+          template: '<button data-testid="shift-week" @click="$emit(\'update:weekStart\', new Date(2026, 7, 10))">Shift week</button>',
+        },
         TrainingDaySession: {
           name: 'TrainingDaySession',
           props: ['logs', 'sessionCheck'],
@@ -117,5 +123,39 @@ describe('training page', () => {
       expect(store.saveLogs).toHaveBeenCalledWith([log])
       expect(store.saveSessionCheck).toHaveBeenCalledWith(check)
     })
+  })
+
+  it('clears week data before loading a different week', async () => {
+    const { store, wrapper } = mountPage()
+    await vi.waitFor(() => expect(api.getWeek).toHaveBeenCalledTimes(1))
+
+    store.logs = [
+      {
+        exerciseId: 'exercise-1',
+        dayKey: '2026-08-17',
+        note: 'stale',
+        sets: [],
+      },
+    ]
+    store.sessionChecks = [
+      {
+        dayKey: '2026-08-17',
+        startStatus: 'skipped',
+        endStatus: 'none',
+        start: null,
+        end: null,
+      },
+    ]
+    store.week = mockWeeklyPlan
+    api.getWeek.mockResolvedValue(null)
+    api.getLogs.mockResolvedValue([])
+    api.getSessionChecks.mockResolvedValue([])
+
+    await wrapper.get('[data-testid="shift-week"]').trigger('click')
+    await vi.waitFor(() => expect(api.getWeek).toHaveBeenCalledTimes(2))
+
+    expect(store.logs).toEqual([])
+    expect(store.sessionChecks).toEqual([])
+    expect(store.week).toBeNull()
   })
 })

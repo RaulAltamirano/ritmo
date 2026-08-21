@@ -92,6 +92,7 @@
   watch(
     weekStart,
     start => {
+      trainingStore.clearWeekData()
       const inWeek = Array.from({ length: 7 }, (_, i) => addDays(start, i)).some(date =>
         isSameCalendarDay(date, selectedDay.value),
       )

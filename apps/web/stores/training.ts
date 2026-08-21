@@ -19,6 +19,7 @@ export const useTrainingStore = defineStore('training', () => {
   const exercises = ref<TrainingExercise[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  let loadGeneration = 0
 
   const run = async <T>(operation: () => Promise<T>): Promise<T> => {
     loading.value = true
@@ -71,12 +72,22 @@ export const useTrainingStore = defineStore('training', () => {
       return week.value
     })
 
-  const loadWeek = (weekStart: string) =>
-    run(async () => {
+  const clearWeekData = () => {
+    loadGeneration += 1
+    week.value = null
+    logs.value = []
+    sessionChecks.value = []
+  }
+
+  const loadWeek = (weekStart: string) => {
+    const generation = loadGeneration
+    return run(async () => {
       const loaded = await api.getWeek(weekStart)
+      if (generation !== loadGeneration) return week.value
       week.value = loaded ? mapTrainingWeekToPlan(loaded) : null
       return week.value
     })
+  }
 
   const loadExercises = () =>
     run(async () => {
@@ -84,11 +95,15 @@ export const useTrainingStore = defineStore('training', () => {
       return exercises.value
     })
 
-  const loadLogs = (from: string, to: string) =>
-    run(async () => {
-      logs.value = await api.getLogs(from, to)
+  const loadLogs = (from: string, to: string) => {
+    const generation = loadGeneration
+    return run(async () => {
+      const loaded = await api.getLogs(from, to)
+      if (generation !== loadGeneration) return logs.value
+      logs.value = loaded
       return logs.value
     })
+  }
 
   const saveLogs = (values: ExerciseLog[]) =>
     run(async () => {
@@ -105,11 +120,15 @@ export const useTrainingStore = defineStore('training', () => {
       return saved
     })
 
-  const loadSessionChecks = (dayKeys: string[]) =>
-    run(async () => {
-      sessionChecks.value = await api.getSessionChecks(dayKeys)
+  const loadSessionChecks = (dayKeys: string[]) => {
+    const generation = loadGeneration
+    return run(async () => {
+      const loaded = await api.getSessionChecks(dayKeys)
+      if (generation !== loadGeneration) return sessionChecks.value
+      sessionChecks.value = loaded
       return sessionChecks.value
     })
+  }
 
   const saveSessionCheck = (value: TrainingSessionCheck) =>
     run(async () => {
@@ -122,6 +141,7 @@ export const useTrainingStore = defineStore('training', () => {
     })
 
   const reset = () => {
+    loadGeneration += 1
     profile.value = null
     week.value = null
     logs.value = []
@@ -146,6 +166,7 @@ export const useTrainingStore = defineStore('training', () => {
     generateWeekPreview,
     applyWeek,
     loadWeek,
+    clearWeekData,
     loadExercises,
     loadLogs,
     saveLogs,

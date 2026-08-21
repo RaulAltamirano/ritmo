@@ -4,6 +4,8 @@ import type { ExerciseLog } from '@/types/training'
 
 const api = vi.hoisted(() => ({
   getWeek: vi.fn(),
+  getLogs: vi.fn(),
+  getSessionChecks: vi.fn(),
   saveLog: vi.fn(),
 }))
 
@@ -81,5 +83,59 @@ describe('training store', () => {
 
     expect(api.saveLog).toHaveBeenCalledWith({ ...log, note: 'draft' })
     expect(store.logs).toEqual([{ ...log, note: 'saved' }])
+  })
+
+  it('clears week-scoped data before a new load', async () => {
+    const { useTrainingStore } = await import('@/stores/training')
+    const store = useTrainingStore()
+    store.week = { id: 'week-1' } as never
+    store.logs = [log]
+    store.sessionChecks = [{ dayKey: '2026-08-17' } as never]
+
+    store.clearWeekData()
+
+    expect(store.week).toBeNull()
+    expect(store.logs).toEqual([])
+    expect(store.sessionChecks).toEqual([])
+  })
+
+  it('ignores stale week loads after clearWeekData', async () => {
+    let resolveWeek: (value: typeof apiWeek) => void = () => undefined
+    api.getWeek.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          resolveWeek = resolve
+        }),
+    )
+    const { useTrainingStore } = await import('@/stores/training')
+    const store = useTrainingStore()
+    store.logs = [log]
+
+    const pending = store.loadWeek('2026-08-17')
+    store.clearWeekData()
+    resolveWeek(apiWeek)
+    await pending
+
+    expect(store.week).toBeNull()
+    expect(store.logs).toEqual([])
+  })
+
+  it('ignores stale log loads after clearWeekData', async () => {
+    let resolveLogs: (value: ExerciseLog[]) => void = () => undefined
+    api.getLogs.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          resolveLogs = resolve
+        }),
+    )
+    const { useTrainingStore } = await import('@/stores/training')
+    const store = useTrainingStore()
+
+    const pending = store.loadLogs('2026-08-17', '2026-08-23')
+    store.clearWeekData()
+    resolveLogs([log])
+    await pending
+
+    expect(store.logs).toEqual([])
   })
 })
