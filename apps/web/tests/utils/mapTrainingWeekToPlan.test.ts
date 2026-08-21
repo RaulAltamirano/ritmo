@@ -63,10 +63,13 @@ describe('mapTrainingWeekToPlan', () => {
     expect(plan.days).toHaveLength(2)
     expect(plan.days[0]?.exercises).toHaveLength(2)
     expect(plan.days[1]?.exercises).toHaveLength(0)
+    expect(plan.blockPhase).toBe('accumulation')
+    expect(plan.weekInBlock).toBe(2)
     expect(plan.days[0]?.exercises[0]).toMatchObject({
-      id: 'entry-1',
+      id: 'exercise-1',
       rpe: '8',
       emphasis: 'main',
     })
+    expect(plan.days[0]?.exercises[1]?.id).toBe('exercise-2')
   })
 })

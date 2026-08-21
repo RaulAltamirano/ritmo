@@ -65,7 +65,10 @@ describe('training store', () => {
     await store.loadWeek('2026-08-17')
 
     expect(api.getWeek).toHaveBeenCalledWith('2026-08-17')
+    expect(store.week?.days[0]?.exercises[0]?.id).toBe('exercise-1')
     expect(store.week?.days[0]?.exercises[0]?.rpe).toBe('8')
+    expect(store.week?.blockPhase).toBe('accumulation')
+    expect(store.week?.weekInBlock).toBe(1)
   })
 
   it('persists logs and replaces matching local entries', async () => {

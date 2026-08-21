@@ -46,6 +46,8 @@ export function mapTrainingWeekToPlan(week: FrontendTrainingWeek): WeeklyPlan {
     id: week.id,
     title: 'Weekly plan',
     programLabel: week.programTemplateCode,
+    blockPhase: week.blockPhase,
+    weekInBlock: week.weekInBlock,
     days: week.days.map(d => ({
       id: d.id,
       dayNumber: d.dayNumber,
@@ -53,7 +55,7 @@ export function mapTrainingWeekToPlan(week: FrontendTrainingWeek): WeeklyPlan {
       focus: d.focus,
       weekday: d.weekday as WeekdayIndex,
       exercises: d.exercises.map(e => ({
-        id: e.id,
+        id: e.exerciseId,
         block: e.block,
         name: e.name,
         setsReps: e.setsReps,
