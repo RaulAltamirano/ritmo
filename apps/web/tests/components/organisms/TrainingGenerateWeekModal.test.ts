@@ -6,6 +6,7 @@ import { useTrainingStore } from '@/stores/training'
 import { mapTrainingWeekToPlan } from '@/utils/mapTrainingWeekToPlan'
 
 const api = vi.hoisted(() => ({
+  getProfile: vi.fn(),
   chat: vi.fn(),
   generateWeek: vi.fn(),
   applyWeek: vi.fn(),
@@ -79,6 +80,7 @@ function mountModal() {
 describe('TrainingGenerateWeekModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    api.getProfile.mockResolvedValue(null)
     api.chat.mockResolvedValue({
       assistantMessage: 'Your profile is ready.',
       profileDraft: null,
@@ -92,9 +94,30 @@ describe('TrainingGenerateWeekModal', () => {
     })
   })
 
+  it('loads a complete profile on open and enables generation without chat', async () => {
+    api.getProfile.mockResolvedValue({
+      level: 'intermediate',
+      daysPerWeek: 3,
+      minutesPerSession: 60,
+      equipment: 'full_gym',
+      goal: 'hypertrophy',
+      hasActiveInjury: false,
+    })
+
+    const wrapper = mountModal()
+    const previewButton = wrapper.get('button[aria-label="Generate preview"]')
+
+    await vi.waitFor(() => expect(api.getProfile).toHaveBeenCalledTimes(1))
+    await vi.waitFor(() => expect(previewButton.attributes('disabled')).toBeUndefined())
+    expect(api.chat).not.toHaveBeenCalled()
+  })
+
   it('uses intake chat, previews exercise days, and applies the generated week', async () => {
     const wrapper = mountModal()
+    const store = useTrainingStore()
 
+    await vi.waitFor(() => expect(api.getProfile).toHaveBeenCalledTimes(1))
+    await vi.waitFor(() => expect(store.loading).toBe(false))
     expect(
       wrapper.get('button[aria-label="Generate preview"]').attributes('disabled'),
     ).toBeDefined()
@@ -131,6 +154,8 @@ describe('TrainingGenerateWeekModal', () => {
     })
     store.week = previousWeek
 
+    await vi.waitFor(() => expect(api.getProfile).toHaveBeenCalledTimes(1))
+    await vi.waitFor(() => expect(store.loading).toBe(false))
     await wrapper.get('textarea').setValue('Intermediate, three days, full gym.')
     await wrapper.get('button[aria-label="Send message"]').trigger('click')
     const previewButton = wrapper.get('button[aria-label="Generate preview"]')

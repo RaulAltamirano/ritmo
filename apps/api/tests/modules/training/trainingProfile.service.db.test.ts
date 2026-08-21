@@ -91,4 +91,25 @@ describe('TrainingProfileService', () => {
     expect(service.isStop(activeInjury)).toBe(true)
     expect(service.isComplete(activeInjury)).toBe(false)
   })
+
+  it.each([
+    [{ daysPerWeek: 2 }, 'daysPerWeek'],
+    [{ daysPerWeek: 7 }, 'daysPerWeek'],
+    [{ daysPerWeek: 3.5 }, 'daysPerWeek'],
+    [{ minutesPerSession: 0 }, 'minutesPerSession'],
+    [{ minutesPerSession: -10 }, 'minutesPerSession'],
+    [{ level: 'expert' }, 'level'],
+    [{ equipment: 'hotel' }, 'equipment'],
+    [{ goal: 'endurance' }, 'goal'],
+  ])('rejects invalid profile patch %#', async (patch, field) => {
+    const service = new TrainingProfileService()
+    const user = await createUser()
+
+    await expect(
+      service.upsertProfile(user.id, patch as TrainingProfilePatch),
+    ).rejects.toMatchObject({
+      name: 'InvalidInputException',
+      message: expect.stringContaining(field),
+    })
+  })
 })

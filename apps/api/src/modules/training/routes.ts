@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import { Router } from 'express'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 
 import { ResponseMiddleware } from '../../api/responses/api.response.js'
 import { authenticateToken } from '../../core/middleware/auth.js'
@@ -7,6 +8,22 @@ import { TrainingController } from './controllers/TrainingController.js'
 
 const router = Router()
 const controller = new TrainingController()
+const aiRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: req =>
+    ((req as Request & { user?: { id?: string } }).user?.id ??
+      ipKeyGenerator(req.ip ?? '')) as string,
+  message: {
+    success: false,
+    error: {
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: 'Too many training AI requests, please try again later',
+    },
+  },
+})
 
 router.use(ResponseMiddleware.addRequestId)
 router.use(ResponseMiddleware.addTimestamp)
@@ -22,10 +39,10 @@ router.get('/profile', (req, res, next) => {
 router.put('/profile', (req, res, next) => {
   void controller.updateProfile(req, res, next)
 })
-router.post('/chat', (req, res, next) => {
+router.post('/chat', aiRateLimit, (req, res, next) => {
   void controller.chat(req, res, next)
 })
-router.post('/weeks/generate', (req, res, next) => {
+router.post('/weeks/generate', aiRateLimit, (req, res, next) => {
   void controller.generateWeek(req, res, next)
 })
 router.post('/weeks/:id/apply', (req, res, next) => {

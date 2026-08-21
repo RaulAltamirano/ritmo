@@ -16,8 +16,8 @@ const PROGRAM_MATRIX: Record<TrainingLevel, Partial<Record<number, string>>> = {
   advanced: {
     3: 'intermediate_1_0',
     4: 'advanced_1_1',
-    5: 'advanced_1_3',
-    6: 'advanced_3_2',
+    5: 'advanced_1_1',
+    6: 'advanced_1_1',
   },
 }
 

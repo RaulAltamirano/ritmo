@@ -1,17 +1,9 @@
-import type {
-  EquipmentProfile,
-  Prisma,
-  TrainingGoal,
-  TrainingLevel,
-  TrainingProfile,
-} from '@prisma/client'
+import { EquipmentProfile, TrainingGoal, TrainingLevel } from '@prisma/client'
+import type { Prisma, TrainingProfile } from '@prisma/client'
 
 import prisma from '../../../core/database/prisma.js'
-import {
-  type ChatMessage,
-  OpenAiTrainingClient,
-  type ProfileFields,
-} from './OpenAiTrainingClient.js'
+import { InvalidInputException } from '../../../shared/exceptions/app.exceptions.js'
+import { type ChatMessage, OpenAiTrainingClient } from './OpenAiTrainingClient.js'
 
 export type FrontendTrainingProfile = TrainingProfile
 
@@ -69,6 +61,7 @@ export class TrainingProfileService {
     userId: string,
     patch: TrainingProfilePatch,
   ): Promise<FrontendTrainingProfile> {
+    this.assertValidPatch(patch)
     const data: PersistedProfileData = this.persistedPatch(patch)
     return prisma.trainingProfile.upsert({
       where: { userId },
@@ -118,7 +111,7 @@ export class TrainingProfileService {
     )
   }
 
-  private persistedPatch(patch: Partial<ProfileFields>): TrainingProfilePatch {
+  private persistedPatch(patch: TrainingProfilePatch): TrainingProfilePatch {
     return {
       ...(patch.level !== undefined && { level: patch.level }),
       ...(patch.daysPerWeek !== undefined && { daysPerWeek: patch.daysPerWeek }),
@@ -139,6 +132,42 @@ export class TrainingProfileService {
       ...(patch.understandsRir !== undefined && {
         understandsRir: patch.understandsRir,
       }),
+    }
+  }
+
+  private assertValidPatch(patch: TrainingProfilePatch): void {
+    if (
+      patch.daysPerWeek !== undefined &&
+      patch.daysPerWeek !== null &&
+      (!Number.isInteger(patch.daysPerWeek) ||
+        patch.daysPerWeek < 3 ||
+        patch.daysPerWeek > 6)
+    ) {
+      throw new InvalidInputException('daysPerWeek must be an integer between 3 and 6')
+    }
+    if (
+      patch.minutesPerSession !== undefined &&
+      patch.minutesPerSession !== null &&
+      (!Number.isFinite(patch.minutesPerSession) || patch.minutesPerSession <= 0)
+    ) {
+      throw new InvalidInputException('minutesPerSession must be greater than 0')
+    }
+    this.assertEnumValue('level', patch.level, TrainingLevel)
+    this.assertEnumValue('equipment', patch.equipment, EquipmentProfile)
+    this.assertEnumValue('goal', patch.goal, TrainingGoal)
+  }
+
+  private assertEnumValue(
+    field: string,
+    value: string | null | undefined,
+    values: Record<string, string>,
+  ): void {
+    if (
+      value !== undefined &&
+      value !== null &&
+      !Object.values(values).includes(value)
+    ) {
+      throw new InvalidInputException(`${field} is invalid`)
     }
   }
 }

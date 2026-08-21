@@ -150,6 +150,22 @@ describe('TrainingWeekService', () => {
     expect(second.profile.weekInBlock).toBe(2)
   })
 
+  it('preserves applied status when regenerating and does not advance again', async () => {
+    const user = await createUser()
+    await createCompleteProfile(user.id)
+    const service = new TrainingWeekService(createClient())
+    const draft = await service.generateWeek(user.id, '2026-08-17')
+    const applied = await service.applyWeek(user.id, draft.id)
+
+    const regenerated = await service.generateWeek(user.id, '2026-08-17')
+    const reapplied = await service.applyWeek(user.id, regenerated.id)
+
+    expect(regenerated.status).toBe(TrainingWeekStatus.applied)
+    expect(reapplied.week.status).toBe(TrainingWeekStatus.applied)
+    expect(applied.profile.weekInBlock).toBe(2)
+    expect(reapplied.profile.weekInBlock).toBe(2)
+  })
+
   it('generates successfully when OpenAI proposes no substitutions', async () => {
     const user = await createUser()
     await createCompleteProfile(user.id)

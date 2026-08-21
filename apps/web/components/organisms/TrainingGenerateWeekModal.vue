@@ -163,13 +163,20 @@
 
   watch(
     () => props.isOpen,
-    open => {
+    async open => {
       if (!open) return
       uiPhase.value = 'chat'
       messages.value = []
       readyToGenerate.value = false
       previewWeek.value = null
+      try {
+        const profile = await store.loadProfile()
+        if (props.isOpen) readyToGenerate.value = isCompleteProfile(profile)
+      } catch {
+        readyToGenerate.value = false
+      }
     },
+    { immediate: true },
   )
 
   async function sendMessage(content: string) {
@@ -219,6 +226,18 @@
       content,
       createdAt: new Date().toISOString(),
     }
+  }
+
+  function isCompleteProfile(profile: typeof store.profile): boolean {
+    return Boolean(
+      profile &&
+        profile.level !== null &&
+        profile.daysPerWeek !== null &&
+        profile.minutesPerSession !== null &&
+        profile.equipment !== null &&
+        profile.goal !== null &&
+        profile.hasActiveInjury === false,
+    )
   }
 
   function onSecondaryAction() {

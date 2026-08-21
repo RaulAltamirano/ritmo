@@ -97,6 +97,10 @@ export class TrainingWeekService {
     const days = applyDraftSubstitutions(draftDays, substitutions)
 
     const week = await prisma.$transaction(async tx => {
+      const existing = await tx.trainingWeek.findUnique({
+        where: { userId_weekStart: { userId, weekStart: start } },
+        select: { status: true },
+      })
       const saved = await tx.trainingWeek.upsert({
         where: { userId_weekStart: { userId, weekStart: start } },
         create: {
@@ -112,7 +116,7 @@ export class TrainingWeekService {
           days: { create: days },
         },
         update: {
-          status: 'draft',
+          status: existing?.status ?? 'draft',
           profileSnapshot: this.profileSnapshot(profile),
           programTemplateId: template.id,
           blockPhase: profile.blockPhase,

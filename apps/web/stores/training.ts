@@ -20,6 +20,7 @@ export const useTrainingStore = defineStore('training', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
   let loadGeneration = 0
+  const logSaveQueues = new Map<string, Promise<void>>()
 
   const run = async <T>(operation: () => Promise<T>): Promise<T> => {
     loading.value = true
@@ -105,9 +106,25 @@ export const useTrainingStore = defineStore('training', () => {
     })
   }
 
+  const queueLogSave = (value: ExerciseLog) => {
+    const key = `${value.dayKey}:${value.exerciseId}`
+    const queued = (logSaveQueues.get(key) ?? Promise.resolve()).then(() =>
+      api.saveLog(value),
+    )
+    const settled = queued.then(
+      () => undefined,
+      () => undefined,
+    )
+    logSaveQueues.set(key, settled)
+    void settled.finally(() => {
+      if (logSaveQueues.get(key) === settled) logSaveQueues.delete(key)
+    })
+    return queued
+  }
+
   const saveLogs = (values: ExerciseLog[]) =>
     run(async () => {
-      const saved = await Promise.all(values.map(value => api.saveLog(value)))
+      const saved = await Promise.all(values.map(queueLogSave))
       const savedKeys = new Set(
         saved.map(value => `${value.dayKey}:${value.exerciseId}`),
       )
@@ -149,6 +166,7 @@ export const useTrainingStore = defineStore('training', () => {
     exercises.value = []
     loading.value = false
     error.value = null
+    logSaveQueues.clear()
   }
 
   return {

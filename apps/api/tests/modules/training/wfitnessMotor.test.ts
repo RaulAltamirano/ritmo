@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { PROGRAM_TEMPLATE_SEEDS } from '../../../src/modules/training/data/programTemplates.seed.js'
 import {
   advanceBlock,
   applyDeloadToSlot,
@@ -7,16 +8,24 @@ import {
 } from '../../../src/modules/training/services/WfitnessMotor.js'
 
 describe('WfitnessMotor', () => {
-  it('maps intermediate 3 days to intermediate_1_0', () => {
-    expect(selectProgramCode('intermediate', 3)).toBe('intermediate_1_0')
-  })
+  it.each([
+    ['basic', 3, 'basic_1_0'],
+    ['basic', 4, 'basic_1_0'],
+    ['basic', 5, 'basic_2_0'],
+    ['basic', 6, 'basic_2_0'],
+    ['intermediate', 3, 'intermediate_1_0'],
+    ['intermediate', 4, 'intermediate_2_0'],
+    ['intermediate', 5, 'intermediate_2_0'],
+    ['intermediate', 6, 'intermediate_2_0'],
+    ['advanced', 3, 'intermediate_1_0'],
+    ['advanced', 4, 'advanced_1_1'],
+    ['advanced', 5, 'advanced_1_1'],
+    ['advanced', 6, 'advanced_1_1'],
+  ] as const)('maps %s at %i days to seeded template %s', (level, days, expected) => {
+    const code = selectProgramCode(level, days)
 
-  it('maps intermediate 4 days to intermediate_2_0', () => {
-    expect(selectProgramCode('intermediate', 4)).toBe('intermediate_2_0')
-  })
-
-  it('maps basic 4 days to basic_1_0', () => {
-    expect(selectProgramCode('basic', 4)).toBe('basic_1_0')
+    expect(code).toBe(expected)
+    expect(PROGRAM_TEMPLATE_SEEDS.some(seed => seed.code === code)).toBe(true)
   })
 
   it('advances accumulation then flips to deload', () => {
