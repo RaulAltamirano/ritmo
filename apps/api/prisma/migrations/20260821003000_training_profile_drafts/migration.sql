@@ -1,0 +1,8 @@
+ALTER TABLE "public"."training_profiles"
+ALTER COLUMN "level" DROP NOT NULL,
+ALTER COLUMN "daysPerWeek" DROP NOT NULL,
+ALTER COLUMN "minutesPerSession" DROP NOT NULL,
+ALTER COLUMN "equipment" DROP NOT NULL,
+ALTER COLUMN "goal" DROP NOT NULL,
+ALTER COLUMN "hasActiveInjury" DROP DEFAULT,
+ALTER COLUMN "hasActiveInjury" DROP NOT NULL;

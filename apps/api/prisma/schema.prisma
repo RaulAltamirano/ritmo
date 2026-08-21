@@ -844,12 +844,12 @@ model ProgramTemplateSlot {
 model TrainingProfile {
   id                 String           @id @default(cuid())
   userId             String           @unique
-  level              TrainingLevel
-  daysPerWeek        Int
-  minutesPerSession  Int
-  equipment          EquipmentProfile
-  goal               TrainingGoal
-  hasActiveInjury    Boolean          @default(false)
+  level              TrainingLevel?
+  daysPerWeek        Int?
+  minutesPerSession  Int?
+  equipment          EquipmentProfile?
+  goal               TrainingGoal?
+  hasActiveInjury    Boolean?
   injuriesNotes      String?
   restrictions       String?
   understandsRir     Boolean          @default(false)
