@@ -75,4 +75,11 @@ describe('TrainingSessionCheckBar', () => {
     expect(endChip.text()).toContain('Wrapped up')
     expect(endChip.attributes('role')).toBe('status')
   })
+
+  it('uses a full-width wrapping action row for narrow layouts', () => {
+    const wrapper = mountBar()
+    const root = wrapper.get('div')
+    expect(root.classes()).toContain('w-full')
+    expect(root.classes().join(' ')).toMatch(/flex-wrap/)
+  })
 })

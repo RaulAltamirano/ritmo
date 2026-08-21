@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-wrap items-center gap-2">
+  <div class="flex w-full flex-wrap items-center gap-2 md:w-auto">
     <span
       v-if="sessionCheck.startStatus === 'saved'"
       data-testid="session-check-status-start"

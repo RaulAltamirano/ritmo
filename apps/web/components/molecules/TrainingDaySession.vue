@@ -4,11 +4,12 @@
       Rest day
     </p>
     <div v-else class="space-y-3">
-      <header class="flex flex-wrap items-center justify-between gap-3">
+      <header class="flex flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between">
         <h2 class="text-base font-semibold text-content" :class="titleClass">
           {{ trainingDay.name }}
         </h2>
         <TrainingSessionCheckBar
+          class="w-full md:w-auto"
           :session-check="currentCheck"
           :planned-complete="plannedComplete"
           @check-in="openPhase('start')"

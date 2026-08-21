@@ -80,8 +80,19 @@ describe('TrainingDaySession', () => {
     expect(wrapper.get('section').attributes('aria-label')).toBe(day.name)
   })
 
+  it('stacks the session title and check bar on small screens via responsive classes', () => {
+    const day = mockWeeklyPlan.days[0]!
+    const wrapper = mountSession({ trainingDay: day })
+    const header = wrapper.get('header')
+    const cls = header.classes().join(' ')
+    expect(cls).toMatch(/flex-col/)
+    expect(cls).toMatch(/md:flex-row/)
+    expect(cls).toMatch(/md:items-center/)
+    expect(cls).toMatch(/md:justify-between/)
+  })
+
   it('labels supersets and shows RPE without RIR', () => {
-    const day = mockWeeklyPlan.days[1]! // Piernas A: supersets + triset
+    const day = mockWeeklyPlan.days[2]! // Piernas A: supersets + triset
     const wrapper = mount(TrainingDaySession, {
       props: { trainingDay: day },
     })
