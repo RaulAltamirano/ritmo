@@ -70,4 +70,24 @@ describe('PlanWeekStrip', () => {
     const selectedTab = wrapper.get('[aria-selected="true"]')
     expect(selectedTab.html()).toContain('rounded-full')
   })
+
+  it('uses comfortable touch targets for week nav and day tabs', () => {
+    const wrapper = mount(PlanWeekStrip, {
+      props: {
+        weekStart,
+        selectedDay,
+        scheduledTasks: scheduled,
+        'onUpdate:weekStart': () => undefined,
+        'onUpdate:selectedDay': () => undefined,
+      },
+    })
+    expect(wrapper.get('button[aria-label="Previous week"]').classes().join(' ')).toMatch(
+      /min-h-11|min-w-11/,
+    )
+    expect(wrapper.get('button[aria-label="Next week"]').classes().join(' ')).toMatch(
+      /min-h-11|min-w-11/,
+    )
+    const tab = wrapper.get('[role="tab"]')
+    expect(tab.classes().join(' ')).toMatch(/min-h-11/)
+  })
 })

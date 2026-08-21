@@ -4,7 +4,7 @@
       <div class="flex items-center">
         <button
           type="button"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-full text-content-secondary transition-colors hover:bg-surface-raised hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+          class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-content-secondary transition-colors hover:bg-surface-raised hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
           aria-label="Previous week"
           @click="shiftWeek(-1)"
         >
@@ -12,7 +12,7 @@
         </button>
         <button
           type="button"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-full text-content-secondary transition-colors hover:bg-surface-raised hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:opacity-40 disabled:pointer-events-none"
+          class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-content-secondary transition-colors hover:bg-surface-raised hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:opacity-40 disabled:pointer-events-none"
           aria-label="Next week"
           :disabled="!canGoNext"
           @click="shiftWeek(1)"
@@ -26,7 +26,7 @@
     </div>
 
     <div
-      class="flex gap-1 sm:gap-2 overflow-x-auto overscroll-x-contain pb-1"
+      class="flex gap-1.5 sm:gap-2 overflow-x-auto overscroll-x-contain pb-1"
       role="tablist"
       aria-label="Week days"
     >
@@ -35,7 +35,7 @@
         :key="day.key"
         type="button"
         role="tab"
-        class="flex min-w-[2.75rem] flex-1 flex-col items-center gap-1 rounded-xl px-1.5 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+        class="flex min-h-11 min-w-[2.75rem] flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
         :class="
           isSelected(day.date)
             ? 'bg-primary-500 text-white'
