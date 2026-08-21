@@ -37,5 +37,17 @@ router.get('/weeks', (req, res, next) => {
 router.get('/exercises', (req, res, next) => {
   void controller.getExercises(req, res, next)
 })
+router.get('/logs', (req, res, next) => {
+  void controller.getLogs(req, res, next)
+})
+router.put('/logs', (req, res, next) => {
+  void controller.upsertLog(req, res, next)
+})
+router.get('/session-checks', (req, res, next) => {
+  void controller.getSessionChecks(req, res, next)
+})
+router.put('/session-checks', (req, res, next) => {
+  void controller.upsertSessionCheck(req, res, next)
+})
 
 export default router
