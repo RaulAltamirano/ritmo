@@ -10,9 +10,11 @@ Este archivo es el **índice** del manual.
 | Fundamentos científicos | [`01_fundamentos_cientificos.md`](01_fundamentos_cientificos.md) |
 | Motor (nivel × días + progresión) | [`03_motor_decision.md`](03_motor_decision.md) |
 | Catálogo núcleo + sustitutos | [`04_catalogo_ejercicios.md`](04_catalogo_ejercicios.md) |
+| Periodización (aplicación WFITNESS) | [`05_periodizacion_wfitness.md`](05_periodizacion_wfitness.md) |
 | Few-shots | [`06_casos_ejemplo.md`](06_casos_ejemplo.md) |
+| Modelos / evidencia (canónico) | [`docs/knowledge/training/`](../docs/knowledge/training/README.md) |
 
-Para generar un plan con cualquier IA: empieza por **`00`**, luego **`03`** + **`04`** + el `02A`/`02B`/`02C` del nivel.
+Para generar un plan con cualquier IA: empieza por **`00`**, luego **`03`** + **`04`** + el `02A`/`02B`/`02C` del nivel; añade **`05`** (y knowledge si hace falta periodización).
 
 ---
 

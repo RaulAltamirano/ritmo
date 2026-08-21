@@ -193,3 +193,64 @@ enum WorkSessionFrictionBlocker {
   environment
   none
 }
+
+enum TrainingLevel {
+  basic
+  intermediate
+  advanced
+}
+
+enum TrainingGoal {
+  hypertrophy
+  strength
+  recomposition
+  health
+}
+
+enum EquipmentProfile {
+  full_gym
+  limited_machines
+  dumbbells_cables
+  home
+}
+
+enum BlockPhase {
+  accumulation
+  deload
+}
+
+enum DayFocus {
+  upper
+  lower
+}
+
+enum TrainingWeekStatus {
+  draft
+  applied
+}
+
+enum ExerciseFamily {
+  press_horizontal
+  press_inclinado
+  aduccion_horizontal
+  press_vertical
+  elevacion_lateral
+  deltoides_posterior
+  jalon
+  remo
+  pullover
+  extension_lumbar
+  sentadilla_bilateral
+  sentadilla_unilateral
+  bisagra_cadera
+  empuje_cadera
+  extension_rodilla
+  curl_femoral
+  aductor
+  abductor
+  pantorrilla
+  curl_biceps
+  extension_triceps
+  core
+  face_pull
+}

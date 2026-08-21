@@ -10,6 +10,7 @@ import { authRoutes } from '../../modules/auth/index.js'
 import { checkinRoutes } from '../../modules/checkins/index.js'
 import { planRoutes } from '../../modules/plans/index.js'
 import { taskRoutes } from '../../modules/tasks/index.js'
+import { trainingRoutes } from '../../modules/training/index.js'
 import { workSessionRoutes } from '../../modules/work-sessions/index.js'
 import circadianRoutes from '../../modules/circadian/routes.js'
 import deviceRoutes from '../../modules/devices/routes.js'
@@ -84,6 +85,7 @@ router.use('/users', userRoutes)
 router.use('/devices', deviceRoutes)
 router.use('/tasks', taskRoutes)
 router.use('/plans', planRoutes)
+router.use('/training', trainingRoutes)
 router.use('/checkins', checkinRoutes)
 router.use('/work-sessions', workSessionRoutes)
 
