@@ -69,7 +69,7 @@ export class TrainingProfileService {
     userId: string,
     patch: TrainingProfilePatch,
   ): Promise<FrontendTrainingProfile> {
-    const data: PersistedProfileData = patch
+    const data: PersistedProfileData = this.persistedPatch(patch)
     return prisma.trainingProfile.upsert({
       where: { userId },
       create: { userId, ...data },
