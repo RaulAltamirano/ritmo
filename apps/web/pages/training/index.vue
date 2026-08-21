@@ -1,9 +1,9 @@
 <template>
-  <div class="mx-auto min-w-0 max-w-7xl px-2 py-6 sm:px-4 lg:px-8">
-    <PageHeader :title="plan?.title ?? 'Weekly plan'" actions>
+  <div class="mx-auto min-w-0 max-w-7xl px-3 py-4 sm:px-4 sm:py-6 lg:px-8">
+    <PageHeader class="!mb-4" :title="plan?.title ?? 'Weekly plan'" actions>
       <template #actions>
         <div class="flex items-center gap-2">
-          <TrainingExportButton v-if="plan" :plan="plan" :week-start="weekStart" />
+          <TrainingExportButton :plan="plan" :week-start="weekStart" />
           <PlanAiWeekGenerator @open="generateModalOpen = true" />
         </div>
       </template>
@@ -16,7 +16,6 @@
         :day-statuses="dayStatuses"
       />
       <TrainingDaySession
-        v-if="plan"
         :training-day="selectedTrainingDay"
         :day-key="selectedDayKey"
         :logs="logs"
@@ -30,19 +29,6 @@
         @update:session-check="onUpdateSessionCheck"
         @select-day="onSelectDay"
       />
-      <section
-        v-else
-        class="rounded-2xl border border-dashed border-outline bg-surface/60 px-6 py-12 text-center"
-        aria-label="Rest day"
-      >
-        <h2 class="text-base font-semibold text-content">Rest day</h2>
-        <p class="mt-2 text-sm text-content-secondary">
-          There is no training week for these dates yet.
-        </p>
-        <div class="mt-5 flex justify-center">
-          <PlanAiWeekGenerator @open="generateModalOpen = true" />
-        </div>
-      </section>
     </div>
 
     <TrainingGenerateWeekModal
@@ -63,6 +49,7 @@
   import TrainingExportButton from '~/components/molecules/TrainingExportButton.vue'
   import TrainingGenerateWeekModal from '~/components/organisms/TrainingGenerateWeekModal.vue'
   import { buildMockLoadSettings, MOCK_BODYWEIGHT_KG } from '~/data/mockTrainingLogs'
+  import { mockWeeklyPlan } from '~/data/mockWeeklyPlan'
   import { useTrainingStore } from '~/stores/training'
   import type { ExerciseLog, TrainingSessionCheck } from '~/types/training'
   import {
@@ -82,7 +69,8 @@
   })
 
   const trainingStore = useTrainingStore()
-  const { logs, sessionChecks, week: plan } = storeToRefs(trainingStore)
+  const { logs, sessionChecks, week } = storeToRefs(trainingStore)
+  const plan = computed(() => week.value ?? mockWeeklyPlan)
   const weekStart = ref(startOfWeekMonday(new Date()))
   const selectedDay = ref(defaultSelectedDay(weekStart.value))
   const generateModalOpen = ref(false)
