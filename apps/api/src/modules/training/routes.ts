@@ -25,5 +25,17 @@ router.put('/profile', (req, res, next) => {
 router.post('/chat', (req, res, next) => {
   void controller.chat(req, res, next)
 })
+router.post('/weeks/generate', (req, res, next) => {
+  void controller.generateWeek(req, res, next)
+})
+router.post('/weeks/:id/apply', (req, res, next) => {
+  void controller.applyWeek(req, res, next)
+})
+router.get('/weeks', (req, res, next) => {
+  void controller.getWeek(req, res, next)
+})
+router.get('/exercises', (req, res, next) => {
+  void controller.getExercises(req, res, next)
+})
 
 export default router

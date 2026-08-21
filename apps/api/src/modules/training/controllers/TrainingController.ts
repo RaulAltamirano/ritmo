@@ -6,9 +6,13 @@ import {
   type TrainingProfilePatch,
   TrainingProfileService,
 } from '../services/TrainingProfileService.js'
+import { TrainingWeekService } from '../services/TrainingWeekService.js'
 
 export class TrainingController {
-  constructor(private readonly service = new TrainingProfileService()) {}
+  constructor(
+    private readonly service = new TrainingProfileService(),
+    private readonly weeks = new TrainingWeekService(),
+  ) {}
 
   async getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -65,6 +69,72 @@ export class TrainingController {
 
       const result = await this.service.chat(userId, messages)
       ApiResponses.ok(result, 'Training intake response generated')
+        .withRequestId((req as any).requestId)
+        .send(res)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async generateWeek(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = this.getUserId(req)
+      if (!userId) {
+        this.sendUnauthorized(req, res)
+        return
+      }
+      const { weekStart } = req.body as { weekStart?: string }
+      const week = await this.weeks.generateWeek(userId, weekStart ?? '')
+      ApiResponses.ok(week, 'Training week generated successfully')
+        .withRequestId((req as any).requestId)
+        .send(res)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async applyWeek(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = this.getUserId(req)
+      if (!userId) {
+        this.sendUnauthorized(req, res)
+        return
+      }
+      const result = await this.weeks.applyWeek(userId, req.params.id)
+      ApiResponses.ok(result, 'Training week applied successfully')
+        .withRequestId((req as any).requestId)
+        .send(res)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getWeek(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = this.getUserId(req)
+      if (!userId) {
+        this.sendUnauthorized(req, res)
+        return
+      }
+      const weekStart =
+        typeof req.query.weekStart === 'string' ? req.query.weekStart : ''
+      const week = await this.weeks.getWeek(userId, weekStart)
+      ApiResponses.ok(week, 'Training week retrieved successfully')
+        .withRequestId((req as any).requestId)
+        .send(res)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getExercises(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!this.getUserId(req)) {
+        this.sendUnauthorized(req, res)
+        return
+      }
+      const exercises = await this.weeks.getExercises()
+      ApiResponses.ok(exercises, 'Training exercises retrieved successfully')
         .withRequestId((req as any).requestId)
         .send(res)
     } catch (error) {
