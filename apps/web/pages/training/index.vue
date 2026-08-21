@@ -24,7 +24,7 @@
         :bodyweight-kg="bodyweightKg"
         :session-check="currentCheck"
         :is-today="isToday"
-        @update:logs="logs = $event"
+        @update:logs="onUpdateLogs"
         @update:settings="settings = $event"
         @update:bodyweight-kg="bodyweightKg = $event"
         @update:session-check="onUpdateSessionCheck"
@@ -62,12 +62,9 @@
   import TrainingDaySession from '~/components/molecules/TrainingDaySession.vue'
   import TrainingExportButton from '~/components/molecules/TrainingExportButton.vue'
   import TrainingGenerateWeekModal from '~/components/organisms/TrainingGenerateWeekModal.vue'
-  import {
-    buildMockLoadSettings,
-    buildMockTrainingLogs,
-    MOCK_BODYWEIGHT_KG,
-  } from '~/data/mockTrainingLogs'
+  import { buildMockLoadSettings, MOCK_BODYWEIGHT_KG } from '~/data/mockTrainingLogs'
   import { useTrainingStore } from '~/stores/training'
+  import type { ExerciseLog, TrainingSessionCheck } from '~/types/training'
   import {
     addDays,
     calendarDayKey,
@@ -75,7 +72,6 @@
     isSameCalendarDay,
     startOfWeekMonday,
   } from '~/utils/planWeek'
-  import type { TrainingSessionCheck } from '~/types/training'
   import { findSessionCheck, upsertSessionCheck } from '~/utils/trainingSessionCheck'
   import { dayLogStatus, type DayLogStatus } from '~/utils/trainingSetLog'
   import { buildWeekColumns } from '~/utils/trainingWeek'
@@ -86,14 +82,12 @@
   })
 
   const trainingStore = useTrainingStore()
-  const { week: plan } = storeToRefs(trainingStore)
+  const { logs, sessionChecks, week: plan } = storeToRefs(trainingStore)
   const weekStart = ref(startOfWeekMonday(new Date()))
   const selectedDay = ref(defaultSelectedDay(weekStart.value))
   const generateModalOpen = ref(false)
-  const logs = ref(buildMockTrainingLogs(weekStart.value))
   const settings = ref(buildMockLoadSettings())
   const bodyweightKg = ref<number | null>(MOCK_BODYWEIGHT_KG)
-  const sessionChecks = ref<TrainingSessionCheck[]>([])
 
   watch(
     weekStart,
@@ -102,7 +96,14 @@
         isSameCalendarDay(date, selectedDay.value),
       )
       if (!inWeek) selectedDay.value = defaultSelectedDay(start)
-      void trainingStore.loadWeek(calendarDayKey(start)).catch(() => undefined)
+      const dayKeys = Array.from({ length: 7 }, (_, i) =>
+        calendarDayKey(addDays(start, i)),
+      )
+      void Promise.all([
+        trainingStore.loadWeek(dayKeys[0]!),
+        trainingStore.loadLogs(dayKeys[0]!, dayKeys[6]!),
+        trainingStore.loadSessionChecks(dayKeys),
+      ]).catch(() => undefined)
     },
     { immediate: true },
   )
@@ -115,8 +116,20 @@
     findSessionCheck(sessionChecks.value, selectedDayKey.value),
   )
 
+  function onUpdateLogs(next: ExerciseLog[]) {
+    const changed = next.filter(nextLog => {
+      const current = logs.value.find(
+        log => log.dayKey === nextLog.dayKey && log.exerciseId === nextLog.exerciseId,
+      )
+      return current !== nextLog
+    })
+    logs.value = next
+    if (changed.length) void trainingStore.saveLogs(changed).catch(() => undefined)
+  }
+
   function onUpdateSessionCheck(next: TrainingSessionCheck) {
     sessionChecks.value = upsertSessionCheck(sessionChecks.value, next)
+    void trainingStore.saveSessionCheck(next).catch(() => undefined)
   }
 
   const dayStatuses = computed(() => {
