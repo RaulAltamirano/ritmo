@@ -18,6 +18,7 @@ import {
 import { CatalogValidator } from './CatalogValidator.js'
 import {
   OpenAiTrainingClient,
+  type Substitution,
   type SubstitutionResult,
 } from './OpenAiTrainingClient.js'
 import {
@@ -45,6 +46,30 @@ const weekInclude = {
     },
   },
 } as const
+
+function normalizeSubstitutionResult(value: unknown): SubstitutionResult {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { substitutions: [], warning: 'openai_unavailable' }
+  }
+
+  const result = value as Record<string, unknown>
+  const substitutions = Array.isArray(result.substitutions)
+    ? result.substitutions.filter((item): item is Substitution =>
+        Boolean(
+          item &&
+            typeof item === 'object' &&
+            typeof (item as Record<string, unknown>).fromExerciseId === 'string' &&
+            typeof (item as Record<string, unknown>).toExerciseId === 'string' &&
+            typeof (item as Record<string, unknown>).reason === 'string',
+        ),
+      )
+    : []
+
+  return {
+    substitutions,
+    ...(typeof result.warning === 'string' && { warning: result.warning }),
+  }
+}
 
 export class TrainingWeekService {
   constructor(
@@ -114,11 +139,13 @@ export class TrainingWeekService {
     const result = await prisma.$transaction(async tx => {
       const week = await tx.trainingWeek.findFirst({
         where: { id: weekId, userId },
+        include: weekInclude,
       })
       if (!week) throw new ResourceNotFoundException('Training week', weekId)
 
       const profile = await tx.trainingProfile.findUnique({ where: { userId } })
       if (!profile) throw new InvalidInputException('Training profile is required')
+      if (week.status === 'applied') return { week, profile }
 
       const nextBlock = advanceBlock(profile)
       const updatedProfile = await tx.trainingProfile.update({
@@ -215,12 +242,14 @@ export class TrainingWeekService {
     catalog: Exercise[],
   ): Promise<SubstitutionResult> {
     try {
-      return await this.client.proposeSubstitutions({
-        exerciseIds: draftExerciseIds(days),
-        catalog,
-        equipment: profile.equipment,
-        ...(profile.restrictions && { restrictions: profile.restrictions }),
-      })
+      return normalizeSubstitutionResult(
+        await this.client.proposeSubstitutions({
+          exerciseIds: draftExerciseIds(days),
+          catalog,
+          equipment: profile.equipment,
+          ...(profile.restrictions && { restrictions: profile.restrictions }),
+        }),
+      )
     } catch {
       return { substitutions: [], warning: 'openai_unavailable' }
     }

@@ -136,6 +136,20 @@ describe('TrainingWeekService', () => {
     expect(result.profile.programTemplateId).not.toBeNull()
   })
 
+  it('does not advance the profile when an applied week is applied again', async () => {
+    const user = await createUser()
+    await createCompleteProfile(user.id)
+    const service = new TrainingWeekService(createClient())
+    const draft = await service.generateWeek(user.id, '2026-08-17')
+
+    const first = await service.applyWeek(user.id, draft.id)
+    const second = await service.applyWeek(user.id, draft.id)
+
+    expect(first.profile.weekInBlock).toBe(2)
+    expect(second.week.status).toBe(TrainingWeekStatus.applied)
+    expect(second.profile.weekInBlock).toBe(2)
+  })
+
   it('generates successfully when OpenAI proposes no substitutions', async () => {
     const user = await createUser()
     await createCompleteProfile(user.id)
@@ -149,6 +163,32 @@ describe('TrainingWeekService', () => {
     expect(week.substitutions).toEqual([])
     expect(week.warning).toBe('openai_unavailable')
   })
+
+  it.each([
+    { result: {}, expectedWarning: null },
+    {
+      result: { substitutions: null, warning: 'model_warning' },
+      expectedWarning: 'model_warning',
+    },
+    { result: { substitutions: 'invalid' }, expectedWarning: null },
+  ])(
+    'generates successfully for malformed OpenAI substitution shape %#',
+    async ({ result, expectedWarning }) => {
+      const user = await createUser()
+      await createCompleteProfile(user.id)
+      const client = {
+        proposeSubstitutions: vi.fn().mockResolvedValue(result),
+      } as unknown as OpenAiTrainingClient
+
+      const week = await new TrainingWeekService(client).generateWeek(
+        user.id,
+        '2026-08-17',
+      )
+
+      expect(week.substitutions).toEqual([])
+      expect(week.warning).toBe(expectedWarning)
+    },
+  )
 
   it('rejects OpenAI substitutions outside the source exercise family', async () => {
     const user = await createUser()
