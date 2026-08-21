@@ -60,6 +60,9 @@ export const useTrainingStore = defineStore('training', () => {
       return week.value
     })
 
+  const generateWeekPreview = (weekStart: string) =>
+    run(async () => mapTrainingWeekToPlan(await api.generateWeek(weekStart)))
+
   const applyWeek = (id: string) =>
     run(async () => {
       const result = await api.applyWeek(id)
@@ -140,6 +143,7 @@ export const useTrainingStore = defineStore('training', () => {
     saveProfile,
     sendChat,
     generateWeek,
+    generateWeekPreview,
     applyWeek,
     loadWeek,
     loadExercises,

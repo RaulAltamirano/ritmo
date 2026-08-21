@@ -86,7 +86,7 @@
       </section>
 
       <section v-else class="max-h-[55vh] overflow-y-auto">
-        <TrainingWeekDraftPreview v-if="draft" :draft="draft" />
+        <TrainingWeekDraftPreview v-if="previewWeek" :draft="previewWeek" />
       </section>
 
       <footer
@@ -110,7 +110,7 @@
           v-else
           variant="primary"
           size="sm"
-          :disabled="!draft || loading"
+          :disabled="!previewWeek || loading"
           :loading="applying"
           aria-label="Apply week"
           @click="applyDraft"
@@ -153,9 +153,7 @@
   const readyToGenerate = ref(false)
   const generating = ref(false)
   const applying = ref(false)
-  const previewGenerated = ref(false)
-  const previousWeek = ref<WeeklyPlan | null>(null)
-  const draft = computed(() => store.week)
+  const previewWeek = ref<WeeklyPlan | null>(null)
   const loading = computed(() => store.loading)
   const error = computed(() => store.error)
   const currentStep = computed(() => (uiPhase.value === 'chat' ? 1 : 2))
@@ -170,8 +168,7 @@
       uiPhase.value = 'chat'
       messages.value = []
       readyToGenerate.value = false
-      previewGenerated.value = false
-      previousWeek.value = store.week
+      previewWeek.value = null
     },
   )
 
@@ -186,8 +183,9 @@
     if (!readyToGenerate.value) return
     generating.value = true
     try {
-      await store.generateWeek(calendarDayKey(props.weekStart))
-      previewGenerated.value = true
+      previewWeek.value = await store.generateWeekPreview(
+        calendarDayKey(props.weekStart),
+      )
       uiPhase.value = 'preview'
     } finally {
       generating.value = false
@@ -195,11 +193,11 @@
   }
 
   async function applyDraft() {
-    if (!draft.value) return
+    if (!previewWeek.value) return
     applying.value = true
     try {
-      await store.applyWeek(draft.value.id)
-      previewGenerated.value = false
+      await store.applyWeek(previewWeek.value.id)
+      previewWeek.value = null
       emit('applied')
       emit('update:isOpen', false)
     } finally {
@@ -224,8 +222,12 @@
   }
 
   function onSecondaryAction() {
-    if (uiPhase.value === 'preview') uiPhase.value = 'chat'
-    else requestClose()
+    if (uiPhase.value === 'preview') {
+      previewWeek.value = null
+      uiPhase.value = 'chat'
+      return
+    }
+    requestClose()
   }
 
   function handleOpenUpdate(value: boolean) {
@@ -234,7 +236,7 @@
   }
 
   function requestClose() {
-    if (previewGenerated.value) store.week = previousWeek.value
+    previewWeek.value = null
     emit('update:isOpen', false)
     emit('close')
   }

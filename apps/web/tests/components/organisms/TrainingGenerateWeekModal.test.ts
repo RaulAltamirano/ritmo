@@ -2,6 +2,8 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import TrainingGenerateWeekModal from '@/components/organisms/TrainingGenerateWeekModal.vue'
+import { useTrainingStore } from '@/stores/training'
+import { mapTrainingWeekToPlan } from '@/utils/mapTrainingWeekToPlan'
 
 const api = vi.hoisted(() => ({
   chat: vi.fn(),
@@ -119,8 +121,16 @@ describe('TrainingGenerateWeekModal', () => {
     await vi.waitFor(() => expect(wrapper.emitted('applied')).toHaveLength(1))
   })
 
-  it('discards an unapplied preview when closed', async () => {
+  it('keeps an unapplied preview isolated from the active week', async () => {
     const wrapper = mountModal()
+    const store = useTrainingStore()
+    const previousWeek = mapTrainingWeekToPlan({
+      ...generatedWeek,
+      id: 'previous-week',
+      status: 'applied',
+    })
+    store.week = previousWeek
+
     await wrapper.get('textarea').setValue('Intermediate, three days, full gym.')
     await wrapper.get('button[aria-label="Send message"]').trigger('click')
     const previewButton = wrapper.get('button[aria-label="Generate preview"]')
@@ -128,11 +138,19 @@ describe('TrainingGenerateWeekModal', () => {
     await previewButton.trigger('click')
     await vi.waitFor(() => expect(wrapper.text()).toContain('Bench press'))
 
+    expect(store.week).toStrictEqual(previousWeek)
+
+    const backButton = wrapper
+      .findAll('button')
+      .find(button => button.text() === 'Back')
+    await backButton?.trigger('click')
+    expect(wrapper.text()).toContain('Generate training week')
+    expect(store.week).toStrictEqual(previousWeek)
+
     await wrapper
       .get('button[aria-label="Close generate training week"]')
       .trigger('click')
 
-    const { useTrainingStore } = await import('@/stores/training')
-    expect(useTrainingStore().week).toBeNull()
+    expect(store.week).toStrictEqual(previousWeek)
   })
 })
